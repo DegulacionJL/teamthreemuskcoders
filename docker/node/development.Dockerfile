@@ -10,7 +10,7 @@ COPY ./src/frontend/package.json /var/www/frontend
 COPY ./src/frontend/package-lock.json /var/www/frontend
 
 # Install dependencies
-RUN npm install
+RUN npm install --force
 
 COPY ./src/frontend/ /var/www/frontend
 RUN chown -R node:node /var/www/frontend
