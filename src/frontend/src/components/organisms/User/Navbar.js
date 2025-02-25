@@ -29,6 +29,7 @@ function Navbar(props) {
     { label: t('menu.inquiry'), url: '/inquiry' },
     { label: t('menu.faq'), url: '/faq' },
     { label: t('menu.styleguide'), url: '/styleguide' },
+    { label: t('menu.calculate'), url: '/calculate' },
   ];
 
   const appName = process.env.REACT_APP_SITE_TITLE;

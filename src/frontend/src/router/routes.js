@@ -67,6 +67,11 @@ const routes = [
     component: 'pages/guest/PrivacyPolicy',
     auth: false,
   },
+  {
+    path: '/calculate',
+    component: 'pages/guest/Calculate',
+    auth: false,
+  },
   ...admin,
 ];
 

@@ -184,6 +184,7 @@ const en = {
       styleguide: 'Styleguide',
       roles: 'Roles',
       broadcast: 'Broadcast',
+      calculate: 'calculate',
     },
     table: {
       no_data: 'No data.',

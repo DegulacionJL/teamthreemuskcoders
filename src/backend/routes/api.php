@@ -11,6 +11,7 @@ use App\Http\Controllers\API\Auth\TokenController;
 use App\Http\Controllers\API\PermissionController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\Auth\PasswordController;
+use App\Http\Controllers\calculateController;
 use Laravel\Passport\Http\Controllers\AccessTokenController;
 
 /*
@@ -66,6 +67,11 @@ Route::prefix('roles')
         Route::put('{id}', [RoleController::class, 'update']);
         Route::delete('{id}', [RoleController::class, 'delete']);
     });
+    
+Route::post('/add', [calculateController::class, 'addition']);
+Route::post('/sub', [calculateController::class, 'subtraction']);
+Route::post('/mul', [calculateController::class, 'multiplication']);
+Route::post('/div', [calculateController::class, 'division']);
 
 Route::get('permissions', [PermissionController::class, 'index']);
 
