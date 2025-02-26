@@ -31,7 +31,7 @@ function Navbar(props) {
     { label: t('menu.styleguide'), url: '/styleguide' },
     { label: t('menu.calculate'), url: '/calculate' },
   ];
-
+  s;
   if (user) {
     menus.push({ label: t('menu.memefeed'), url: '/memefeed' });
   }
