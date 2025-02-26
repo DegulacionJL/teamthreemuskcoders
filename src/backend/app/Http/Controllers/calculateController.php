@@ -28,7 +28,7 @@ class CalculateController extends Controller
             $num1 = $request->input('num1');
             $num2 = $request->input('num2');
             $result = $this->calculatorService->addition($num1, $num2);
-
+            $this->response['result'] = new calculateResource((object) ['result' => $result]);
         } catch (Exception $e) {
             $this->response = [
                 'error' => $e->getMessage(),
@@ -92,14 +92,9 @@ class CalculateController extends Controller
 
             $num1 = $request->input('num1');
             $num2 = $request->input('num2');
-
-            if ($num2 == 0) {
-                throw new Exception('Division by zero');
-            }
-
             $result = round($this->calculatorService->division($num1, $num2), 2);
 
-            $this->response['result'] = new calculateResource($result);
+            $this->response['result'] = new calculateResource((object) ['result' => $result]);
         } catch (Exception $e) {
             $this->response = [
                 'error' => $e->getMessage(),

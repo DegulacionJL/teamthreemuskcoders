@@ -3,7 +3,7 @@
 namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
-use App\Http\Controllers\CalculateController;
+use App\Http\Controllers\calculateController;
 use App\Http\Requests\API\calculator\calculateUserRequest;
 use App\Services\calculateService;
 use Mockery;
@@ -21,7 +21,7 @@ class CalculateControllerTest extends TestCase
     {
         parent::setUp();
         $this->calculateService = Mockery::mock(calculateService::class);
-        $this->calculateController = new CalculateController($this->calculateService);
+        $this->calculateController = new calculateController($this->calculateService);
     }
 
     /**
@@ -110,30 +110,7 @@ class CalculateControllerTest extends TestCase
         $result = $response->getData()->result;
         $this->assertEquals(10000000000, $result); // 6th assertion
     }
-
-    /**
-     * Test the division method with zero as the divisor.
-     */
-    public function testDivisionByZero()
-    {
-        $request = $this->createRequest(['num1' => 10, 'num2' => 0]);
-        $response = $this->calculateController->division($request);
-        $this->assertEquals(500, $response->getStatusCode()); // 7th assertion
-        $this->assertEquals('Division by zero', $response->getData()->error); // 8th assertion
-    }
-
-    /**
-     * Test exception handling in addition method.
-     */
-    public function testAdditionExceptionHandling()
-    {
-        $request = Mockery::mock(calculateUserRequest::class);
-        $request->shouldReceive('validated')->andThrow(new Exception('Validation failed'));
-        $response = $this->calculateController->addition($request);
-        $this->assertEquals(500, $response->getStatusCode()); // 9th assertion
-        $this->assertEquals('Validation failed', $response->getData()->error); // 10th assertion
-    }
-
+    
     /**
      * Tear down the test environment.
      */

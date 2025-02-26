@@ -80,7 +80,7 @@ function Calculate() {
   };
 
   return (
-    <Container maxWidth="xs" sx={{ pt: 8 }}>
+    <Container maxWidth="xs" sx={{ pt: 8, marginLeft: 16 }}>
       <Card
         sx={{
           p: 4,

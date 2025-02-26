@@ -32,6 +32,10 @@ function Navbar(props) {
     { label: t('menu.calculate'), url: '/calculate' },
   ];
 
+  if (user) {
+    menus.push({ label: t('menu.memefeed'), url: '/memefeed' });
+  }
+
   const appName = process.env.REACT_APP_SITE_TITLE;
 
   const handleOpenNavMenu = (event) => setAnchorMobileNav(event.currentTarget);

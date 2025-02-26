@@ -147,6 +147,10 @@ const en = {
         our_activities: 'Our Activities',
         activities_description: 'Never get so busy making a living that you forget to make a life.',
       },
+      memefeed: {
+        main_heading: 'Showcase your memes!',
+        sub_heading: 'Share your memes with the world.',
+      },
       roles: {
         role_created: 'The role has been created.',
         role_updated: 'Role details have been updated.',
@@ -185,6 +189,7 @@ const en = {
       roles: 'Roles',
       broadcast: 'Broadcast',
       calculate: 'calculate',
+      memefeed: 'Meme Feed',
     },
     table: {
       no_data: 'No data.',

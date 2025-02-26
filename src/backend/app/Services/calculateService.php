@@ -16,7 +16,7 @@ class calculateService
     /**
      * Calculate the sum of two numbers and save it to the database.
      */
-    public function addition(int $num1, int $num2): int
+    public function addition(float $num1, float $num2): float
     {
         $result = $num1 + $num2;
 
@@ -58,7 +58,7 @@ class calculateService
         return $result;
     }
 
-    public function division(int $num1, int $num2): int
+    public function division(float $num1, float $num2): float
     {
         if ($num2 == 0) {
             throw new \InvalidArgumentException('Division by zero');

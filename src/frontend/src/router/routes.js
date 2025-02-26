@@ -72,6 +72,11 @@ const routes = [
     component: 'pages/guest/Calculate',
     auth: false,
   },
+  {
+    path: '/memefeed',
+    component: 'pages/guest/MemeFeed',
+    auth: false,
+  },
   ...admin,
 ];
 
