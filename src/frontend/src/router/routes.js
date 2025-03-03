@@ -69,13 +69,13 @@ const routes = [
   },
   {
     path: '/calculate',
-    component: 'pages/guest/Calculate',
-    auth: false,
+    component: 'pages/users/Calculate',
+    auth: true,
   },
   {
     path: '/memefeed',
-    component: 'pages/guest/MemeFeed',
-    auth: false,
+    component: 'pages/users/MemeFeed',
+    auth: true,
   },
   ...admin,
 ];

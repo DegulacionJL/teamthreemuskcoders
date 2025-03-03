@@ -45,6 +45,8 @@ const en = {
       notifications: 'Notifications',
       noNotifications: 'No new notifications.',
       newNotification: 'You have a new notification.',
+      get_started_memema: 'Join the fun',
+      post: 'post',
     },
     pages: {
       signup: {
@@ -114,6 +116,22 @@ const en = {
         main_heading: 'Welcome to React Base Template!',
         sub_heading: 'A lightweight boilerplate about the development of a React project.',
         why_heading: 'Why use Base Template?',
+        why_memema_heading: 'What to expect?',
+        uploads: {
+          heading: 'User Uploads',
+          description:
+            'Share your own memes and showcase your creativity to the community.',
+        },
+        voting: {
+          heading: 'Voting System',
+          description:
+            'Express your voting by pressing our laugh reaction.',
+        },
+        comment: {
+          heading: 'Laugher-Board Rankings',
+          description:
+            'See who’s on top with the funniest meme.',
+        },
         docker: {
           heading: 'Flexible Environment',
           description:
@@ -150,6 +168,9 @@ const en = {
       memefeed: {
         main_heading: 'Showcase your memes!',
         sub_heading: 'Share your memes with the world.',
+      },
+      memema: {
+        main_heading: 'Think you\'re funny? Prove it.',
       },
       roles: {
         role_created: 'The role has been created.',

@@ -29,10 +29,10 @@ function Navbar(props) {
     { label: t('menu.inquiry'), url: '/inquiry' },
     { label: t('menu.faq'), url: '/faq' },
     { label: t('menu.styleguide'), url: '/styleguide' },
-    { label: t('menu.calculate'), url: '/calculate' },
   ];
-  s;
+  
   if (user) {
+    menus.push({ label: t('menu.calculate'), url: '/calculate' });
     menus.push({ label: t('menu.memefeed'), url: '/memefeed' });
   }
 
@@ -54,18 +54,21 @@ function Navbar(props) {
       position="static"
       color="transparent"
       elevation={0}
-      sx={{ borderBottom: (theme) => `1px solid ${theme.palette.divider}` }}
+      sx={{ 
+        borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+        backgroundColor: '#333', // Change this to your desired color
+      }}
     >
-      <Container maxWidth="lg">
-        <Toolbar sx={{ flexWrap: 'wrap' }} disableGutters>
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
+      <Container maxWidth="lg" sx={{ padding: 0 }}>
+        <Toolbar sx={{ flexWrap: 'wrap', padding: 0 }} disableGutters>
+         <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
             <Link to="/">
-              <img src="/static/images/sprobe-icon.png" alt={appName} height={48} />
+              <img src="/static/images/memema_test.png" alt={appName} height={60} />
             </Link>
           </Box>
 
           <Box component="nav" sx={{ display: { xs: 'none', md: 'flex' } }}>
-            <MenuLinks items={menus} />
+            <MenuLinks items={menus} sx={{ color: 'white' }} />
           </Box>
 
           {/** Mobile Menu */}
@@ -89,7 +92,7 @@ function Navbar(props) {
                 justifyContent: 'center',
               }}
             >
-              <img src="/static/images/sprobe-icon.png" alt={appName} height={48} />
+              <img src="/static/images/memema_test.png" alt={appName} height={60} />
             </Box>
 
             <Menu
@@ -117,18 +120,18 @@ function Navbar(props) {
             >
               {menus.map((menu, key) => (
                 <MenuItem key={key} onClick={() => handleCloseNavMenu(menu.url)}>
-                  <Typography textAlign="center">{menu.label}</Typography>
+                  <Typography textAlign="center" sx={{ color: 'white' }}>{menu.label}</Typography>
                 </MenuItem>
               ))}
 
               {!user && (
                 <Box>
                   <MenuItem onClick={() => handleCloseNavMenu('/signup')}>
-                    <Typography textAlign="center">{t('labels.signup')}</Typography>
+                    <Typography textAlign="center" sx={{ color: 'white' }}>{t('labels.signup')}</Typography>
                   </MenuItem>
 
                   <MenuItem onClick={() => handleCloseNavMenu('/login')}>
-                    <Typography textAlign="center">{t('labels.login')}</Typography>
+                    <Typography textAlign="center" sx={{ color: 'white' }}>{t('labels.login')}</Typography>
                   </MenuItem>
                 </Box>
               )}

@@ -20,13 +20,13 @@ function Footer() {
   ];
 
   return (
-    <Box sx={{ py: 8, color: blueGrey['A100'], backgroundColor: blueGrey[900] }} component="footer">
+    <Box sx={{ py: 8, color: blueGrey['A100'], backgroundColor: '#171E31' }} component="footer">
       <Container>
         <Grid container spacing={4}>
           <Grid item xs={12} sm={4}>
             <Box sx={{ mb: 2 }}>
               <img
-                src="/static/images/babylloyd.jpg"
+                src="/static/images/memema_test.png"
                 alt={process.env.REACT_APP_SITE_TITLE}
                 width="100"
               />

@@ -15,20 +15,20 @@ function Landing() {
 
   const features = [
     {
-      title: t('pages.landing.docker.heading'),
-      description: t('pages.landing.docker.description'),
+      title: t('pages.landing.uploads.heading'),
+      description: t('pages.landing.uploads.description'),
       image: '/static/images/docker.png',
-      left: true,
+      left: true, 
     },
     {
-      title: t('pages.landing.react.heading'),
-      description: t('pages.landing.react.description'),
+      title: t('pages.landing.voting.heading'),
+      description: t('pages.landing.voting.description'),
       image: '/static/images/react.png',
       left: false,
     },
     {
-      title: t('pages.landing.laravel.heading'),
-      description: t('pages.landing.laravel.description'),
+      title: t('pages.landing.comment.heading'),
+      description: t('pages.landing.comment.description'),
       image: '/static/images/laravel.png',
       left: true,
     },
@@ -58,47 +58,69 @@ function Landing() {
   return (
     <>
       <Seo
-        title="Sprobe Base Template"
+        title="MemeMa - MemeSharing Platform"
         description="This is a boilerplate for React + Laravel Applications."
         image="http://test.com/"
       />
 
-      <HeroImage image="/static/images/landing-cover.jpg" height="calc(100vh - 100px)">
-        <Box
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}
-        >
-          <Box>
-            <Typography
-              component="h2"
-              variant="h2"
-              align="center"
-              color="text.primary"
-              gutterBottom
-              sx={{ fontWeight: 'bold', color: 'white', textShadow: '2px 2px rgba(0, 0, 0, 0.5)' }}
-            >
-              {t('pages.landing.main_heading')}
-            </Typography>
-            <Typography
-              variant="h5"
-              align="center"
-              color="text.secondary"
-              component="p"
-              sx={{ color: 'white' }}
-            >
-              {t('pages.landing.sub_heading')}
-            </Typography>
+      <Box sx={{ backgroundColor: '#171E31', py: 4, mt: -8 }}>
+        <Container>
+          <Grid container spacing={2} alignItems="center" justifyContent="center" style={{ height: '100vh' }}>
+            <Grid item xs={12} md={6}>
+              <Typography
+                component="h3"
+                variant="h3"
+                align="left"
+                color="text.primary"
+                gutterBottom
+                sx={{ fontWeight: 'bold', color: 'white', textShadow: '2px 2px rgba(0, 0, 0, 0.5)' }}
+              >
+                {t('pages.memema.main_heading')}
+              </Typography>
+              <Typography
+                variant="h5"
+                align="left"
+                color="text.secondary"
+                component="p"
+                sx={{ color: 'white' }}
+              >
+                {t('pages.landing.sub_heading')}
+              </Typography>
 
-            <Box textAlign="center" sx={{ mt: 2 }}>
-              <ButtonRound component={Link} to="/signup" disableElevation>
-                {t('labels.get_started')}
-              </ButtonRound>
-            </Box>
-          </Box>
-        </Box>
-      </HeroImage>
+              <Box textAlign="left" sx={{ mt: 2 }}>
+                <ButtonRound component={Link} to="/signup" disableElevation>
+                  {t('labels.get_started_memema')}
+                </ButtonRound>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ position: 'relative', width: '80%', maxWidth: '400px', ml: '90px' }}>
+                <Box
+                  component="img"
+                  alt="Hero Image"
+                  src="/static/images/monalisa_bean.jpg"
+                  sx={{ width: '100%', height: 'auto', borderRadius: '16px' }}
+                />
+                <Box
+                  component="img"
+                  alt="Hero GIF"
+                  src="/static/images/laughing.gif"
+                  sx={{ position: 'absolute', top:'70%', bottom: '10%', left: '80%', right: '10%', width: '40%', height: 'auto', borderRadius: '16px', transform: 'rotate(-15deg)' }}
+                />
+                <Box
+                  component="img"
+                  alt="Hero GIF"
+                  src="/static/images/laughingtwo.gif"
+                  sx={{ position: 'absolute', top: '40%', left: '-30%', width: '55%', height: 'auto', borderRadius: '16px', transform: 'rotate(25deg)' }}
+                />
+              </Box>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
 
       {/** Features List */}
-      <Section heading={t('pages.landing.why_heading')}>
+      <Section heading={t('pages.landing.why_memema_heading')}>
         {features.map((feature, key) => {
           return (
             <Feature
@@ -112,7 +134,7 @@ function Landing() {
         })}
       </Section>
 
-      {/** Our Clients */}
+      {/* * Our Clients
       <Section heading={t('pages.landing.our_customers_heading')} background="white">
         <Container maxWidth="lg" sx={{ py: 8 }}>
           <Grid container spacing={8}>
@@ -128,20 +150,21 @@ function Landing() {
             ))}
           </Grid>
         </Container>
-      </Section>
+      </Section> */}
 
-      {/** Reviews */}
+      {/* * Reviews
       <Section heading={t('pages.landing.reviews_heading')} fullWidth={true}>
         <ReviewSlider reviews={reviews} sx={{ mt: 6, p: 4 }} />
 
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
           <MuiButton variant="outlined">{t('pages.landing.see_all_reviews')}</MuiButton>
         </Box>
-      </Section>
+      </Section> */}
 
       {/** CTA */}
       <CallToAction />
     </>
+    
   );
 }
 

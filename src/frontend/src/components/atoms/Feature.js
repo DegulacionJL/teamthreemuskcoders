@@ -9,7 +9,7 @@ function Feature(props) {
 
   return (
     <Container sx={{ py: 8 }}>
-      <Grid container spacing={12}>
+      <Grid container spacing={12} alignItems="center">
         <Grid item xs={12} sm={6} order={{ sm: left ? 1 : 2, xs: 1 }}>
           <Box component="img" alt={title} src={image} sx={{ width: '100%', m: '0 auto' }} />
         </Grid>
