@@ -1,111 +1,95 @@
-import { faker } from '@faker-js/faker';
-import { useTranslation } from 'react-i18next';
-import { Box, Container, Grid, Typography } from '@mui/material';
-import BodyText from 'components/atoms/BodyText';
-import HeroImage from 'components/atoms/HeroImage';
-import PageTitle from 'components/atoms/PageTitle';
-import Youtube from 'components/atoms/Youtube';
-import MemberList from 'components/molecules/MemberList';
-import QuiltedImageList from 'components/molecules/QuiltedImageList';
+import React, { useState } from 'react';
+import createMemePost from 'services/meme.service';
+import PhotoCamera from '@mui/icons-material/PhotoCamera';
+import { Avatar, Box, Button, IconButton, TextField, Typography } from '@mui/material';
+import MemePost from 'components/MemePost';
 
 function MemeFeed() {
-  const { t } = useTranslation();
+  const [caption, setCaption] = useState('');
+  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [posts, setPosts] = useState([]);
 
-  const members = [...Array(6)].map(() => ({
-    name: `${faker.name.firstName()} ${faker.name.lastName()}`,
-    avatar: faker.image.people(120, 120, true),
-    role: faker.name.jobTitle(),
-  }));
-
-  const random = (min, max) => {
-    return Math.floor(Math.random() * (max - min + 1) + min);
+  const handleCaptionChange = (event) => {
+    setCaption(event.target.value);
   };
 
-  const images = [...Array(24)].map(() => ({
-    alt: faker.lorem.words(3),
-    image: faker.image.city(640, 480, true),
-    rows: random(1, 2),
-    cols: random(1, 2),
-  }));
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    setImage(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handlePost = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('caption', caption);
+      formData.append('image', image);
+      formData.append('user_id', '1');
+      const response = await createMemePost(formData);
+      console.log('Post created:', response);
+
+      setPosts([{ caption, image: imagePreview }, ...posts]);
+      setCaption('');
+      setImage(null);
+      setImagePreview(null);
+    } catch (error) {
+      console.error('Error creating post:', error);
+    }
+  };
 
   return (
-    <>
-      <Container disableGutters component="section" sx={{ pt: 8, pb: 6 }}>
-        <PageTitle
-          title={t('pages.memefeed.main_heading')}
-          subTitle={t('pages.memefeed.sub_heading')}
+    <Box>
+      <Box
+        sx={{
+          p: 2,
+          backgroundColor: 'white',
+          boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+          borderRadius: '8px',
+          maxWidth: '500px',
+          margin: '12px auto',
+          mt: 4,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Avatar sx={{ mr: 2 }}>U</Avatar>
+          <Typography variant="h6" gutterBottom>
+            Create a Post
+          </Typography>
+        </Box>
+        <TextField
+          placeholder="Write something funny..."
+          variant="outlined"
+          fullWidth
+          multiline
+          rows={4}
+          value={caption}
+          onChange={handleCaptionChange}
+          sx={{ mb: 2 }}
         />
-      </Container>
-
-      {/** Cover */}
-      <HeroImage image={faker.image.technics()} height="300px" />
-
-      {/** Staff */}
-      <Container disableGutters maxWidth="sm" component="section" sx={{ pt: 12, pb: 6 }}>
-        <Typography
-          component="h5"
-          variant="h5"
-          align="center"
-          color="text.primary"
-          gutterBottom
-          sx={{ fontWeight: 'bold', mb: 2 }}
-        >
-          {t('pages.about.meet_the_team')}
-        </Typography>
-        <BodyText align="center">{t('pages.about.team_description')}</BodyText>
-      </Container>
-
-      <Container maxWidth="lg" sx={{ pb: 12 }}>
-        <MemberList members={members} />
-      </Container>
-
-      <Box component="section" sx={{ mt: 6, py: 12, backgroundColor: 'white' }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={8}>
-            <Grid item xs={12} md={6}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  flexDirection: 'column',
-                  height: '100%',
-                }}
-              >
-                <Typography
-                  component="h5"
-                  variant="h5"
-                  color="text.primary"
-                  sx={{ mb: 4, fontWeight: 'bold' }}
-                >
-                  {t('pages.about.our_mission')}
-                </Typography>
-                <BodyText>{t('pages.about.mission_description')}</BodyText>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Youtube videoId="mocuGRf2UVg" />
-            </Grid>
-          </Grid>
-        </Container>
+        {imagePreview && (
+          <Box sx={{ mb: 2 }}>
+            <img
+              src={imagePreview}
+              alt="Preview"
+              style={{ maxWidth: '100%', borderRadius: '8px' }}
+            />
+          </Box>
+        )}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <IconButton color="primary" component="label">
+            <PhotoCamera />
+            <input type="file" hidden accept="image/*" onChange={handleImageChange} />
+          </IconButton>
+          <Button variant="contained" color="primary" onClick={handlePost}>
+            Post
+          </Button>
+        </Box>
       </Box>
-
-      {/* * Masonry
-      <Container disableGutters maxWidth="sm" component="section" sx={{ pt: 12, pb: 6 }}>
-        <Typography
-          component="h5"
-          variant="h5"
-          align="center"
-          color="text.primary"
-          gutterBottom
-          sx={{ fontWeight: 'bold', mb: 2 }}
-        >
-          {t('pages.about.our_activities')}
-        </Typography>
-        <BodyText align="center">{t('pages.about.activities_description')}</BodyText>
-
-        <QuiltedImageList images={images} />
-      </Container> */}
-    </>
+      {posts.map((post, index) => (
+        <MemePost key={index} caption={post.caption} image={post.image} />
+      ))}
+    </Box>
   );
 }
 

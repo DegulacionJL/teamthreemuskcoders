@@ -66,7 +66,7 @@ class calculateService
 
         $result = $num1 / $num2;
 
-        // Save the sum to the database
+        // Save the result to the database
         $this->calculateModel->create([
             'num1' => $num1,
             'num2' => $num2,

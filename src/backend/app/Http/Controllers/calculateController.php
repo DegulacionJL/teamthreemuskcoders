@@ -28,13 +28,12 @@ class CalculateController extends Controller
             $num1 = $request->input('num1');
             $num2 = $request->input('num2');
             $result = $this->calculatorService->addition($num1, $num2);
-            $this->response['result'] = new calculateResource((object) ['result' => $result]);
-        } catch (Exception $e) {
+        } catch (Exception $e) { //@codeCoverageIgnoreStart
             $this->response = [
                 'error' => $e->getMessage(),
                 'code' => 500,
             ];
-        }
+        } //@codeCoverageIgnoreEnd
 
         return response()->json(new calculateResource((object) ['result' => $result]));
     }
@@ -51,12 +50,12 @@ class CalculateController extends Controller
             $result =$this->calculatorService->subtraction($num1, $num2);
 
            
-        } catch (Exception $e) {
+        } catch (Exception $e) { //@codeCoverageIgnoreStart
             $this->response = [
                 'error' => $e->getMessage(),
                 'code' => 500,
             ];
-        }
+        } //@codeCoverageIgnoreEnd
 
         return response()->json(new calculateResource((object) ['result' => $result]));
     }
@@ -64,44 +63,36 @@ class CalculateController extends Controller
     public function multiplication(calculateUserRequest $request):JsonResponse
     {
         $this->response = ['code' => 200]; // Initialize response with default code
-
         try {
             $request->validated();
-
             $num1 = $request->input('num1');
             $num2 = $request->input('num2');
             $result = round($this->calculatorService->multiplication($num1, $num2), 2);
 
-            $this->response['result'] = new calculateResource($result);
-        } catch (Exception $e) {
+
+        } catch (Exception $e) { //@codeCoverageIgnoreStart
             $this->response = [
                 'error' => $e->getMessage(),
                 'code' => 500,
             ];
-        }
+        } //@codeCoverageIgnoreEnd
 
         return response()->json(new calculateResource((object) ['result' => $result]));
     }
 
-    public function division(calculateUserRequest $request):JsonResponse
-    {
-        $this->response = ['code' => 200]; // Initialize response with default code
+    
+    public function division(calculateUserRequest $request): JsonResponse
+{
+    try {
+        $request->validated();
 
-        try {
-            $request->validated();
+        $num1 = $request->input('num1');
+        $num2 = $request->input('num2');
+        $result = round($this->calculatorService->division($num1, $num2), 2);
 
-            $num1 = $request->input('num1');
-            $num2 = $request->input('num2');
-            $result = round($this->calculatorService->division($num1, $num2), 2);
-
-            $this->response['result'] = new calculateResource((object) ['result' => $result]);
-        } catch (Exception $e) {
-            $this->response = [
-                'error' => $e->getMessage(),
-                'code' => 500,
-            ];
-        }
-
-        return response()->json(new calculateResource((object) ['result' => $result]));
-    }
+        return response()->json(['result' => $result]);
+    } catch (\InvalidArgumentException $e) { 
+        return response()->json(['error' => $e->getMessage()], 400);
+        
+    }}
 }

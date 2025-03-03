@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
@@ -10,6 +10,7 @@ import Container from '@mui/material/Container';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import Switch from '@mui/material/Switch';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from 'components/atoms/Button';
@@ -23,15 +24,23 @@ function Navbar(props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [anchorMobileNav, setAnchorMobileNav] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+  }, [darkMode]);
 
   const menus = [
     { label: t('menu.about'), url: '/about' },
     { label: t('menu.inquiry'), url: '/inquiry' },
     { label: t('menu.faq'), url: '/faq' },
     { label: t('menu.styleguide'), url: '/styleguide' },
-    { label: t('menu.calculate'), url: '/calculate' },
   ];
-  s;
+
   if (user) {
     menus.push({ label: t('menu.memefeed'), url: '/memefeed' });
   }
@@ -48,6 +57,10 @@ function Navbar(props) {
     { label: t('menu.profile'), url: '/profile' },
     { label: t('menu.logout'), url: '/logout' },
   ];
+
+  const handleDarkModeToggle = () => {
+    setDarkMode((prevMode) => !prevMode);
+  };
 
   return (
     <AppBar
@@ -136,6 +149,8 @@ function Navbar(props) {
           </Box>
 
           <LanguageSelect sx={{ ml: 1 }} />
+
+          <Switch checked={darkMode} onChange={handleDarkModeToggle} />
 
           {user ? (
             <Fragment>

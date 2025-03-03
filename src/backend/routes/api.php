@@ -13,6 +13,7 @@ use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\Auth\PasswordController;
 use App\Http\Controllers\calculateController;
 use Laravel\Passport\Http\Controllers\AccessTokenController;
+use App\Http\Controllers\PostController;
 
 /*
 |--------------------------------------------------------------------------
@@ -72,6 +73,17 @@ Route::post('/add', [calculateController::class, 'addition']);
 Route::post('/sub', [calculateController::class, 'subtraction']);
 Route::post('/mul', [calculateController::class, 'multiplication']);
 Route::post('/div', [calculateController::class, 'division']);
+
+Route::prefix('posts')
+    ->group(function () {
+        Route::get('/', [PostController::class, 'getPost']);
+        Route::post('/', [PostController::class, 'createMemePost']);
+        Route::post('/{id}/like', [PostController::class, 'likePost']); // Changed path for liking a post
+        Route::post('/{id}/comment', [PostController::class, 'commentPost']); // Changed path for commenting on a post
+        Route::get('{id}', [PostController::class, 'read']);
+        Route::put('{id}', [PostController::class, 'update']);
+        Route::delete('{id}', [PostController::class, 'delete']);
+    });
 
 Route::get('permissions', [PermissionController::class, 'index']);
 

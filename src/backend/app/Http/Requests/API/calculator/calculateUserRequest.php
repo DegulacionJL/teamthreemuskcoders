@@ -18,13 +18,4 @@ class calculateUserRequest extends FormRequest
         ];
     }
 
-    public function getnum1(): int
-    {
-        return $this->input('num1');
-    }
-
-    public function getnum2(): int
-    {
-        return $this->input('num2');
-    }
 }

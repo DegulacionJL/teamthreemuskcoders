@@ -33,9 +33,9 @@ class CalculateControllerTest extends TestCase
     protected function createRequest(array $data)
     {
         $request = Mockery::mock(calculateUserRequest::class);
-        $request->shouldReceive('validated')->andReturn($data);
         $request->shouldReceive('input')->with('num1')->andReturn($data['num1']);
         $request->shouldReceive('input')->with('num2')->andReturn($data['num2']);
+        $request->shouldReceive('validated')->andReturn($data);
         return $request;
     }
 
@@ -110,6 +110,21 @@ class CalculateControllerTest extends TestCase
         $result = $response->getData()->result;
         $this->assertEquals(10000000000, $result); // 6th assertion
     }
+
+    /**
+ * Test the division method with zero as the divisor.
+ */
+public function testDivisionByZero()
+{
+    $this->calculateService->shouldReceive('division')->with(10, 0)->andThrow(new \InvalidArgumentException('Division by zero'));
+    $request = $this->createRequest(['num1' => 10, 'num2' => 0]);
+
+    $response = $this->calculateController->division($request);
+    $responseData = $response->getData();
+
+    $this->assertEquals('Division by zero', $responseData->error); // 7th assertion
+    $this->assertEquals(400, $response->status()); // 8th assertion
+}
     
     /**
      * Tear down the test environment.

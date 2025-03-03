@@ -189,7 +189,7 @@ const en = {
       roles: 'Roles',
       broadcast: 'Broadcast',
       calculate: 'calculate',
-      memefeed: 'Meme Feed',
+      memefeed: 'meme feed',
     },
     table: {
       no_data: 'No data.',
