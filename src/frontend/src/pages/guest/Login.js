@@ -55,7 +55,7 @@ function Login() {
             redirect = '/admin';
             break;
           default:
-            redirect = '/';
+            redirect = '/memefeed';
             break;
         }
         const query = new URLSearchParams(location.search);

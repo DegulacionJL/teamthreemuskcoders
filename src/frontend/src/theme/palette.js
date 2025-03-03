@@ -4,7 +4,8 @@
  */
 const palette = {
   primary: {
-    main: '#058ED9',
+    main: '#f2fb00',
+    memema_main: '#8d2ff6',
     contrastText: '#fff',
   },
   secondary: {
