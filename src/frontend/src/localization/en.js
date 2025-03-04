@@ -115,6 +115,7 @@ const en = {
       landing: {
         main_heading: 'Welcome to React Base Template!',
         sub_heading: 'A lightweight boilerplate about the development of a React project.',
+        sub_memema_heading: 'Post your best memes and let the community decide!',
         why_heading: 'Why use Base Template?',
         why_memema_heading: 'What to expect?',
         uploads: {
@@ -150,7 +151,7 @@ const en = {
         our_customers_heading: 'Our Clients',
         reviews_heading: 'What our clients say',
         see_all_reviews: 'See All Reviews',
-        call_to_action: 'Accelerate your application development today!',
+        call_to_action: 'Got a Funny Idea? Turn It Into a Meme!',
       },
       about: {
         main_heading: 'Our Story',
@@ -170,7 +171,7 @@ const en = {
         sub_heading: 'Share your memes with the world.',
       },
       memema: {
-        main_heading: 'Think you\'re funny? Prove it.',
+        main_heading: `Think you're funny? Prove it.`,
       },
       roles: {
         role_created: 'The role has been created.',

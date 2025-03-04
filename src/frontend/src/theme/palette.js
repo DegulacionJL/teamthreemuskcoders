@@ -5,12 +5,13 @@
 const palette = {
   primary: {
     main: '#f2fb00',
-    memema_main: '#8d2ff6',
+    memema_main: '#2A3450',
     contrastText: '#fff',
   },
   secondary: {
     main: '#D14081',
     contrastText: '#fff',
+    memema_cta: '#FFD700',
   },
   success: {
     main: '#70A37F',

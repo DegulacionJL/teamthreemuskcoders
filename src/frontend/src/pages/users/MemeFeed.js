@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Box, Button, TextField, Typography, IconButton, Avatar } from '@mui/material';
+import { Box, Grid, Button, TextField, Typography, IconButton, Avatar, Paper } from '@mui/material';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
-import { createMemePost } from 'services/meme.service';
+import MemePost from './MemePost'; // Import the MemePost component
 
 function MemeFeed() {
   const [caption, setCaption] = useState('');
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [posts, setPosts] = useState([]); // Store posts locally
 
   const handleCaptionChange = (event) => {
     setCaption(event.target.value);
@@ -14,56 +15,81 @@ function MemeFeed() {
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
-    setImage(file);
-    setImagePreview(URL.createObjectURL(file));
-  };
-
-  const handlePost = async () => {
-    try {
-      const response = await createMemePost(caption, image);
-      console.log('Post created:', response);
-      // Reset the form
-      setCaption('');
-      setImage(null);
-      setImagePreview(null);
-    } catch (error) {
-      console.error('Error creating post:', error);
+    if (file) {
+      setImage(file);
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
+  const handlePost = () => {
+    if (!caption.trim() && !imagePreview) return; // Prevent empty posts
+
+    // Create a new post object
+    const newPost = {
+      id: Date.now(),
+      caption,
+      image: imagePreview,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Update the posts state
+    setPosts([newPost, ...posts]);
+
+    // Reset form
+    setCaption('');
+    setImage(null);
+    setImagePreview(null);
+  };
+
   return (
-    <Box sx={{ p: 2, backgroundColor: 'white', boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)', borderRadius: '8px', maxWidth: '500px', margin: 12, alignSelf: 'flex-start', mt: 4 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <Avatar sx={{ mr: 2 }}>U</Avatar>
-        <Typography variant="h6" gutterBottom>
-          Create a Post
-        </Typography>
-      </Box>
-      <TextField
-        placeholder="Write something funny..."
-        variant="outlined"
-        fullWidth
-        multiline
-        rows={4}
-        value={caption}
-        onChange={handleCaptionChange}
-        sx={{ mb: 2 }}
-      />
-      {imagePreview && (
-        <Box sx={{ mb: 2 }}>
-          <img src={imagePreview} alt="Preview" style={{ maxWidth: '100%', borderRadius: '8px' }} />
+    <Grid container spacing={3} sx={{ p: 4 }}>
+      {/* Left Side - Create a Post */}
+      <Grid item xs={12} sm={4}>
+        <Paper sx={{ p: 3, backgroundColor: 'white', borderRadius: '8px' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Avatar sx={{ mr: 2 }}>U</Avatar>
+            <Typography variant="h6">Create a Post</Typography>
+          </Box>
+          <TextField
+            placeholder="Write something funny..."
+            variant="outlined"
+            fullWidth
+            multiline
+            rows={3}
+            value={caption}
+            onChange={handleCaptionChange}
+            sx={{ mb: 2 }}
+          />
+          {imagePreview && (
+            <Box sx={{ mb: 2 }}>
+              <img src={imagePreview} alt="Preview" style={{ maxWidth: '100%', borderRadius: '8px' }} />
+            </Box>
+          )}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <IconButton color="primary" component="label">
+              <PhotoCamera />
+              <input type="file" hidden accept="image/*" onChange={handleImageChange} />
+            </IconButton>
+            <Button variant="contained" color="primary" onClick={handlePost}>
+              Post
+            </Button>
+          </Box>
+        </Paper>
+      </Grid>
+
+      {/* Center - Display Posts */}
+      <Grid item xs={12} sm={8}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 5 }}>
+          {posts.length === 0 ? (
+             <Typography variant="body1" color="gray" sx={{ mt: 10 }}>
+              No posts yet. Be the first to share!
+            </Typography>
+          ) : (
+            posts.map((post) => <MemePost key={post.id} {...post} />)
+          )}
         </Box>
-      )}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <IconButton color="primary" component="label">
-          <PhotoCamera />
-          <input type="file" hidden accept="image/*" onChange={handleImageChange} />
-        </IconButton>
-        <Button variant="contained" color="primary" onClick={handlePost}>
-          Post
-        </Button>
-      </Box>
-    </Box>
+      </Grid>
+    </Grid>
   );
 }
 

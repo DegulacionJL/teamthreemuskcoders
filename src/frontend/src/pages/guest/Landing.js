@@ -3,11 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Box, Container, Grid, Button as MuiButton, Typography } from '@mui/material';
 import ButtonRound from 'components/atoms/ButtonRound';
-import Feature from 'components/atoms/Feature';
-import HeroImage from 'components/atoms/HeroImage';
 import Section from 'components/atoms/Section';
 import CallToAction from 'components/molecules/CallToAction';
-import ReviewSlider from 'components/molecules/ReviewSlider';
 import Seo from 'components/organisms/Seo';
 
 function Landing() {
@@ -63,9 +60,13 @@ function Landing() {
         image="http://test.com/"
       />
 
-      <Box sx={{ backgroundColor: '#171E31', py: 4, mt: -8 }}>
+      <Box sx={{ backgroundColor: '#171E31', py: 4 }}>
         <Container>
-          <Grid container spacing={2} alignItems="center" justifyContent="center" style={{ height: '100vh' }}>
+          <Grid 
+          container spacing={2} 
+          alignItems="center" 
+          justifyContent="center" 
+          style={{ height: '100vh' }}>
             <Grid item xs={12} md={6}>
               <Typography
                 component="h3"
@@ -78,13 +79,13 @@ function Landing() {
                 {t('pages.memema.main_heading')}
               </Typography>
               <Typography
-                variant="h5"
+                variant="subtitle1"
                 align="left"
                 color="text.secondary"
                 component="p"
                 sx={{ color: 'white' }}
               >
-                {t('pages.landing.sub_heading')}
+                {t('pages.landing.sub_memema_heading')}
               </Typography>
 
               <Box textAlign="left" sx={{ mt: 2 }}>
@@ -121,18 +122,33 @@ function Landing() {
 
       {/** Features List */}
       <Section heading={t('pages.landing.why_memema_heading')}>
-        {features.map((feature, key) => {
-          return (
-            <Feature
-              key={key}
-              title={feature.title}
-              description={feature.description}
-              image={feature.image}
-              left={feature.left}
-            />
-          );
-        })}
-      </Section>
+  <Grid container spacing={4} justifyContent="center">
+    {features.map((feature, key) => (
+      <Grid item xs={12} sm={4} key={key}>
+        <Box textAlign="center">
+          <Box
+            component="img"
+            src={feature.image}
+            alt={feature.title}
+            sx={{
+              width: '100%',
+              maxWidth: '180px',
+              height: 'auto',
+              marginBottom: 2,
+            }}
+          />
+          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+            {feature.title}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {feature.description}
+          </Typography>
+        </Box>
+      </Grid>
+    ))}
+  </Grid>
+</Section>
+
 
       {/* * Our Clients
       <Section heading={t('pages.landing.our_customers_heading')} background="white">

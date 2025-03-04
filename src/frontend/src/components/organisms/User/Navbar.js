@@ -70,7 +70,7 @@ function Navbar(props) {
       elevation={0}
       sx={{
         borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
-        backgroundColor: '#333', // Change this to your desired color
+        backgroundColor: '#171E31', // Change this to your desired color
       }}
     >
       <Container maxWidth="lg" sx={{ padding: 0 }}>
