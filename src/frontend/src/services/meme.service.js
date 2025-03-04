@@ -5,4 +5,9 @@ const createMemePost = async function (postData) {
   return await req;
 };
 
+const getMemePosts = async function () {
+  const req = api.get('/posts', post).then(({ data }) => data);
+  return await req;
+};
+
 export default createMemePost;
