@@ -24,8 +24,7 @@ class PostService
             throw new Exception('User ID is missing');
         }
 
-        // Create the post
-        $post = Post::create([
+         $post = Post::create([
             'caption' => $caption,
             'user_id' => $user_id,
         ]);

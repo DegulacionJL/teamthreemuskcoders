@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import createMemePost from 'services/meme.service';
+import { useEffect } from 'react';
+import { createMemePost, getMemePosts } from 'services/meme.service';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import { Avatar, Box, Button, IconButton, TextField, Typography } from '@mui/material';
 import MemePost from 'components/MemePost';
 
 function MemeFeed() {
   const [caption, setCaption] = useState('');
-  const [image, setImage] = useState(null);
+  const [image, setImage] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
   const [posts, setPosts] = useState([]);
 
@@ -24,7 +25,9 @@ function MemeFeed() {
     try {
       const formData = new FormData();
       formData.append('caption', caption);
-      formData.append('image', image);
+      if (image) {
+        formData.append('image', image); // Ensure it's a File object
+      }
       formData.append('user_id', '1');
       const response = await createMemePost(formData);
       console.log('Post created:', response);
@@ -37,6 +40,21 @@ function MemeFeed() {
       console.error('Error creating post:', error);
     }
   };
+
+  const fetchPosts = async () => {
+    try {
+      const fetchedPosts = await getMemePosts(); // Calls API to fetch posts
+      setPosts(fetchedPosts); // Updates state with fetched posts
+      setImage(fetchedPosts);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    }
+  };
+
+  // Call fetchPosts when component mounts
+  useEffect(() => {
+    fetchPosts();
+  }, []);
 
   return (
     <Box>

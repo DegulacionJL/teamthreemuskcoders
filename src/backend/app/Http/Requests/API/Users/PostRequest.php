@@ -21,4 +21,14 @@ class PostRequest extends FormRequest
         return $this->input('caption');
     }
 
+    public function getImage()
+    {
+        return $this->file('image'); // Correctly retrieve the uploaded file
+    }
+
+    public function getUserId(): int
+    {
+        return (int) $this->input('user_id'); // Ensure user_id is returned as an integer
+    }
+
 }

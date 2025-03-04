@@ -34,6 +34,23 @@ Route::get('/', [HomeController::class, '__invoke']);
 Route::get('/profile', [ProfileController::class, 'index']);
 Route::put('/profile', [ProfileController::class, 'update']);
 
+Route::prefix('posts')
+    ->group(function () {
+        Route::get('/', [PostController::class, 'create']);
+        Route::post('/', [PostController::class, 'createMemePost'])->middleware('auth:api');
+        Route::get('/posts', [PostController::class, 'index']); // Fetch all posts
+    });
+
+
+    // Route::prefix('posts')->middleware('auth:sanctum')->group(function () {
+    //     Route::post('/', [PostController::class, 'store']);    // Create a new post
+    //     Route::get('/', [PostController::class, 'index']);     // Get all posts
+    //     Route::get('{id}', [PostController::class, 'show']); // Get a specific post
+    //     Route::put('{id}', [PostController::class, 'update']); // Update a post
+    //     Route::delete('/posts/{id}', [PostController::class, 'destroy']); // Delete a post
+    // });
+    
+
 // user logout
 Route::delete('oauth/token', [TokenController::class, 'delete'])->middleware('auth:api');
 Route::get('/token/verify', [TokenController::class, 'verify']);
@@ -73,17 +90,6 @@ Route::post('/add', [calculateController::class, 'addition']);
 Route::post('/sub', [calculateController::class, 'subtraction']);
 Route::post('/mul', [calculateController::class, 'multiplication']);
 Route::post('/div', [calculateController::class, 'division']);
-
-Route::prefix('posts')
-    ->group(function () {
-        Route::get('/', [PostController::class, 'getPost']);
-        Route::post('/', [PostController::class, 'createMemePost']);
-        Route::post('/{id}/like', [PostController::class, 'likePost']); // Changed path for liking a post
-        Route::post('/{id}/comment', [PostController::class, 'commentPost']); // Changed path for commenting on a post
-        Route::get('{id}', [PostController::class, 'read']);
-        Route::put('{id}', [PostController::class, 'update']);
-        Route::delete('{id}', [PostController::class, 'delete']);
-    });
 
 Route::get('permissions', [PermissionController::class, 'index']);
 

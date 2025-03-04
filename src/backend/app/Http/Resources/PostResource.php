@@ -17,11 +17,14 @@ class PostResource extends JsonResource
         return [
             'id' => $this->id,
             'caption' => $this->caption,
-            'user_id' => $this->user_id,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
-            'image' => $this->image ? $this->image->url : null,
-            'result' => $this->result,
+            'image' => $this->image ? asset('storage/' . $this->image) : null,
+            'user_id' => [
+                'id' => $this->user->id,
+                'name' =>$this->user->name,
+            ],
+            'created_at' => $this->created_at->format('y-m-d H:i:s'),
+            'updated_at' => $this->updated_at->format('y-m-d H:i:s'),
+           
         ];
     }
 }
