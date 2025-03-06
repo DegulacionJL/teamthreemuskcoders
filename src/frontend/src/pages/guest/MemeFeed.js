@@ -45,15 +45,16 @@ function MemeFeed() {
     try {
       const fetchedPosts = await getMemePosts(); // Calls API to fetch posts
 
-      const updatedPosts = fetchedPosts.map((post) => ({
-        ...post,
-        image: post.image
-          ? `http://memema.local/${post.image.replace('public/', 'storage/')}`
-          : null, // Adjust URL
-      }));
+      const updatedPosts = fetchedPosts
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .map((post) => ({
+          ...post,
+          image: post.image
+            ? `http://memema.local/${post.image.replace('public/', 'storage/')}`
+            : null, // Adjust URL
+        }));
       setPosts(updatedPosts);
       setPosts(fetchedPosts); // Updates state with fetched posts
-      setImage(fetchedPosts);
     } catch (error) {
       console.error('Error fetching posts:', error);
     }
