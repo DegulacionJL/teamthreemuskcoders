@@ -1,5 +1,5 @@
+import PropTypes from 'prop-types';
 import React from 'react';
-import createMemePost from 'services/meme.service';
 import { Avatar, Box, Typography } from '@mui/material';
 
 function MemePost({ caption, image }) {
@@ -32,5 +32,10 @@ function MemePost({ caption, image }) {
     </Box>
   );
 }
+
+MemePost.propTypes = {
+  caption: PropTypes.string.isRequired,
+  image: PropTypes.string,
+};
 
 export default MemePost;

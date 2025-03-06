@@ -19,33 +19,34 @@ class PostService
     }
 
     public function createMemePost(string $caption, $image, int $user_id)
-    {
-        if (!$user_id) {
-            throw new Exception('User ID is missing');
-        }
-
-         $post = Post::create([
-            'caption' => $caption,
-            'user_id' => $user_id,
-        ]);
-
-        if (!$post) {
-            throw new Exception('Failed to create post');
-        }
-
-        // Create the image
-        if ($image) {
-            $imagePath = $image->store('images', 'public');
-            Image::create([
-                'url' => $imagePath,
-                'post_id' => $post->id,
-                'user_id' => $user_id,
-            ]);
-            $post->url=$imagePath;
-        }
-
-        return $post;
+{
+    if (!$user_id) {
+        throw new Exception('User ID is missing');
     }
+
+    $imagePath = null;
+
+    // Store the image if provided
+    if ($image) {
+        $imagePath = env('STORAGE_DISK_URL').'/'.$image->store('images', 'public'); // Saves to storage/app/public/images
+        // $imagePath = str_replace('public/', 'storage/', $imagePath); 
+    }
+
+    // Create the post with the image path
+    $post = Post::create([
+        'caption' => $caption,
+        'user_id' => $user_id,
+        'image' => $imagePath,
+         // Save the image path in the database
+    ]);
+    // dump($imagePath);
+
+    if (!$post) {
+        return response()->json(['error' => 'Failed to create post'], 500);
+    }
+
+    return $post;
+}
     public function likePost(int $post_id, int $user_id)
     {
         // Create the like
