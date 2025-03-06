@@ -41,6 +41,7 @@ class PostService
                 'post_id' => $post->id,
                 'user_id' => $user_id,
             ]);
+            $post->url=$imagePath;
         }
 
         return $post;

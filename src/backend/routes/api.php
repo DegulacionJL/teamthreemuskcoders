@@ -39,6 +39,9 @@ Route::prefix('posts')
         Route::get('/', [PostController::class, 'create']);
         Route::post('/', [PostController::class, 'createMemePost'])->middleware('auth:api');
         Route::get('/posts', [PostController::class, 'index']); // Fetch all posts
+        Route::post('/posts', [PostController::class, 'store']);
+    
+        
     });
 
 

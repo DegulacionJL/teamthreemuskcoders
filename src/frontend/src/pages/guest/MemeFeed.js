@@ -34,7 +34,7 @@ function MemeFeed() {
 
       setPosts([{ caption, image: imagePreview }, ...posts]);
       setCaption('');
-      setImage(null);
+      setImage('');
       setImagePreview(null);
     } catch (error) {
       console.error('Error creating post:', error);

@@ -17,7 +17,7 @@ class Post extends Model
     use HasFactory;
 
 
-    protected $fillable = ['caption', 'user_id'];
+    protected $fillable = ['caption', 'user_id', 'url'];
 
     public function image(): BelongsTo
     {

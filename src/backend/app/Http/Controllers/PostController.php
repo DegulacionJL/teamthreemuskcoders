@@ -53,5 +53,25 @@ public function index()
 {
     return response()->json(Post::with('comments')->get());
 }
+
+public function store(PostRequest $request)
+    {
+        $request->validate();
+
+        // Store the image
+        $path = $request->file('image')->store('posts', 'public');
+
+        // Save meme details in DB
+        $post = Post::create([
+            'image' => $path,
+            'caption' => $request->caption,
+        ]);
+
+        return response()->json([
+            'message' => 'Meme uploaded successfully!',
+            'post' => $post
+        ], 201);
+
+    }
     
 }
