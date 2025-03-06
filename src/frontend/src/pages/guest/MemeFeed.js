@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createMemePost, getMemePosts } from 'services/meme.service';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import { Avatar, Box, Button, IconButton, TextField, Typography } from '@mui/material';
@@ -11,14 +10,27 @@ function MemeFeed() {
   const [imagePreview, setImagePreview] = useState(null);
   const [posts, setPosts] = useState([]);
 
-  const handleCaptionChange = (event) => {
-    setCaption(event.target.value);
+  // State to track menu anchor (for post options)
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedPostId, setSelectedPostId] = useState(null);
+
+  const open = Boolean(anchorEl);
+
+  // Handle menu open (pass post ID)
+  const handleMenuOpen = (event, postId) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedPostId(postId);
   };
 
-  const handleImageChange = (event) => {
-    const file = event.target.files[0];
-    setImage(file);
-    setImagePreview(URL.createObjectURL(file));
+  // Handle menu close
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedPostId(null);
+  };
+
+  const handleDelete = (id) => {
+    setPosts(posts.filter((post) => post.id !== id)); // Remove the post from the state
+    handleMenuClose();
   };
 
   const handlePost = async () => {
@@ -32,10 +44,15 @@ function MemeFeed() {
       const response = await createMemePost(formData);
       console.log('Post created:', response);
 
-      setPosts([{ caption, image: imagePreview }, ...posts]);
+      setPosts([
+        { caption, image: imagePreview, id: Date.now(), created_at: new Date().toISOString() },
+        ...posts,
+      ]);
       setCaption('');
       setImage(null);
       setImagePreview(null);
+
+      fetchPosts();
     } catch (error) {
       console.error('Error creating post:', error);
     }
@@ -43,7 +60,7 @@ function MemeFeed() {
 
   const fetchPosts = async () => {
     try {
-      const fetchedPosts = await getMemePosts(); // Calls API to fetch posts
+      const fetchedPosts = await getMemePosts();
 
       const updatedPosts = fetchedPosts
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -51,16 +68,15 @@ function MemeFeed() {
           ...post,
           image: post.image
             ? `http://memema.local/${post.image.replace('public/', 'storage/')}`
-            : null, // Adjust URL
+            : null,
         }));
       setPosts(updatedPosts);
-      setPosts(fetchedPosts); // Updates state with fetched posts
+      setPosts(fetchedPosts);
     } catch (error) {
       console.error('Error fetching posts:', error);
     }
   };
 
-  // Call fetchPosts when component mounts
   useEffect(() => {
     fetchPosts();
   }, []);
@@ -91,7 +107,7 @@ function MemeFeed() {
           multiline
           rows={4}
           value={caption}
-          onChange={handleCaptionChange}
+          onChange={(e) => setCaption(e.target.value)}
           sx={{ mb: 2 }}
         />
         {imagePreview && (
@@ -106,15 +122,37 @@ function MemeFeed() {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <IconButton color="primary" component="label">
             <PhotoCamera />
-            <input type="file" hidden accept="image/*" onChange={handleImageChange} />
+            <input
+              type="file"
+              hidden
+              accept="image/*"
+              onChange={(e) => {
+                setImage(e.target.files[0]);
+                setImagePreview(URL.createObjectURL(e.target.files[0]));
+              }}
+            />
           </IconButton>
           <Button variant="contained" color="primary" onClick={handlePost}>
             Post
           </Button>
         </Box>
       </Box>
-      {posts.map((post, index) => (
-        <MemePost key={index} caption={post.caption} image={post.image} />
+
+      {/* Pass handleMenuOpen and handleMenuClose to MemePost */}
+      {posts.map((post) => (
+        <MemePost
+          key={post.id}
+          id={post.id}
+          caption={post.caption}
+          image={post.image}
+          timestamp={post.created_at}
+          onDelete={handleDelete}
+          onMenuOpen={handleMenuOpen}
+          onMenuClose={handleMenuClose}
+          menuAnchor={anchorEl}
+          selectedPostId={selectedPostId}
+          isMenuOpen={open && selectedPostId === post.id}
+        />
       ))}
     </Box>
   );
