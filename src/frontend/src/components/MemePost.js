@@ -1,7 +1,8 @@
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useState } from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Avatar, Box, IconButton, Menu, MenuItem, Typography } from '@mui/material';
+import EditPostModal from 'components/organisms/EditPostModal'; // Import the EditPostModal component
 import PostActions from 'components/organisms/PostActions';
 
 function getRelativeTime(timestamp) {
@@ -25,8 +26,18 @@ function MemePost({
   onMenuClose,
   menuAnchor,
   isMenuOpen,
-  onComment, // ✅ New prop for handling comment button clicks
+  onComment,
 }) {
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // State to control modal visibility
+  const [currentCaption, setCurrentCaption] = useState(caption); // State to hold the caption being edited
+  const [currentImage, setCurrentImage] = useState(image); // State to hold the image being edited
+
+  const handleSave = (newCaption, newImage) => {
+    setCurrentCaption(newCaption); // Update the caption
+    setCurrentImage(newImage); // Update the image
+    onDelete(id); // Assuming onDelete handles the update operation, change it if needed
+  };
+
   return (
     <Box
       sx={{
@@ -64,7 +75,8 @@ function MemePost({
           </IconButton>
         </Box>
         <Menu anchorEl={menuAnchor} open={isMenuOpen} onClose={onMenuClose}>
-          <MenuItem onClick={() => onDelete(id)}>Edit</MenuItem>
+          <MenuItem onClick={() => setIsEditModalOpen(true)}>Edit</MenuItem>{' '}
+          {/* Open modal on click */}
           <MenuItem onClick={() => onDelete(id)} sx={{ color: 'red' }}>
             Delete
           </MenuItem>
@@ -72,13 +84,23 @@ function MemePost({
       </Box>
 
       <Typography variant="body1" sx={{ mb: 2 }}>
-        {caption}
+        {currentCaption}
       </Typography>
 
-      {image && <img src={image} alt="Meme" style={{ maxWidth: '100%', borderRadius: '8px' }} />}
+      {currentImage && (
+        <img src={currentImage} alt="Meme" style={{ maxWidth: '100%', borderRadius: '8px' }} />
+      )}
 
-      {/* ✅ Updated PostActions to pass onComment */}
       <PostActions onComment={() => onComment(id)} />
+
+      {/* EditPostModal Integration */}
+      <EditPostModal
+        open={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        currentCaption={currentCaption}
+        currentImage={currentImage}
+        onSave={handleSave}
+      />
     </Box>
   );
 }
@@ -93,7 +115,7 @@ MemePost.propTypes = {
   onMenuClose: PropTypes.func.isRequired,
   menuAnchor: PropTypes.object,
   isMenuOpen: PropTypes.bool.isRequired,
-  onComment: PropTypes.func.isRequired, // ✅ Ensure onComment is required
+  onComment: PropTypes.func.isRequired,
 };
 
 export default MemePost;
