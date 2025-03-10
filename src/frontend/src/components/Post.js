@@ -2,7 +2,6 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Avatar, Box, IconButton, Menu, MenuItem, Typography } from '@mui/material';
-import PostActions from 'components/organisms/PostActions';
 
 function getRelativeTime(timestamp) {
   const now = new Date();
@@ -25,7 +24,6 @@ function MemePost({
   onMenuClose,
   menuAnchor,
   isMenuOpen,
-  onComment, // ✅ New prop for handling comment button clicks
 }) {
   return (
     <Box
@@ -76,13 +74,11 @@ function MemePost({
       </Typography>
 
       {image && <img src={image} alt="Meme" style={{ maxWidth: '100%', borderRadius: '8px' }} />}
-
-      {/* ✅ Updated PostActions to pass onComment */}
-      <PostActions onComment={() => onComment(id)} />
     </Box>
   );
 }
 
+// ✅ Add PropTypes to define prop validation
 MemePost.propTypes = {
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   caption: PropTypes.string.isRequired,
@@ -93,7 +89,6 @@ MemePost.propTypes = {
   onMenuClose: PropTypes.func.isRequired,
   menuAnchor: PropTypes.object,
   isMenuOpen: PropTypes.bool.isRequired,
-  onComment: PropTypes.func.isRequired, // ✅ Ensure onComment is required
 };
 
 export default MemePost;
