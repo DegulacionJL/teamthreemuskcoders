@@ -20,6 +20,7 @@ function MemePost({
   image,
   timestamp,
   onDelete,
+  onUpdate,
   onMenuOpen,
   onMenuClose,
   menuAnchor,
@@ -62,7 +63,8 @@ function MemePost({
           </IconButton>
         </Box>
         <Menu anchorEl={menuAnchor} open={isMenuOpen} onClose={onMenuClose}>
-          <MenuItem onClick={() => onDelete(id)}>Edit</MenuItem>
+          <MenuItem onClick={() => onUpdate(id, caption, image)}>Edit</MenuItem>
+
           <MenuItem onClick={() => onDelete(id)} sx={{ color: 'red' }}>
             Delete
           </MenuItem>
@@ -85,6 +87,7 @@ MemePost.propTypes = {
   image: PropTypes.string,
   timestamp: PropTypes.string.isRequired,
   onDelete: PropTypes.func.isRequired,
+  onUpdate: PropTypes.func,
   onMenuOpen: PropTypes.func.isRequired,
   onMenuClose: PropTypes.func.isRequired,
   menuAnchor: PropTypes.object,

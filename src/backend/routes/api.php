@@ -36,10 +36,10 @@ Route::put('/profile', [ProfileController::class, 'update']);
 
 Route::prefix('posts')
     ->group(function () {
-        Route::get('/', [PostController::class, 'create']);
+        Route::get('/', [PostController::class, 'index']);
         Route::post('/', [PostController::class, 'createMemePost'])->middleware('auth:api');
-        Route::get('/posts', [PostController::class, 'index']); // Fetch all posts
-        Route::post('/posts', [PostController::class, 'store']);
+        Route::put('/{id}', [PostController::class, 'update']);
+        Route::delete('/{id}', [PostController::class, 'deletePost']);
     
         
     });

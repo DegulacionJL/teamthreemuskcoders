@@ -9,7 +9,7 @@ use App\Services\API\PostService;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Http\Requests\API\Users\PostRequest;
-use Illuminate\Support\Facades\Storage;
+
 
 class PostController extends Controller
 {
@@ -22,13 +22,9 @@ class PostController extends Controller
     $this->postService = $postService;
     $this->middleware(['auth:api']);
 }
-    public function create()
-    {
-        return Post::all();
-    }
-
+  
     public function createMemePost(PostRequest $request)
-{
+    {
     $this->response = ['code' => 200]; // Initialize response with default code
 
     try {
@@ -49,10 +45,40 @@ class PostController extends Controller
 
     return response()->json($this->response, $this->response['code']);
 }
+public function update(Request $request, $id)
+{
+    $post = Post::findOrFail($id);
+
+    $post->caption = $request->caption;
+
+    if ($request->hasFile('image')) {
+        $imagePath = $request->file('image')->store('public/posts');
+        $post->image = str_replace('public/', 'storage/', $imagePath);
+    }
+
+    $post->save();
+
+    return response()->json($post);
+}
+
+public function deletePost($id)
+{
+    $post = Post::find($id);
+    if (!$post) {  // ✅ Fixed: Add $
+        return response()->json(['error' => 'Post not found'], 404);
+    }
+    
+    $post->delete();
+    
+    return response()->json(['message' => 'Post deleted']);
+}
 
 public function index()
 {
-    return response()->json(Post::with('comments')->get());
+    return response()->json([
+        'posts' => Post::with('comments')->get(), // Fetch all posts with their comments
+    ]);
 }
-    
+
+
 }
