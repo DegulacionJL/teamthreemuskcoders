@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { createMemePost, getMemePosts } from 'services/meme.service';
+import { createMemePost, deletePost, getMemePosts, updatePost } from 'services/meme.service';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import { Avatar, Box, Button, IconButton, TextField, Typography } from '@mui/material';
 import MemePost from 'components/MemePost';
+import EditPostModal from 'components/organisms/EditPostModal';
 
 function MemeFeed() {
   const [caption, setCaption] = useState('');
@@ -10,68 +11,117 @@ function MemeFeed() {
   const [imagePreview, setImagePreview] = useState(null);
   const [posts, setPosts] = useState([]);
 
-  // State to track menu anchor (for post options)
+  // State for Edit Post Modal
+  const [editPostId, setEditPostId] = useState(null);
+  const [editCaption, setEditCaption] = useState('');
+  const [editImage, setEditImage] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+
+  // State for menu handling
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedPostId, setSelectedPostId] = useState(null);
-
   const open = Boolean(anchorEl);
 
-  // Handle menu open (pass post ID)
+  // Open menu
   const handleMenuOpen = (event, postId) => {
     setAnchorEl(event.currentTarget);
     setSelectedPostId(postId);
   };
 
-  // Handle menu close
+  // Close menu
   const handleMenuClose = () => {
     setAnchorEl(null);
     setSelectedPostId(null);
   };
 
-  const handleDelete = (id) => {
-    setPosts(posts.filter((post) => post.id !== id)); // Remove the post from the state
-    handleMenuClose();
+  // Open edit modal with post details
+  const handleEditClick = (id, currentCaption, currentImage) => {
+    setEditPostId(id);
+    setEditCaption(currentCaption);
+    setEditImage(currentImage);
+    setEditModalOpen(true);
   };
 
+  // Close edit modal
+  const handleCloseEditModal = () => {
+    setEditModalOpen(false);
+    setEditPostId(null);
+    setEditCaption('');
+    setEditImage(null);
+  };
+
+  // Handle update after editing
+  const handleUpdate = async (updatedCaption, updatedImage) => {
+    if (!editPostId) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('caption', updatedCaption);
+      if (updatedImage instanceof File) {
+        formData.append('image', updatedImage);
+      }
+
+      // Call the API to update the post
+      const updatedPost = await updatePost(editPostId, formData);
+
+      // Update the state locally with the updated post
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.id === editPostId
+            ? { ...post, caption: updatedPost.caption, image: updatedPost.image }
+            : post
+        )
+      );
+
+      // Close modal after update
+      handleCloseEditModal();
+    } catch (error) {
+      console.error('Error updating post:', error);
+    }
+  };
+
+  // Handle delete post
+  const handleDelete = async (postId) => {
+    try {
+      await deletePost(postId);
+      setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
+      handleMenuClose();
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    }
+  };
+
+  // Handle new post creation
   const handlePost = async () => {
     try {
       const formData = new FormData();
       formData.append('caption', caption);
-      if (image) {
-        formData.append('image', image); // Ensure it's a File object
-      }
+      if (image) formData.append('image', image);
       formData.append('user_id', '1');
-      const response = await createMemePost(formData);
-      console.log('Post created:', response);
 
+      const response = await createMemePost(formData);
       setPosts([
         { caption, image: imagePreview, id: Date.now(), created_at: new Date().toISOString() },
         ...posts,
       ]);
+
       setCaption('');
       setImage(null);
       setImagePreview(null);
-
       fetchPosts();
     } catch (error) {
       console.error('Error creating post:', error);
     }
   };
 
+  // Fetch posts from API
   const fetchPosts = async () => {
     try {
-      const fetchedPosts = await getMemePosts();
+      const response = await getMemePosts();
+      if (!response || !Array.isArray(response.posts))
+        throw new Error('Fetched posts is not an array!');
 
-      const updatedPosts = fetchedPosts
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        .map((post) => ({
-          ...post,
-          image: post.image
-            ? `http://memema.local/${post.image.replace('public/', 'storage/')}`
-            : null,
-        }));
-      setPosts(updatedPosts);
-      setPosts(fetchedPosts);
+      setPosts(response.posts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
     } catch (error) {
       console.error('Error fetching posts:', error);
     }
@@ -83,6 +133,7 @@ function MemeFeed() {
 
   return (
     <Box>
+      {/* Create Post Section */}
       <Box
         sx={{
           p: 2,
@@ -138,7 +189,7 @@ function MemeFeed() {
         </Box>
       </Box>
 
-      {/* Pass handleMenuOpen and handleMenuClose to MemePost */}
+      {/* Meme Posts */}
       {posts.map((post) => (
         <MemePost
           key={post.id}
@@ -147,6 +198,7 @@ function MemeFeed() {
           image={post.image}
           timestamp={post.created_at}
           onDelete={handleDelete}
+          onUpdate={handleEditClick}
           onMenuOpen={handleMenuOpen}
           onMenuClose={handleMenuClose}
           menuAnchor={anchorEl}
@@ -154,6 +206,15 @@ function MemeFeed() {
           isMenuOpen={open && selectedPostId === post.id}
         />
       ))}
+
+      {/* Edit Post Modal */}
+      <EditPostModal
+        open={editModalOpen}
+        onClose={handleCloseEditModal}
+        currentCaption={editCaption}
+        currentImage={editImage}
+        onSave={handleUpdate}
+      />
     </Box>
   );
 }

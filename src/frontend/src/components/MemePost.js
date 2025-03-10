@@ -2,9 +2,8 @@ import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Avatar, Box, IconButton, Menu, MenuItem, Typography } from '@mui/material';
-import EditPostModal from 'components/organisms/EditPostModal';
-// Import the EditPostModal component
-import PostActions from 'components/organisms/PostActions';
+import EditPostModal from './organisms/EditPostModal';
+import PostActions from './organisms/PostActions';
 
 function getRelativeTime(timestamp) {
   const now = new Date();
@@ -23,6 +22,7 @@ function MemePost({
   image,
   timestamp,
   onDelete,
+  onUpdate,
   onMenuOpen,
   onMenuClose,
   menuAnchor,
@@ -76,8 +76,8 @@ function MemePost({
           </IconButton>
         </Box>
         <Menu anchorEl={menuAnchor} open={isMenuOpen} onClose={onMenuClose}>
-          <MenuItem onClick={() => setIsEditModalOpen(true)}>Edit</MenuItem>{' '}
-          {/* Open modal on click */}
+          <MenuItem onClick={() => onUpdate(id, caption, image)}>Edit</MenuItem>
+
           <MenuItem onClick={() => onDelete(id)} sx={{ color: 'red' }}>
             Delete
           </MenuItem>
@@ -112,6 +112,7 @@ MemePost.propTypes = {
   image: PropTypes.string,
   timestamp: PropTypes.string.isRequired,
   onDelete: PropTypes.func.isRequired,
+  onUpdate: PropTypes.func,
   onMenuOpen: PropTypes.func.isRequired,
   onMenuClose: PropTypes.func.isRequired,
   menuAnchor: PropTypes.object,

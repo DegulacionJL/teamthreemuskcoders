@@ -11,6 +11,7 @@ use App\Http\Resources\PostResource;
 use App\Http\Requests\API\Users\PostRequest;
 use Illuminate\Support\Facades\Storage;
 
+
 class PostController extends Controller
 {
     protected $postService;
@@ -22,13 +23,9 @@ class PostController extends Controller
     $this->postService = $postService;
     $this->middleware(['auth:api']);
 }
-    public function create()
-    {
-        return Post::all();
-    }
-
+  
     public function createMemePost(PostRequest $request)
-{
+    {
     $this->response = ['code' => 200]; // Initialize response with default code
 
     try {
@@ -49,10 +46,50 @@ class PostController extends Controller
 
     return response()->json($this->response, $this->response['code']);
 }
+public function updatePost(PostRequest $request, $id)
+{
+    if (!auth()->check()) {
+        return response()->json(['error' => 'User not authenticated'], 401);
+    }
+    $this->response = ['code' => 200];
+
+    try {
+        $request->validated();
+
+        $caption = $request->input('caption');
+        $image = $request->file('image');
+        $user_id = auth()->id();
+
+        $updatedPost = $this->postService->updatePost($id, $caption, $image, $user_id);
+
+        $this->response['data'] = new PostResource($updatedPost);
+    } catch (Exception $e) {
+        $this->response['error'] = $e->getMessage();
+        $this->response['code'] = 500;
+    }
+
+    return response()->json($this->response, $this->response['code']);
+}
+
+
+public function deletePost($id)
+{
+    $post = Post::find($id);
+    if (!$post) {  // ✅ Fixed: Add $
+        return response()->json(['error' => 'Post not found'], 404);
+    }
+    
+    $post->delete();
+    
+    return response()->json(['message' => 'Post deleted']);
+}
 
 public function index()
 {
-    return response()->json(Post::with('comments')->get());
+    return response()->json([
+        'posts' => Post::with('comments')->get(), // Fetch all posts with their comments
+    ]);
 }
-    
+
+
 }

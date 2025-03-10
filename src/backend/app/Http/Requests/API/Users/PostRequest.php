@@ -11,7 +11,7 @@ class PostRequest extends FormRequest
     {
         return [
             'caption' => 'required|string|max:255',
-            'image' => 'file|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|file', 
             'user_id' => 'required|exists:users,id',
         ];
     }
