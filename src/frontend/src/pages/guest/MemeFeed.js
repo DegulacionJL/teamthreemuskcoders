@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { createMemePost, getMemePosts } from 'services/meme.service';
+import { createMemePost, deletePost, getMemePosts, updatePost } from 'services/meme.service';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import { Avatar, Box, Button, IconButton, TextField, Typography } from '@mui/material';
 import MemePost from 'components/MemePost';
@@ -9,6 +9,9 @@ function MemeFeed() {
   const [image, setImage] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
   const [posts, setPosts] = useState([]);
+  const [editPostId, setEditPostId] = useState(null);
+  const [editCaption, setEditCaption] = useState('');
+  const [editImage, setEditImage] = useState(null);
 
   // State to track menu anchor (for post options)
   const [anchorEl, setAnchorEl] = useState(null);
@@ -28,9 +31,58 @@ function MemeFeed() {
     setSelectedPostId(null);
   };
 
-  const handleDelete = (id) => {
-    setPosts(posts.filter((post) => post.id !== id)); // Remove the post from the state
-    handleMenuClose();
+  // const handleEditClick = (id, currentCaption, currentImage) => {
+  //   setEditPostId(id);
+  //   setEditCaption(currentCaption);
+  //   setImagePreview(currentImage);
+  // };
+
+  // const handleImageChange = (e) => {
+  //   const file = e.target.files[0];
+  //   setEditImage(file);
+  //   setImagePreview(URL.createObjectURL(file));
+  // };
+
+  const handleUpdate = async () => {
+    if (!editPostId) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('caption', editCaption);
+      if (editImage) {
+        formData.append('image', editImage);
+      }
+
+      const updatedPost = await updatePost(editPostId, formData);
+
+      setPosts(
+        posts.map((post) =>
+          post.id === editPostId
+            ? { ...post, caption: updatedPost.caption, image: updatedPost.image }
+            : post
+        )
+      );
+
+      setEditPostId(null);
+      setEditCaption('');
+      setEditImage(null);
+      setImagePreview(null);
+    } catch (error) {
+      console.error('Error updating post:', error);
+    }
+  };
+
+  const handleDelete = async (postId) => {
+    try {
+      await deletePost(postId);
+      console.log('Post deleted:', postId);
+
+      setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
+
+      handleMenuClose();
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    }
   };
 
   const handlePost = async () => {
@@ -60,18 +112,17 @@ function MemeFeed() {
 
   const fetchPosts = async () => {
     try {
-      const fetchedPosts = await getMemePosts();
+      const response = await getMemePosts();
 
-      const updatedPosts = fetchedPosts
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        .map((post) => ({
-          ...post,
-          image: post.image
-            ? `http://memema.local/${post.image.replace('public/', 'storage/')}`
-            : null,
-        }));
+      // Ensure response is an object and has posts array
+      if (!response || !Array.isArray(response.posts)) {
+        throw new Error('Fetched posts is not an array!');
+      }
+
+      const updatedPosts = response.posts.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
       setPosts(updatedPosts);
-      setPosts(fetchedPosts);
     } catch (error) {
       console.error('Error fetching posts:', error);
     }
@@ -147,6 +198,7 @@ function MemeFeed() {
           image={post.image}
           timestamp={post.created_at}
           onDelete={handleDelete}
+          onUpdate={handleEditClick}
           onMenuOpen={handleMenuOpen}
           onMenuClose={handleMenuClose}
           menuAnchor={anchorEl}
@@ -154,6 +206,21 @@ function MemeFeed() {
           isMenuOpen={open && selectedPostId === post.id}
         />
       ))}
+      {/* 🟢 Edit Modal or Input Fields */}
+      {editPostId && (
+        <Box className="edit-modal">
+          <input
+            type="text"
+            value={editCaption}
+            onChange={(e) => setEditCaption(e.target.value)}
+            placeholder="Edit caption"
+          />
+          <input type="file" onChange={handleImageChange} />
+          {imagePreview && <img src={imagePreview} alt="Preview" width="100" />}
+          <button onClick={handleUpdate}>Save Changes</button>
+          <button onClick={() => setEditPostId(null)}>Cancel</button>
+        </Box>
+      )}
     </Box>
   );
 }
