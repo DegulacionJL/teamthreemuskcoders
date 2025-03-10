@@ -1,56 +1,101 @@
-import React, { useState } from 'react';
-import { Modal, Box, Button, Typography } from '@mui/material';
-import CaptionInput from 'components/atoms/CaptionInput';
-import ImageEditor from 'components/molecules/ImageEditor';
+import React, { useEffect, useState } from 'react';
+import { Box, Button, Modal, Typography } from '@mui/material';
 
 function EditPostModal({ open, onClose, currentCaption, currentImage, onSave }) {
   const [caption, setCaption] = useState(currentCaption);
   const [image, setImage] = useState(currentImage);
+  const [imagePreview, setImagePreview] = useState(null);
 
-  const handleCaptionChange = (e) => {
-    setCaption(e.target.value);
-  };
+  useEffect(() => {
+    setCaption(currentCaption);
+    setImage(currentImage);
+
+    if (typeof currentImage === 'string') {
+      setImagePreview(currentImage); // Use as URL
+    } else if (currentImage instanceof File) {
+      setImagePreview(URL.createObjectURL(currentImage)); // Generate preview
+    }
+  }, [currentCaption, currentImage]);
+
+  const handleCaptionChange = (e) => setCaption(e.target.value);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setImage(URL.createObjectURL(file));
+      setImage(file);
+      setImagePreview(URL.createObjectURL(file)); // Generate preview
     }
   };
 
   const handleImageRemove = () => {
     setImage(null);
+    setImagePreview(null);
   };
 
   const handleSave = () => {
-    onSave(caption, image);
-    onClose();
+    const formData = new FormData();
+    formData.append('caption', caption);
+    if (image instanceof File) {
+      formData.append('image', image);
+    }
+
+    try {
+      // Call the parent's onSave function (which is handleUpdate from MemeFeed)
+      onSave(caption, image); // Pass updated caption and image
+      onClose(); // Close modal
+    } catch (error) {
+      console.error('Error updating post:', error);
+    }
   };
 
   return (
     <Modal open={open} onClose={onClose}>
       <Box
         sx={{
-          padding: 3,
-          backgroundColor: 'white',
-          borderRadius: '8px',
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '90%', // Make sure it's not too wide
           maxWidth: '500px',
-          margin: 'auto',
-          marginTop: '100px',
-          maxHeight: '80vh', // Adjust the height as needed
-          overflowY: 'auto', // Allow scrolling if content exceeds the height
+          maxHeight: '80vh', // Prevent overflowing the screen
+          overflowY: 'auto', // Enable vertical scrolling if needed
+          bgcolor: 'white',
+          boxShadow: 24,
+          p: 3,
+          borderRadius: '8px',
         }}
       >
         <Typography variant="h6" gutterBottom>
           Edit Post
         </Typography>
-        <CaptionInput value={caption} onChange={handleCaptionChange} />
-        <ImageEditor
-          image={image}
-          onImageChange={handleImageChange}
-          onImageRemove={handleImageRemove}
+
+        <textarea
+          value={caption}
+          onChange={handleCaptionChange}
+          style={{ width: '100%', minHeight: '100px', marginBottom: '10px' }}
         />
-        <Button onClick={handleSave} variant="contained" sx={{ mt: 2 }}>
+
+        <input type="file" onChange={handleImageChange} accept="image/*" />
+
+        {imagePreview && (
+          <Box sx={{ mt: 2 }}>
+            <img
+              src={imagePreview}
+              alt="Preview"
+              style={{ maxWidth: '100%', borderRadius: '8px' }}
+            />
+            <Button onClick={handleImageRemove} sx={{ display: 'block', mt: 1 }}>
+              Remove Image
+            </Button>
+          </Box>
+        )}
+
+        <Button
+          onClick={handleSave}
+          variant="contained"
+          sx={{ mt: 2, display: 'block', width: '100%' }}
+        >
           Save Changes
         </Button>
       </Box>

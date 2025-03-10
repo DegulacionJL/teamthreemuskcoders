@@ -38,22 +38,12 @@ Route::prefix('posts')
     ->group(function () {
         Route::get('/', [PostController::class, 'index']);
         Route::post('/', [PostController::class, 'createMemePost'])->middleware('auth:api');
-        Route::put('/{id}', [PostController::class, 'update']);
+        Route::put('/{id}', [PostController::class, 'updatePost']);
         Route::delete('/{id}', [PostController::class, 'deletePost']);
     
         
     });
-
-
-    // Route::prefix('posts')->middleware('auth:sanctum')->group(function () {
-    //     Route::post('/', [PostController::class, 'store']);    // Create a new post
-    //     Route::get('/', [PostController::class, 'index']);     // Get all posts
-    //     Route::get('{id}', [PostController::class, 'show']); // Get a specific post
-    //     Route::put('{id}', [PostController::class, 'update']); // Update a post
-    //     Route::delete('/posts/{id}', [PostController::class, 'destroy']); // Delete a post
-    // });
     
-
 // user logout
 Route::delete('oauth/token', [TokenController::class, 'delete'])->middleware('auth:api');
 Route::get('/token/verify', [TokenController::class, 'verify']);

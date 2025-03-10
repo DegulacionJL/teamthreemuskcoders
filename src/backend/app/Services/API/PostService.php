@@ -6,6 +6,7 @@ use App\Models\Post;
 use App\Models\Like;
 use App\Models\Comment;
 use App\Models\Image;
+use Illuminate\Support\Facades\Storage;
 use Exception;
 
 class PostService
@@ -57,6 +58,32 @@ class PostService
 
         return $like;
     }
+
+   public function updatePost($postId, $caption, $image, $user_id)
+{
+    $post = Post::findOrFail($postId);
+
+    $post->caption = $caption;
+
+    if ($image) {
+        if ($post->image) {
+            $oldImagePath = str_replace('storage/', 'public/', $post->image);
+            if (Storage::exists($oldImagePath)) {
+                Storage::delete($oldImagePath);
+            }
+        }
+
+        $imagePath = $image->store('public/posts');
+        $post->image = str_replace('public/', 'storage/', $imagePath);
+    }
+
+    $post->user_id = $user_id;  // If the post belongs to a user, you can set the user_id
+
+    $post->save();
+
+    return $post;
+}
+
 
     public function commentPost(int $post_id, int $user_id, string $content)
     {

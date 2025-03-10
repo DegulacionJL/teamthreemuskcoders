@@ -9,6 +9,7 @@ use App\Services\API\PostService;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Http\Requests\API\Users\PostRequest;
+use Illuminate\Support\Facades\Storage;
 
 
 class PostController extends Controller
@@ -45,21 +46,31 @@ class PostController extends Controller
 
     return response()->json($this->response, $this->response['code']);
 }
-public function update(Request $request, $id)
+public function updatePost(PostRequest $request, $id)
 {
-    $post = Post::findOrFail($id);
+    if (!auth()->check()) {
+        return response()->json(['error' => 'User not authenticated'], 401);
+    }
+    $this->response = ['code' => 200];
 
-    $post->caption = $request->caption;
+    try {
+        $request->validated();
 
-    if ($request->hasFile('image')) {
-        $imagePath = $request->file('image')->store('public/posts');
-        $post->image = str_replace('public/', 'storage/', $imagePath);
+        $caption = $request->input('caption');
+        $image = $request->file('image');
+        $user_id = auth()->id();
+
+        $updatedPost = $this->postService->updatePost($id, $caption, $image, $user_id);
+
+        $this->response['data'] = new PostResource($updatedPost);
+    } catch (Exception $e) {
+        $this->response['error'] = $e->getMessage();
+        $this->response['code'] = 500;
     }
 
-    $post->save();
-
-    return response()->json($post);
+    return response()->json($this->response, $this->response['code']);
 }
+
 
 public function deletePost($id)
 {
