@@ -2,7 +2,8 @@ import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Avatar, Box, IconButton, Menu, MenuItem, Typography } from '@mui/material';
-import EditPostModal from 'components/organisms/EditPostModal'; // Import the EditPostModal component
+import EditPostModal from 'components/organisms/EditPostModal';
+// Import the EditPostModal component
 import PostActions from 'components/organisms/PostActions';
 
 function getRelativeTime(timestamp) {

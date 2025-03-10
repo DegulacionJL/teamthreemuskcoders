@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Box, Button, Typography } from '@mui/material';
+import { Box, Button, Modal, Typography } from '@mui/material';
 import CaptionInput from 'components/atoms/CaptionInput';
 import ImageEditor from 'components/molecules/ImageEditor';
 
