@@ -40,6 +40,8 @@ Route::prefix('posts')
         Route::post('/', [PostController::class, 'createMemePost'])->middleware('auth:api');
         Route::put('/{id}', [PostController::class, 'updatePost']);
         Route::delete('/{id}', [PostController::class, 'deletePost']);
+        Route::put('/{id}/image', [PostController::class, 'updatePostImage']);
+
     
         
     });

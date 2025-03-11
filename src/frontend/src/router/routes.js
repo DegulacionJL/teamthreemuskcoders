@@ -75,7 +75,7 @@ const routes = [
   {
     path: '/memefeed',
     component: 'pages/guest/MemeFeed',
-    auth: false,
+    auth: true,
   },
   ...admin,
 ];

@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { createMemePost, deletePost, getMemePosts, updatePost } from 'services/meme.service';
+import {
+  createMemePost,
+  deletePost,
+  getMemePosts,
+  updateImage,
+  updatePost,
+} from 'services/meme.service';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import { Avatar, Box, Button, IconButton, TextField, Typography } from '@mui/material';
 import MemePost from 'components/MemePost';
@@ -51,30 +57,67 @@ function MemeFeed() {
   };
 
   // Handle update after editing
-  const handleUpdate = async (updatedCaption, updatedImage) => {
+  const handleUpdateCaption = async (updatedCaption) => {
     if (!editPostId) return;
 
     try {
-      const formData = new FormData();
-      formData.append('caption', updatedCaption);
-      if (updatedImage instanceof File) {
-        formData.append('image', updatedImage);
-      }
-
       // Call the API to update the post
-      const updatedPost = await updatePost(editPostId, formData);
+      const data = {
+        caption: updatedCaption,
+      };
+
+      const updatedPost = await updatePost(editPostId, data);
 
       // Update the state locally with the updated post
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
-          post.id === editPostId
-            ? { ...post, caption: updatedPost.caption, image: updatedPost.image }
-            : post
+          post.id === editPostId ? { ...post, caption: updatedPost.caption } : post
         )
       );
 
       // Close modal after update
       handleCloseEditModal();
+    } catch (error) {
+      console.error('Error updating post:', error);
+    }
+  };
+
+  const handleUpdateImage = async (updatedImage) => {
+    if (!editPostId || !(updatedImage instanceof File)) return;
+
+    const formData = new FormData();
+    formData.append('image', updatedImage); // Append the File
+
+    const updatedPost = await updateImage(editPostId, formData); // Send FormData directly
+
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === editPostId ? { ...post, image: updatedPost.image } : post
+      )
+    );
+
+    handleCloseEditModal();
+  };
+
+  // const convertFileToBase64 = (file) => {
+  //   return new Promise((resolve, reject) => {
+  //     const reader = new FileReader();
+  //     reader.readAsDataURL(file);
+  //     reader.onload = () => resolve(reader.result);
+  //     reader.onerror = (error) => reject(error);
+  //   });
+  // };
+
+  const handleSave = async (updatedCaption, updatedImage) => {
+    if (!editPostId) return;
+
+    try {
+      if (updatedCaption !== editCaption) {
+        await handleUpdateCaption(updatedCaption); // Update caption
+      }
+      if (updatedImage instanceof File) {
+        await handleUpdateImage(updatedImage); // Update image only if changed
+      }
     } catch (error) {
       console.error('Error updating post:', error);
     }
@@ -100,17 +143,26 @@ function MemeFeed() {
       formData.append('user_id', '1');
 
       const response = await createMemePost(formData);
-      setPosts([
-        { caption, image: imagePreview, id: Date.now(), created_at: new Date().toISOString() },
-        ...posts,
-      ]);
+
+      if (!response || !response.data || !response.data.id) {
+        throw new Error('Failed to create post');
+      }
+
+      setPosts((prevPosts) => [response.data, ...prevPosts]);
+      console.log('Before reset:', caption, image, imagePreview);
 
       setCaption('');
       setImage(null);
       setImagePreview(null);
+
+      setTimeout(() => {
+        console.log('After reset:', caption, image, imagePreview);
+      }, 0);
+
       fetchPosts();
     } catch (error) {
-      console.error('Error creating post:', error);
+      // console.error('Error creating post:', error);
+      console.log('After reset:', caption, image, imagePreview);
     }
   };
 
@@ -213,7 +265,7 @@ function MemeFeed() {
         onClose={handleCloseEditModal}
         currentCaption={editCaption}
         currentImage={editImage}
-        onSave={handleUpdate}
+        onSave={handleSave}
       />
     </Box>
   );
