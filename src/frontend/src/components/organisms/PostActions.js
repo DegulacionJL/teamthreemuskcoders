@@ -23,10 +23,23 @@ function PostActions() {
     setComment(event.target.value);
   };
 
-  const handleCommentSubmit = () => {
+  // Creating Comment Post
+  const handleCommentSubmit = async () => {
     if (comment.trim()) {
-      console.log('Comment submitted:', comment);
-      setComment('');
+      try {
+        const response = await axios.post('/api/comments', {
+          content: comment, // assuming the backend expects 'content'
+          user_id: 1, // replace with actual user ID
+          post_id: 1, // replace with actual post ID
+        });
+
+        console.log('Comment submitted:', response.data);
+
+        // Optionally update UI (e.g., re-fetch comments)
+        setComment('');
+      } catch (error) {
+        console.error('Error submitting comment:', error.response?.data || error.message);
+      }
     }
   };
 

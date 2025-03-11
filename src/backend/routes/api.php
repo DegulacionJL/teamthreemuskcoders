@@ -12,6 +12,7 @@ use App\Http\Controllers\API\PermissionController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\Auth\PasswordController;
 use App\Http\Controllers\calculateController;
+use App\Http\Controllers\CommentController;
 use Laravel\Passport\Http\Controllers\AccessTokenController;
 use App\Http\Controllers\PostController;
 
@@ -85,6 +86,20 @@ Route::post('/add', [calculateController::class, 'addition']);
 Route::post('/sub', [calculateController::class, 'subtraction']);
 Route::post('/mul', [calculateController::class, 'multiplication']);
 Route::post('/div', [calculateController::class, 'division']);
+
+// comments route
+
+Route::prefix('comments')
+    ->group(function () {
+        Route::get('/', [CommentController::class, 'index']);
+        // Route::post('/', [PostController::class, 'createMemePost'])->middleware('auth:api');
+        // Route::put('/{id}', [PostController::class, 'updatePost']);
+        // Route::delete('/{id}', [PostController::class, 'deletePost']);
+        // Route::put('/{id}/image', [PostController::class, 'updatePostImage']);
+
+    
+        
+    });
 
 Route::get('permissions', [PermissionController::class, 'index']);
 

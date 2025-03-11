@@ -63,7 +63,7 @@ function Landing() {
         image="http://test.com/"
       />
 
-      <HeroImage image="/static/images/landing-cover.jpg" height="calc(100vh - 100px)">
+      <HeroImage image="/static/images/background_memema2.jpg" height="calc(100vh - 100px)">
         <Box
           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}
         >

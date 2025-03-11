@@ -3,7 +3,6 @@ import React from 'react';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import { IconButton } from '@mui/material';
 
-// ✅ Atom: ReactionButton
 function ReactionButton({ onClick, count, isActive }) {
   return (
     <IconButton onClick={onClick} color={isActive ? 'primary' : 'default'}>
