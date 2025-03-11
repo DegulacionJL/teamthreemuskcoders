@@ -32,17 +32,12 @@ function EditPostModal({ open, onClose, currentCaption, currentImage, onSave }) 
     setImagePreview(null);
   };
 
-  const handleSave = () => {
-    const formData = new FormData();
-    formData.append('caption', caption);
-    if (image instanceof File) {
-      formData.append('image', image);
-    }
-
+  const handleSave = async () => {
     try {
-      // Call the parent's onSave function (which is handleUpdate from MemeFeed)
-      onSave(caption, image); // Pass updated caption and image
-      onClose(); // Close modal
+      if (caption.trim()) {
+        await onSave(caption, image); // Call parent function from MemeFeed
+      }
+      onClose(); // Close modal after saving
     } catch (error) {
       console.error('Error updating post:', error);
     }

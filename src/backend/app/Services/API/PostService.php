@@ -1,11 +1,9 @@
 <?php
 
 namespace App\Services\API;
-
-use App\Models\Post;
 use App\Models\Like;
 use App\Models\Comment;
-use App\Models\Image;
+use App\Models\Post;
 use Illuminate\Support\Facades\Storage;
 use Exception;
 
@@ -59,35 +57,63 @@ class PostService
         return $like;
     }
 
-   public function updatePost($postId, $caption, $image, $user_id)
-{
-    $post = Post::findOrFail($postId);
-
-    $post->caption = $caption;
-
-    if ($image) {
+    public function updatePost($postId, $caption, $user_id)
+    {
+        $post = Post::findOrFail($postId);
+    
+        $post->caption = $caption;
+        $post->user_id = $user_id;  
+    
+        $post->save();
+    
+        return $post;
+    }
+    
+    public function updatePostImage($postId, $image)
+    {
+        $post = Post::findOrFail($postId);
+    
+        // ✅ Delete old image (Ensure correct path)
         if ($post->image) {
-            $oldImagePath = str_replace('storage/', 'public/', $post->image);
-            if (Storage::exists($oldImagePath)) {
-                Storage::delete($oldImagePath);
+            $oldImagePath = str_replace(url('/storage/'), '', $post->image);
+            if (Storage::disk('public')->exists($oldImagePath)) {
+                Storage::disk('public')->delete($oldImagePath);
             }
         }
-
-        $imagePath = $image->store('public/posts');
-        $post->image = str_replace('public/', 'storage/', $imagePath);
+    
+        // ✅ If image is base64, decode and store
+        if (preg_match('/^data:image\/(\w+);base64,/', $image, $matches)) {
+            $imageType = $matches[1];
+            $image = substr($image, strpos($image, ',') + 1);
+            $image = base64_decode($image);
+    
+            $imageName = 'post_' . time() . '.' . $imageType;
+            $imagePath = "posts/{$imageName}";  // ✅ Save in public disk
+    
+            // ✅ Store in `storage/app/public/posts/`
+            Storage::disk('public')->put($imagePath, $image);
+    
+            // ✅ Save only the relative path (not full URL)
+            $post->image = $imagePath;
+            $post->save();
+        }
+    
+        // ✅ Return the correct URL
+        return response()->json([
+            'code' => 200,
+            'data' => [
+                'id' => $post->id,
+                'image' => asset("storage/{$post->image}")  // Correct URL
+            ]
+        ]);
     }
-
-    $post->user_id = $user_id;  // If the post belongs to a user, you can set the user_id
-
-    $post->save();
-
-    return $post;
-}
+    
+    
 
 
     public function commentPost(int $post_id, int $user_id, string $content)
     {
-        // Create the comment
+       
         $comment = Comment::create([
             'post_id' => $post_id,
             'user_id' => $user_id,

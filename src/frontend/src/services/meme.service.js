@@ -11,18 +11,19 @@ const getMemePosts = async function () {
 };
 
 const updatePost = async function (postId, updatedData) {
-  const req = api
-    .put(`/posts/${postId}`, updatedData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
-    .then(({ data }) => data);
+  const req = api.put(`/posts/${postId}`, updatedData).then(({ data }) => data);
 
   return await req;
 };
 
+const updateImage = async function (postId, updatedData) {
+  const req = api.put(`/posts/${postId}/image`, updatedData).then(({ data }) => data);
+  console.log('Updated Image Response:', data);
+  return await req;
+};
 const deletePost = async function (postId) {
   const req = api.delete(`/posts/${postId}`).then(({ data }) => data);
   return await req;
 };
 
-export { createMemePost, getMemePosts, updatePost, deletePost };
+export { createMemePost, getMemePosts, updatePost, deletePost, updateImage };

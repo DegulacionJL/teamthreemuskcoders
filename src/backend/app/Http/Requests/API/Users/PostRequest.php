@@ -10,9 +10,9 @@ class PostRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'caption' => 'required|string|max:255',
-            'image' => 'nullable|file', 
-            'user_id' => 'required|exists:users,id',
+            'caption' => 'required',
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'user_id' => 'exists:users,id',
         ];
     }
 
@@ -23,12 +23,12 @@ class PostRequest extends FormRequest
 
     public function getImage()
     {
-        return $this->file('image'); // Correctly retrieve the uploaded file
+        return $this->file('image', null); 
     }
 
     public function getUserId(): int
     {
-        return (int) $this->input('user_id'); // Ensure user_id is returned as an integer
+        return (int) $this->input('user_id'); 
     }
 
 }

@@ -9,6 +9,7 @@ use App\Services\API\PostService;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Http\Requests\API\Users\PostRequest;
+use App\Http\Requests\API\Users\PostImageRequest;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -38,6 +39,7 @@ class PostController extends Controller
         // Pass `user_id` explicitly
         $post = $this->postService->createMemePost($caption, $image, $user_id);
 
+
         $this->response['data'] = new PostResource($post);
     } catch (Exception $e) { 
         $this->response['error'] = $e->getMessage();
@@ -56,11 +58,10 @@ public function updatePost(PostRequest $request, $id)
     try {
         $request->validated();
 
-        $caption = $request->input('caption');
-        $image = $request->file('image');
+        $caption = $request->getCaption();
         $user_id = auth()->id();
 
-        $updatedPost = $this->postService->updatePost($id, $caption, $image, $user_id);
+        $updatedPost = $this->postService->updatePost($id, $caption, $user_id);
 
         $this->response['data'] = new PostResource($updatedPost);
     } catch (Exception $e) {
@@ -70,6 +71,30 @@ public function updatePost(PostRequest $request, $id)
 
     return response()->json($this->response, $this->response['code']);
 }
+
+public function updatePostImage(PostImageRequest $request, $id)
+{
+    if (!auth()->check()) {
+        return response()->json(['error' => 'User not authenticated'], 401);
+    }
+    
+    $this->response = ['code' => 200];
+
+    try {
+        $request->validated();
+        $image = $request->getImage(); 
+
+      
+        $updatedPost = $this->postService->updatePostImage($id, $image);
+        $this->response['data'] = new PostResource($updatedPost);
+    } catch (Exception $e) {
+        $this->response['error'] = $e->getMessage();
+        $this->response['code'] = 500;
+    }
+
+    return response()->json($this->response, $this->response['code']);
+}
+
 
 
 public function deletePost($id)
