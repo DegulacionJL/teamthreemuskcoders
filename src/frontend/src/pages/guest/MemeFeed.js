@@ -144,11 +144,11 @@ function MemeFeed() {
 
       const response = await createMemePost(formData);
 
-      if (!response || !response.id) {
+      if (!response || !response.data || !response.data.id) {
         throw new Error('Failed to create post');
       }
 
-      setPosts((prevPosts) => [response, ...prevPosts]);
+      setPosts((prevPosts) => [response.data, ...prevPosts]);
       console.log('Before reset:', caption, image, imagePreview);
 
       setCaption('');
