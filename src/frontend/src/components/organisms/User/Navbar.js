@@ -77,7 +77,14 @@ function Navbar(props) {
             </Link>
           </Box>
 
-          <Box component="nav" sx={{ display: { xs: 'none', md: 'flex' } }}>
+          <Box
+            component="nav"
+            sx={{
+              flexGrow: 1,
+              display: { xs: 'none', md: 'flex' },
+              justifyContent: 'center', // Centers the menu
+            }}
+          >
             <MenuLinks items={menus} />
           </Box>
 

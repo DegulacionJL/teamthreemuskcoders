@@ -111,8 +111,8 @@ const en = {
         failed_message: 'The update failed.',
       },
       landing: {
-        main_heading: 'Welcome to React Base Template!',
-        sub_heading: 'A lightweight boilerplate about the development of a React project.',
+        main_heading: `Think you're funny? Prove it.`,
+        sub_heading: 'Post your best memes and let the community decide!',
         why_heading: 'Why use Base Template?',
         docker: {
           heading: 'Flexible Environment',

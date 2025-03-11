@@ -17,19 +17,19 @@ function Landing() {
     {
       title: t('pages.landing.docker.heading'),
       description: t('pages.landing.docker.description'),
-      image: '/static/images/docker.png',
+      image: '/static/images/feature_page.png',
       left: true,
     },
     {
       title: t('pages.landing.react.heading'),
       description: t('pages.landing.react.description'),
-      image: '/static/images/react.png',
+      image: '/static/images/feature_ranking.png',
       left: false,
     },
     {
       title: t('pages.landing.laravel.heading'),
       description: t('pages.landing.laravel.description'),
-      image: '/static/images/laravel.png',
+      image: '/static/images/feature_voting.png',
       left: true,
     },
   ];
