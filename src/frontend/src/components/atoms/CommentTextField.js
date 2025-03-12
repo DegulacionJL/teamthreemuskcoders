@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import { TextField } from '@mui/material';
 
@@ -13,5 +14,10 @@ function CommentTextField({ value, onChange }) {
     />
   );
 }
+
+CommentTextField.propTypes = {
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
 
 export default CommentTextField;

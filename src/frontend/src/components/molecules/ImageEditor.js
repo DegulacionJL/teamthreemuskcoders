@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useRef } from 'react';
 import { Button } from '@mui/material';
 import ImagePreview from 'components/atoms/ImagePreview';
@@ -25,5 +26,11 @@ function ImageEditor({ image, onImageChange, onImageRemove }) {
     </div>
   );
 }
+
+ImageEditor.propTypes = {
+  image: PropTypes.string,
+  onImageChange: PropTypes.func.isRequired,
+  onImageRemove: PropTypes.func.isRequired,
+};
 
 export default ImageEditor;

@@ -23,7 +23,12 @@ function PostActions() {
     setComment(event.target.value);
   };
 
-  // Creating Comment Post
+  const handleCommentSubmit = () => {
+    if (comment.trim()) {
+      console.log('Comment submitted:', comment);
+      setComment(''); // Clear input after submitting
+    }
+  };
 
   return (
     <Box sx={{ mt: 2 }}>
