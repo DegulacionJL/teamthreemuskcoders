@@ -1,9 +1,23 @@
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { addComment, deleteComment, getComments } from 'services/meme.service';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { Avatar, Box, IconButton, Menu, MenuItem, Typography } from '@mui/material';
+import {
+  Avatar,
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  Menu,
+  MenuItem,
+  TextField,
+  Typography,
+} from '@mui/material';
 import EditPostModal from './organisms/EditPostModal';
-import PostActions from './organisms/PostActions';
 
 function getRelativeTime(timestamp) {
   const now = new Date();
@@ -11,9 +25,16 @@ function getRelativeTime(timestamp) {
   const diff = Math.floor((now - postedTime) / 1000);
 
   if (diff < 60) return 'Just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
-  return `${Math.floor(diff / 86400)} days ago`;
+  if (diff < 3600) {
+    const minutes = Math.floor(diff / 60);
+    return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  }
+  if (diff < 86400) {
+    const hours = Math.floor(diff / 3600);
+    return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  }
+  const days = Math.floor(diff / 86400);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
 }
 
 function MemePost({
@@ -27,16 +48,55 @@ function MemePost({
   onMenuClose,
   menuAnchor,
   isMenuOpen,
-  onComment,
 }) {
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // State to control modal visibility
-  const [currentCaption, setCurrentCaption] = useState(caption); // State to hold the caption being edited
-  const [currentImage, setCurrentImage] = useState(image); // State to hold the image being edited
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [currentCaption, setCurrentCaption] = useState(caption);
+  const [currentImage, setCurrentImage] = useState(image);
+  const [postComments, setPostComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState(null);
 
-  const handleSave = (newCaption, newImage) => {
-    setCurrentCaption(newCaption); // Update the caption
-    setCurrentImage(newImage); // Update the image
-    onDelete(id); // Assuming onDelete handles the update operation, change it if needed
+  const handleSave = async (newCaption, newImage) => {
+    setCurrentCaption(newCaption);
+    setCurrentImage(newImage);
+    onUpdate(id, newCaption, newImage);
+  };
+
+  // Fetch comments on component mount
+  useEffect(() => {
+    async function fetchComments() {
+      const response = await getComments(id);
+      console.log('Fetched comments:', response); // Debugging
+
+      if (response?.data) {
+        setPostComments(response.data);
+      } else {
+        setPostComments([]);
+      }
+    }
+    fetchComments();
+  }, [id]);
+
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+    const addedComment = await addComment(id, newComment);
+    setPostComments((prev) => [...prev, addedComment.data]); // Ensure correct structure
+    setNewComment(''); // Reset input
+  };
+
+  const confirmDeleteComment = (commentId) => {
+    setCommentToDelete(commentId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteComment = async () => {
+    if (commentToDelete) {
+      await deleteComment(id, commentToDelete);
+      setPostComments((prev) => prev.filter((comment) => comment.id !== commentToDelete));
+    }
+    setCommentToDelete(null);
+    setIsDeleteModalOpen(false);
   };
 
   return (
@@ -51,33 +111,21 @@ function MemePost({
         mt: 4,
       }}
     >
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          mb: 2,
-          gap: 2,
-        }}
-      >
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Avatar sx={{ mr: 2 }}>U</Avatar>
-          <Typography variant="h6" gutterBottom>
-            User
-          </Typography>
+          <Typography variant="h6">User</Typography>
         </Box>
         <Box>
           <Typography variant="caption" sx={{ color: 'gray' }}>
             {getRelativeTime(timestamp)}
           </Typography>
-
           <IconButton onClick={(event) => onMenuOpen(event, id)}>
             <MoreVertIcon />
           </IconButton>
         </Box>
         <Menu anchorEl={menuAnchor} open={isMenuOpen} onClose={onMenuClose}>
-          <MenuItem onClick={() => onUpdate(id, caption, image)}>Edit</MenuItem>
-
+          <MenuItem onClick={() => setIsEditModalOpen(true)}>Edit</MenuItem>
           <MenuItem onClick={() => onDelete(id)} sx={{ color: 'red' }}>
             Delete
           </MenuItem>
@@ -87,14 +135,67 @@ function MemePost({
       <Typography variant="body1" sx={{ mb: 2 }}>
         {currentCaption}
       </Typography>
-
       {currentImage && (
         <img src={currentImage} alt="Meme" style={{ maxWidth: '100%', borderRadius: '8px' }} />
       )}
 
-      <PostActions onComment={() => onComment(id)} />
+      {/* Comment Section */}
+      <Box sx={{ mt: 3 }}>
+        <Typography variant="subtitle1">Comments</Typography>
 
-      {/* EditPostModal Integration */}
+        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, gap: 1 }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Add a comment..."
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+          />
+          <Button variant="contained" onClick={handleAddComment}>
+            Comment
+          </Button>
+        </Box>
+
+        <Box sx={{ mt: 2 }}>
+          {postComments.length > 0 ? (
+            postComments.map((comment) => (
+              <Box key={comment.id} sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                <Avatar sx={{ mr: 1 }}>C</Avatar>
+                <Box sx={{ flexGrow: 1 }}>
+                  <Typography variant="body2">{comment.text}</Typography>
+                  <Typography variant="caption" color="gray">
+                    {getRelativeTime(comment.timestamp)}
+                  </Typography>
+                </Box>
+                <IconButton size="small" onClick={() => confirmDeleteComment(comment.id)}>
+                  🗑️
+                </IconButton>
+              </Box>
+            ))
+          ) : (
+            <Typography variant="body2" sx={{ color: 'gray', mt: 1 }}>
+              No comments yet.
+            </Typography>
+          )}
+        </Box>
+      </Box>
+
+      {/* Delete Comment Confirmation Modal */}
+      <Dialog open={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this comment? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsDeleteModalOpen(false)}>Cancel</Button>
+          <Button color="error" onClick={handleDeleteComment}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <EditPostModal
         open={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -117,7 +218,6 @@ MemePost.propTypes = {
   onMenuClose: PropTypes.func.isRequired,
   menuAnchor: PropTypes.object,
   isMenuOpen: PropTypes.bool.isRequired,
-  onComment: PropTypes.func.isRequired,
 };
 
 export default MemePost;

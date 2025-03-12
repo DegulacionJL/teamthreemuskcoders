@@ -1,51 +1,24 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\API;
 
 use App\Models\Comment;
 
 class CommentService
 {
-    /**
-     * Get all comments.
-     */
-    public function getAll()
+    public function getComments($postId)
     {
-        return Comment::latest()->get();
+        return Comment::where('post_id', $postId)->latest()->get();
     }
 
-    /**
-     * Store a new comment.
-     */
-    public function store(array $data)
+    public function addComment($data)
     {
         return Comment::create($data);
     }
 
-    /**
-     * Find a comment by ID.
-     */
-    public function find($id)
+    public function deleteComment($commentId)
     {
-        return Comment::findOrFail($id);
-    }
-
-    /**
-     * Update a comment.
-     */
-    public function update($id, array $data)
-    {
-        $comment = Comment::findOrFail($id);
-        $comment->update($data);
-        return $comment;
-    }
-
-    /**
-     * Delete a comment.
-     */
-    public function delete($id)
-    {
-        $comment = Comment::findOrFail($id);
+        $comment = Comment::findOrFail($commentId);
         return $comment->delete();
     }
 }

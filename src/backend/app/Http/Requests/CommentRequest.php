@@ -6,25 +6,16 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class CommentRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    // public function authorize(): bool
-    // {
-    //     return false;
-    // }
+    public function authorize()
+    {
+        return true; // Change this based on your auth logic
+    }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
-    public function rules(): array
+    public function rules()
     {
         return [
-            'content' => 'required',
-            'user_id' => 'exists:users,id',
-
+            'post_id' => 'required|exists:posts,id',
+            'text' => 'required|string|max:500',
         ];
     }
 }

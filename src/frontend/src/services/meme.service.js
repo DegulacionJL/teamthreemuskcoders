@@ -23,15 +23,45 @@ const updateImage = async function (postId, updatedData) {
   console.log('Updated Image Response:', data);
   return await req;
 };
+
 const deletePost = async function (postId) {
   const req = api.delete(`/posts/${postId}`).then(({ data }) => data);
   return await req;
 };
 
-// Service for Comments
-const createComment = async function (postId, content) {
-  const req = api.post('/comments', formData).then(({ data }) => data);
+// Service for comments
+
+const getComments = async function (postId) {
+  const req = api.get(`/posts/${postId}/comments`).then(({ data }) => data);
   return await req;
 };
 
-export { createMemePost, getMemePosts, updatePost, deletePost, updateImage };
+const addComment = async function (postId, commentText) {
+  const req = api
+    .post(`/posts/${postId}/comments`, { post_id: postId, text: commentText }) // expects commentText to be a string
+    .then(({ data }) => data);
+  return await req;
+};
+
+const deleteComment = async function (postId, commentId) {
+  const req = api.delete(`/posts/${postId}/comments/${commentId}`).then(({ data }) => data);
+  return await req;
+};
+
+// const updateComment = async function (postId, commentId, updatedText) {
+//   const req = api
+//     .put(`/posts/${postId}/comments/${commentId}`, { text: updatedText }) // expects updatedText to be a string
+//     .then(({ data }) => data);
+//   return await req;
+// };
+
+export {
+  createMemePost,
+  getMemePosts,
+  updatePost,
+  deletePost,
+  updateImage,
+  getComments,
+  addComment,
+  deleteComment,
+};
