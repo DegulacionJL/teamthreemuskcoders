@@ -10,19 +10,22 @@ const getMemePosts = async function () {
   return await req;
 };
 
-const updatePost = async function (postId, updatedData) {
-  const req = api.put(`/posts/${postId}`, updatedData).then(({ data }) => data);
+const updatePost = async function (post, updatedData) {
+  const req = api.put(`/posts/${post}`, updatedData).then(({ data }) => data);
 
   return await req;
 };
 
-const updateImage = async function (postId, updatedData) {
-  const req = api.put(`/posts/${postId}/image`, updatedData).then(({ data }) => data);
-  console.log('Updated Image Response:', data);
+const updateImage = async function (post, updatedData) {
+  const req = api.post(`/posts/${post}/image`, updatedData).then(({ data }) => {
+    console.log('Updated Image Response:', data);
+    return data;
+  });
+
   return await req;
 };
-const deletePost = async function (postId) {
-  const req = api.delete(`/posts/${postId}`).then(({ data }) => data);
+const deletePost = async function (post) {
+  const req = api.delete(`/posts/${post}`).then(({ data }) => data);
   return await req;
 };
 

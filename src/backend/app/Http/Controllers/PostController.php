@@ -8,9 +8,12 @@ use App\Models\Post;
 use App\Services\API\PostService;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
+use App\Http\Resources\UpdatePostResource;
 use App\Http\Requests\API\Users\PostRequest;
-use App\Http\Requests\API\Users\PostImageRequest;
-use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\UpdatePostRequest;
+use App\Http\Requests\UpdateImagePostRequest;
+use Illuminate\Http\JsonResponse;
+
 
 
 class PostController extends Controller
@@ -25,77 +28,71 @@ class PostController extends Controller
     $this->middleware(['auth:api']);
 }
   
-    public function createMemePost(PostRequest $request)
-    {
-    $this->response = ['code' => 200]; // Initialize response with default code
-
+public function createMemePost(PostRequest $request): JsonResponse
+{
     try {
         $request->validated();
 
         $caption = $request->input('caption');
         $image = $request->file('image');
-        $user_id = auth()->id(); // Ensure the authenticated user ID is retrieved
+        $user_id = auth()->id(); // Get authenticated user ID
 
-        // Pass `user_id` explicitly
         $post = $this->postService->createMemePost($caption, $image, $user_id);
 
-
-        $this->response['data'] = new PostResource($post);
-    } catch (Exception $e) { 
-        $this->response['error'] = $e->getMessage();
-        $this->response['code'] = 500;
-    }
-
-    return response()->json($this->response, $this->response['code']);
-}
-public function updatePost(PostRequest $request, $id)
-{
-    if (!auth()->check()) {
-        return response()->json(['error' => 'User not authenticated'], 401);
-    }
-    $this->response = ['code' => 200];
-
-    try {
-        $request->validated();
-
-        $caption = $request->getCaption();
-        $user_id = auth()->id();
-
-        $updatedPost = $this->postService->updatePost($id, $caption, $user_id);
-
-        $this->response['data'] = new PostResource($updatedPost);
+        return response()->json(['data' => new PostResource($post)], 200);
     } catch (Exception $e) {
-        $this->response['error'] = $e->getMessage();
-        $this->response['code'] = 500;
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+}
+public function updatePost(UpdatePostRequest $request, Post $post): JsonResponse
+    {
+        if (!auth()->check()) {
+            return response()->json(['error' => 'User not authenticated'], 401);
+        }
+
+        $this->response = ['code' => 200];
+
+        try {
+            $validatedData = $request->validated();
+            $updatedPost = $this->postService->updatePost($post, $validatedData['caption']);
+
+            $this->response['data'] = new UpdatePostResource($updatedPost->load('image'));
+        } catch (Exception $e) {
+            $this->response['error'] = $e->getMessage();
+            $this->response['code'] = 500;
+        }
+
+        return response()->json($this->response, $this->response['code']);
     }
 
-    return response()->json($this->response, $this->response['code']);
-}
+    public function updatePostImage(UpdateImagePostRequest $request, Post $post): JsonResponse
+    {
+        if (!auth()->check()) {
+            return response()->json(['error' => 'User not authenticated'], 401);
+        }
 
-public function updatePostImage(PostImageRequest $request, $id)
+        $this->response = ['code' => 200];
+
+        try {
+            $imageFile = $request->file('image');
+            $updatedPost = $this->postService->updatePostImage($post, $imageFile);
+
+            $this->response['data'] = new UpdatePostResource($updatedPost->load('image'));
+        } catch (Exception $e) {
+            $this->response['error'] = $e->getMessage();
+            $this->response['code'] = 500;
+        }
+
+        return response()->json($this->response, $this->response['code']);
+    }
+
+
+public function index()
 {
-    if (!auth()->check()) {
-        return response()->json(['error' => 'User not authenticated'], 401);
-    }
-    
-    $this->response = ['code' => 200];
-
-    try {
-        $request->validated();
-        $image = $request->getImage(); 
-
-      
-        $updatedPost = $this->postService->updatePostImage($id, $image);
-        $this->response['data'] = new PostResource($updatedPost);
-    } catch (Exception $e) {
-        $this->response['error'] = $e->getMessage();
-        $this->response['code'] = 500;
-    }
-
-    return response()->json($this->response, $this->response['code']);
+    return response()->json([
+        'posts' => Post::with('image')->get(), // Fetch all posts with image
+    ]);
 }
-
-
 
 public function deletePost($id)
 {
@@ -107,13 +104,6 @@ public function deletePost($id)
     $post->delete();
     
     return response()->json(['message' => 'Post deleted']);
-}
-
-public function index()
-{
-    return response()->json([
-        'posts' => Post::with('comments')->get(), // Fetch all posts with their comments
-    ]);
 }
 
 

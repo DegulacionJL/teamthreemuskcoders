@@ -18,7 +18,7 @@ class Image extends Model
      * @var array
      */
     protected $fillable = [
-        'url',
+        'image_path',
         'post_id',
         'user_id',
     ];
@@ -28,7 +28,7 @@ class Image extends Model
      */
     public function post(): BelongsTo
     {
-        return $this->belongsTo(Post::class);
+        return $this->belongsTo(Post::class, 'custom_foreign_key_column');
     }
 
     /**

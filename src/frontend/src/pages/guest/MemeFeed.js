@@ -85,28 +85,27 @@ function MemeFeed() {
   const handleUpdateImage = async (updatedImage) => {
     if (!editPostId || !(updatedImage instanceof File)) return;
 
-    const formData = new FormData();
-    formData.append('image', updatedImage); // Append the File
+    try {
+      const formData = new FormData();
+      formData.append('image', updatedImage); // Only keep the original file
 
-    const updatedPost = await updateImage(editPostId, formData); // Send FormData directly
+      // Call the API to update the image
+      const updatedPost = await updateImage(editPostId, formData); // Send FormData
 
-    setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.id === editPostId ? { ...post, image: updatedPost.image } : post
-      )
-    );
+      // Update the post state with the new image path (assuming the response has image data)
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.id === editPostId
+            ? { ...post, image: updatedPost.image?.image_path } // Adjusted path (ensure this matches your response)
+            : post
+        )
+      );
 
-    handleCloseEditModal();
+      handleCloseEditModal(); // Close the modal after updating
+    } catch (error) {
+      console.error('Error updating image:', error);
+    }
   };
-
-  // const convertFileToBase64 = (file) => {
-  //   return new Promise((resolve, reject) => {
-  //     const reader = new FileReader();
-  //     reader.readAsDataURL(file);
-  //     reader.onload = () => resolve(reader.result);
-  //     reader.onerror = (error) => reject(error);
-  //   });
-  // };
 
   const handleSave = async (updatedCaption, updatedImage) => {
     if (!editPostId) return;
@@ -154,12 +153,6 @@ function MemeFeed() {
       setCaption('');
       setImage(null);
       setImagePreview(null);
-
-      setTimeout(() => {
-        console.log('After reset:', caption, image, imagePreview);
-      }, 0);
-
-      fetchPosts();
     } catch (error) {
       // console.error('Error creating post:', error);
       console.log('After reset:', caption, image, imagePreview);
@@ -182,6 +175,10 @@ function MemeFeed() {
   useEffect(() => {
     fetchPosts();
   }, []);
+
+  // useEffect(() => {
+  //   console.log('Posts data:', posts); // 🔍 Log posts data in the frontend
+  // }, [posts]);
 
   return (
     <Box>
@@ -247,7 +244,7 @@ function MemeFeed() {
           key={post.id}
           id={post.id}
           caption={post.caption}
-          image={post.image}
+          image={imagePreview || post.image.image_path}
           timestamp={post.created_at}
           onDelete={handleDelete}
           onUpdate={handleEditClick}

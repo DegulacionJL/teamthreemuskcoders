@@ -38,9 +38,9 @@ Route::prefix('posts')
     ->group(function () {
         Route::get('/', [PostController::class, 'index']);
         Route::post('/', [PostController::class, 'createMemePost'])->middleware('auth:api');
-        Route::put('/{id}', [PostController::class, 'updatePost']);
-        Route::delete('/{id}', [PostController::class, 'deletePost']);
-        Route::put('/{id}/image', [PostController::class, 'updatePostImage']);
+        Route::put('/{post}', [PostController::class, 'updatePost'])->middleware('auth:api');
+        Route::delete('/{post}', [PostController::class, 'deletePost']);
+        Route::post('/{post}/image', [PostController::class, 'updatePostImage'])->middleware('auth:api');
 
     
         

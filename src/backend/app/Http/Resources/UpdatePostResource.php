@@ -4,20 +4,21 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class PostResource extends JsonResource
+class UpdatePostResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return array
-     */
     public function toArray($request)
     {
         return [
             'id' => $this->id,
             'caption' => $this->caption,
-            'image' => $this->image ? asset('storage/images/' . basename($this->image->image_path)) : null,
+            'image' => $this->image ? [
+                'id' => $this->image->id,
+                'image_url' => asset('storage/' . $this->image->image_path),
+                'post_id' => $this->image->post_id,
+                'user_id' => $this->image->user_id,
+                'created_at' => $this->image->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $this->image->updated_at->format('Y-m-d H:i:s'),
+            ] : null,
             'user' => [
                     'id' => $this->user->id,
                     'name' => $this->user->name ?? 'Unknown User', 

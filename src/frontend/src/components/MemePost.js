@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Avatar, Box, IconButton, Menu, MenuItem, Typography } from '@mui/material';
 import EditPostModal from './organisms/EditPostModal';
-import PostActions from './organisms/PostActions';
 
 function getRelativeTime(timestamp) {
   const now = new Date();
@@ -27,7 +26,6 @@ function MemePost({
   onMenuClose,
   menuAnchor,
   isMenuOpen,
-  onComment,
 }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false); // State to control modal visibility
   const [currentCaption, setCurrentCaption] = useState(caption); // State to hold the caption being edited
@@ -92,8 +90,6 @@ function MemePost({
         <img src={currentImage} alt="Meme" style={{ maxWidth: '100%', borderRadius: '8px' }} />
       )}
 
-      <PostActions onComment={() => onComment(id)} />
-
       {/* EditPostModal Integration */}
       <EditPostModal
         open={isEditModalOpen}
@@ -117,7 +113,6 @@ MemePost.propTypes = {
   onMenuClose: PropTypes.func.isRequired,
   menuAnchor: PropTypes.object,
   isMenuOpen: PropTypes.bool.isRequired,
-  onComment: PropTypes.func.isRequired,
 };
 
 export default MemePost;

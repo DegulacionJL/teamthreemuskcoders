@@ -5,6 +5,7 @@ function EditPostModal({ open, onClose, currentCaption, currentImage, onSave }) 
   const [caption, setCaption] = useState(currentCaption);
   const [image, setImage] = useState(currentImage);
   const [imagePreview, setImagePreview] = useState(null);
+  const [key, setKey] = useState(Date.now());
 
   useEffect(() => {
     setCaption(currentCaption);
@@ -19,11 +20,16 @@ function EditPostModal({ open, onClose, currentCaption, currentImage, onSave }) 
 
   const handleCaptionChange = (e) => setCaption(e.target.value);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
     if (file) {
-      setImage(file);
-      setImagePreview(URL.createObjectURL(file)); // Generate preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+        setImage(file);
+        setKey(Date.now());
+      };
+      reader.readAsDataURL(file);
     }
   };
 

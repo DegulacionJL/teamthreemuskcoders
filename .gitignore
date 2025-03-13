@@ -7,3 +7,4 @@ src/backend/packages/*
 src/backend/.scribe
 src/backend/public/docs
 .env
+.qodo

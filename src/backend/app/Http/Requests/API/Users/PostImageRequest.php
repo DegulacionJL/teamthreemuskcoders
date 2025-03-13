@@ -13,12 +13,8 @@ class PostImageRequest extends FormRequest
     public function rules()
     {
         return [
+
             'image' => 'nullable|string',
         ];
-    }
-
-    public function getImage()
-    {
-        return $this->file('image');
     }
 }

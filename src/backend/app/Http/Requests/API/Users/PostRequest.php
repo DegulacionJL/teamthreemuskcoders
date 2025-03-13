@@ -10,15 +10,15 @@ class PostRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'caption' => 'required',
+            'caption' => 'sometimes|required|string|max:255',
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
             'user_id' => 'exists:users,id',
         ];
     }
 
-    public function getCaption(): string
+    public function getCaption(): ?string
     {
-        return $this->input('caption');
+        return $this->has('caption') ? $this->input('caption', null) : null;
     }
 
     public function getImage()

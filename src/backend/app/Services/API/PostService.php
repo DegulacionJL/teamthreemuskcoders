@@ -20,34 +20,34 @@ class PostService
     }
 
     public function createMemePost(string $caption, $image, int $user_id)
-{
-    if (!$user_id) {
-        throw new Exception('User ID is missing');
+    {
+        if (!$user_id) {
+            throw new Exception('User ID is missing');
+        }
+
+        try {
+            // Create the post first
+            $post = Post::create([
+                'caption' => $caption,
+                'user_id' => $user_id
+            ]);
+
+            // Handle image if provided
+            if ($image) {
+                $imagePath = env('STORAGE_DISK_URL').'/'.$image->store('images', 'public');
+
+                Image::create([
+                    'post_id' => $post->id,
+                    'user_id' => $user_id,  
+                    'image_path' => $imagePath
+                ]);
+            }
+
+            return $post->load('image'); // Eager load image relationship
+        } catch (\Exception $e) {
+            throw new Exception("Error creating post: " . $e->getMessage());
+        }
     }
-
-    $imagePath = null;
-
-    // Store the image if provided
-    if ($image) {
-        $imagePath = env('STORAGE_DISK_URL').'/'.$image->store('images', 'public'); // Saves to storage/app/public/images
-        // $imagePath = str_replace('public/', 'storage/', $imagePath); 
-    }
-
-    // Create the post with the image path
-    $post = Post::create([
-        'caption' => $caption,
-        'user_id' => $user_id,
-        'image' => $imagePath,
-         // Save the image path in the database
-    ]);
-    // dump($imagePath);
-
-    if (!$post) {
-        return response()->json(['error' => 'Failed to create post'], 500);
-    }
-
-    return $post;
-}
     public function likePost(int $post_id, int $user_id)
     {
         // Create the like
@@ -59,85 +59,39 @@ class PostService
         return $like;
     }
 
-   public function updatePost($postId, $caption, $image, $user_id)
+    public function updatePost(Post $post, $caption)
+    {
+        $post->update(['caption' => $caption]);
+        return $post->load('image');
+    }
+
+    public function updatePostImage(Post $post, $imageFile)
 {
-    $post = Post::findOrFail($postId);
+    $userId = auth()->id();
 
-    $post->caption = $caption;
-
-    if ($image) {
-        if ($post->image) {
-            $oldImagePath = str_replace('storage/', 'public/', $post->image);
-            if (Storage::exists($oldImagePath)) {
-                Storage::delete($oldImagePath);
-            }
-        }
-
-        $imagePath = $image->store('public/posts');
-        $post->image = str_replace('public/', 'storage/', $imagePath);
+    // Ensure $imageFile is a valid uploaded file
+    if (!$imageFile || !$imageFile->isValid()) {
+        return response()->json(['error' => 'Invalid image file'], 400);
     }
 
-    $post->user_id = $user_id;  // If the post belongs to a user, you can set the user_id
+    // Check if post already has an associated image
+    $image = $post->image ?? new Image([
+        'post_id' => $post->id,
+        'user_id' => $userId,
+    ]);
 
-    $post->save();
+    // Delete the old image if it exists
+    if ($image->image_path) {
+        Storage::disk('public')->delete(str_replace(env('STORAGE_DISK_URL') . '/', '', $image->image_path));
+    }
 
-    return $post;
+    // Store the new image in 'storage/app/public/images'
+    $imagePath = $imageFile->store('images', 'public');
+
+    // Save the image path in the database (use full URL)
+    $image->image_path = env('STORAGE_DISK_URL') . '/' . $imagePath;
+    $image->save();
+
+    return $post->load('image');
 }
-
-
-    public function commentPost(int $post_id, int $user_id, string $content)
-    {
-        // Create the comment
-        $comment = Comment::create([
-            'post_id' => $post_id,
-            'user_id' => $user_id,
-            'content' => $content,
-        ]);
-
-        return $comment;
-    }
-
-    public function getPost($post_id)
-    {
-        $post = Post::find($post_id);
-
-        if (!$post) {
-            throw new Exception('Post not found');
-        }
-
-        return $post;
-    }
-
-    public function getPosts()
-    {
-        $posts = Post::all();
-
-        return $posts;
-    }
-
-    public function getPostLikes($post_id)
-    {
-        $post = Post::find($post_id);
-
-        if (!$post) {
-            throw new Exception('Post not found');
-        }
-
-        $likes = $post->likes;
-
-        return $likes;
-    }
-
-    public function getPostComments($post_id)
-    {
-        $post = Post::find($post_id);
-
-        if (!$post) {
-            throw new Exception('Post not found');
-        }
-
-        $comments = $post->comments;
-
-        return $comments;
-    }
 }
