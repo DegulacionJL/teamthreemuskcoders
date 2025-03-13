@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import { Box, Button, Modal, Typography } from '@mui/material';
 
@@ -57,10 +58,10 @@ function EditPostModal({ open, onClose, currentCaption, currentImage, onSave }) 
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: '90%', // Make sure it's not too wide
+          width: '90%',
           maxWidth: '500px',
-          maxHeight: '80vh', // Prevent overflowing the screen
-          overflowY: 'auto', // Enable vertical scrolling if needed
+          maxHeight: '80vh',
+          overflowY: 'auto',
           bgcolor: 'white',
           boxShadow: 24,
           p: 3,
@@ -103,5 +104,13 @@ function EditPostModal({ open, onClose, currentCaption, currentImage, onSave }) 
     </Modal>
   );
 }
+
+EditPostModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  currentCaption: PropTypes.string.isRequired,
+  currentImage: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(File)]),
+  onSave: PropTypes.func.isRequired,
+};
 
 export default EditPostModal;

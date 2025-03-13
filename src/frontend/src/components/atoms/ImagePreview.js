@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 
 function ImagePreview({ image, onRemove }) {
@@ -8,5 +9,10 @@ function ImagePreview({ image, onRemove }) {
     </div>
   );
 }
+
+ImagePreview.propTypes = {
+  image: PropTypes.string.isRequired,
+  onRemove: PropTypes.func.isRequired,
+};
 
 export default ImagePreview;

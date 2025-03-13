@@ -87,19 +87,13 @@ Route::post('/sub', [calculateController::class, 'subtraction']);
 Route::post('/mul', [calculateController::class, 'multiplication']);
 Route::post('/div', [calculateController::class, 'division']);
 
+
 // comments route
-
-Route::prefix('comments')
-    ->group(function () {
-        Route::get('/', [CommentController::class, 'index']);
-        // Route::post('/', [PostController::class, 'createMemePost'])->middleware('auth:api');
-        // Route::put('/{id}', [PostController::class, 'updatePost']);
-        // Route::delete('/{id}', [PostController::class, 'deletePost']);
-        // Route::put('/{id}/image', [PostController::class, 'updatePostImage']);
-
-    
-        
-    });
+Route::prefix('posts/{postId}/comments')->group(function () {
+    Route::get('/', [CommentController::class, 'index']); // ✅ Get comments
+    Route::post('/', [CommentController::class, 'store']); // ✅ Add comment
+    Route::delete('/{commentId}', [CommentController::class, 'destroy']); // ✅ Delete comment
+});
 
 Route::get('permissions', [PermissionController::class, 'index']);
 

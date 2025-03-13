@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import { TextField } from '@mui/material';
 
@@ -14,5 +15,11 @@ function CaptionInput({ value, onChange }) {
     />
   );
 }
+
+// Define prop types
+CaptionInput.propTypes = {
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
 
 export default CaptionInput;
