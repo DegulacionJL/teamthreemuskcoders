@@ -69,8 +69,19 @@ function Login() {
   };
 
   return (
-    <Container maxWidth="xs" sx={{ pt: 8 }}>
-      <Card sx={{ p: 4 }}>
+    <Container
+      maxWidth="xs"
+      sx={{
+        mt: 8,
+        pt: 8,
+        backgroundImage: "url('/static/images/background_memema.jpg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        borderRadius: 2,
+        padding: 4,
+      }}
+    >
+      <Card sx={{ p: 4, backgroundColor: 'rgba(255, 255, 255, 0.8)' }}>
         <PageTitle title={t('labels.login')} />
 
         <Box component="form" noValidate onSubmit={handleSubmit(handleLogin)} sx={{ mt: 3 }}>

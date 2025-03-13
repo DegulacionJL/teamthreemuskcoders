@@ -1,5 +1,7 @@
 import api from 'utils/api';
 
+// Service for Posts
+
 const createMemePost = async function (formData) {
   const req = api.post('/posts', formData).then(({ data }) => data);
   return await req;
@@ -26,6 +28,12 @@ const updateImage = async function (post, updatedData) {
 };
 const deletePost = async function (post) {
   const req = api.delete(`/posts/${post}`).then(({ data }) => data);
+  return await req;
+};
+
+// Service for Comments
+const createComment = async function (postId, content) {
+  const req = api.post('/comments', formData).then(({ data }) => data);
   return await req;
 };
 

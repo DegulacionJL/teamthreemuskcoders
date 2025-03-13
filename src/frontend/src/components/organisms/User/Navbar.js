@@ -67,13 +67,15 @@ function Navbar(props) {
       position="static"
       color="transparent"
       elevation={0}
-      sx={{ borderBottom: (theme) => `1px solid ${theme.palette.divider}` }}
+      sx={{
+        borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+      }}
     >
       <Container maxWidth="lg">
         <Toolbar sx={{ flexWrap: 'wrap' }} disableGutters>
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
             <Link to="/">
-              <img src="/static/images/sprobe-icon.png" alt={appName} height={48} />
+              <img src="/static/images/memema_black.png" alt={appName} height={48} />
             </Link>
           </Box>
 

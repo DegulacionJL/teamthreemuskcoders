@@ -25,7 +25,11 @@ function Footer() {
         <Grid container spacing={4}>
           <Grid item xs={12} sm={4}>
             <Box sx={{ mb: 2 }}>
-              <img src="" alt={process.env.REACT_APP_SITE_TITLE} width="100" />
+              <img
+                src="/static/images/memema_test.png"
+                alt={process.env.REACT_APP_SITE_TITLE}
+                width="100"
+              />
             </Box>
             <Typography variant="body2" component="span">
               &copy; {currentYear} {process.env.REACT_APP_SITE_TITLE}.
