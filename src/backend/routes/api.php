@@ -91,8 +91,9 @@ Route::post('/div', [calculateController::class, 'division']);
 // comments route
 Route::prefix('posts/{postId}/comments')->group(function () {
     Route::get('/', [CommentController::class, 'index']); // ✅ Get comments
-    Route::post('/', [CommentController::class, 'store']); // ✅ Add comment
-    Route::delete('/{commentId}', [CommentController::class, 'destroy']); // ✅ Delete comment
+    Route::post('/', [CommentController::class, 'store'])->middleware('auth:api'); // ✅ Add comment
+    Route::put('/{commentId}', [CommentController::class, 'update'])->middleware('auth:api'); // ✅ Update comment
+    Route::delete('/{commentId}', [CommentController::class, 'destroy'])->middleware('auth:api');
 });
 
 Route::get('permissions', [PermissionController::class, 'index']);

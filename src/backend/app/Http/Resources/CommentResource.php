@@ -10,9 +10,18 @@ class CommentResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'post_id' => $this->post_id,
             'text' => $this->text,
+            'user' => $this->user ? [
+                'id' => $this->user->id,
+                // 'first_name' => $this->user->first_name,
+                // 'last_name' => $this->user->last_name,
+                'full_name' => $this->user->first_name . ' ' . $this->user->last_name,
+                'avatar' => $this->user->avatar,
+            ] : null,
+            'post_id' => $this->post_id,
             'created_at' => $this->created_at->diffForHumans(),
+            'updated_at' => $this->updated_at->toDateTimeString(),
+            'timestamp' => $this->created_at->diffForHumans(), // Add this for easier access in frontend
         ];
     }
 }

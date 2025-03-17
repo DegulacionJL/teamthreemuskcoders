@@ -13,9 +13,13 @@ class CommentRequest extends FormRequest
 
     public function rules()
     {
-        return [
-            'post_id' => 'required|exists:posts,id',
+        // Base rules
+        $rules = [
             'text' => 'required|string|max:500',
         ];
+        
+        // No need to require post_id as it comes from the URL parameter
+        
+        return $rules;
     }
 }
