@@ -9,10 +9,15 @@ class CommentResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'id' => $this->id,
-            'post_id' => $this->post_id,
-            'text' => $this->text,
-            'created_at' => $this->created_at->diffForHumans(),
-        ];
+        'id' => $this->id,
+        'text' => $this->text,
+        'user' => $this->user ? [
+            'id' => $this->user->id,
+            'name' => $this->user->name,
+        ] : null,
+        'post_id' => $this->post_id,
+        'created_at' => $this->created_at->diffForHumans(),
+        'updated_at' => $this->updated_at->toDateTimeString(),
+    ];
     }
 }

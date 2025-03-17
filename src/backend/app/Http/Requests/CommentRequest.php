@@ -12,10 +12,17 @@ class CommentRequest extends FormRequest
     }
 
     public function rules()
-    {
-        return [
-            'post_id' => 'required|exists:posts,id',
-            'text' => 'required|string|max:500',
-        ];
+{
+    // Base rules
+    $rules = [
+        'text' => 'required|string|max:500',
+    ];
+    
+    // Only require post_id for POST requests (new comments)
+    if ($this->isMethod('post')) {
+        $rules['post_id'] = 'required|exists:posts,id';
     }
+    
+    return $rules;
+}
 }

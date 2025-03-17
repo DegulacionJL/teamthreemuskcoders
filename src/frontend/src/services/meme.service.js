@@ -50,12 +50,15 @@ const deleteComment = async function (postId, commentId) {
   return await req;
 };
 
-// const updateComment = async function (postId, commentId, updatedText) {
-//   const req = api
-//     .put(`/posts/${postId}/comments/${commentId}`, { text: updatedText }) // expects updatedText to be a string
-//     .then(({ data }) => data);
-//   return await req;
-// };
+const updateComment = async function (postId, commentId, updatedText) {
+  const req = api
+    .put(`/posts/${postId}/comments/${commentId}`, {
+      post_id: postId,
+      text: updatedText,
+    })
+    .then(({ data }) => data);
+  return await req;
+};
 
 export {
   createMemePost,
@@ -66,4 +69,5 @@ export {
   getComments,
   addComment,
   deleteComment,
+  updateComment,
 };

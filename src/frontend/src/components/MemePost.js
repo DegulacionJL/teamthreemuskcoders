@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
-import { addComment, deleteComment, getComments } from 'services/meme.service';
+import { addComment, deleteComment, getComments, updateComment } from 'services/meme.service';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   Avatar,
@@ -11,6 +11,11 @@ import {
   MenuItem,
   TextField,
   Typography,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from '@mui/material';
 import DeleteConfirmationModal from './organisms/DeleteConfirmationModal';
 import EditPostModal from './organisms/EditPostModal';
@@ -53,6 +58,9 @@ function MemePost({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState(null);
   const [isPostDeleteModalOpen, setIsPostDeleteModalOpen] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
   const handleSave = async (newCaption, newImage) => {
     setCurrentCaption(newCaption);
@@ -67,13 +75,11 @@ function MemePost({
   // Fetch comments on component mount
   useEffect(() => {
     async function fetchComments() {
-      const response = await getComments(id);
-      console.log('Fetched comments:', response); // Debugging
-
-      if (response?.data) {
-        setPostComments(response.data);
-      } else {
-        setPostComments([]);
+      try {
+        const response = await getComments(id);
+        setPostComments(response?.data || []);
+      } catch (error) {
+        console.error('Error fetching comments:', error);
       }
     }
     fetchComments();
@@ -81,9 +87,13 @@ function MemePost({
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
-    const addedComment = await addComment(id, newComment);
-    setPostComments((prev) => [...prev, addedComment.data]); // Ensure correct structure
-    setNewComment(''); // Reset input
+    try {
+      const addedComment = await addComment(id, newComment);
+      setPostComments((prev) => [...prev, addedComment.data]);
+      setNewComment('');
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
   };
 
   const confirmDeleteComment = (commentId) => {
@@ -100,6 +110,23 @@ function MemePost({
     setIsDeleteModalOpen(false);
   };
 
+  // updating comments
+  const handleUpdateComment = async () => {
+    if (!editingCommentText.trim()) return;
+    try {
+      await updateComment(id, editingCommentId, editingCommentText);
+      setPostComments((prev) =>
+        prev.map((comment) =>
+          comment.id === editingCommentId ? { ...comment, text: editingCommentText } : comment
+        )
+      );
+      setEditingCommentId(null);
+      setEditingCommentText('');
+      setIsUpdateModalOpen(false);
+    } catch (error) {
+      console.error('Error updating comment:', error);
+    }
+  };
   return (
     <Box
       sx={{
@@ -175,14 +202,41 @@ function MemePost({
               <Box key={comment.id} sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                 <Avatar sx={{ mr: 1 }}>C</Avatar>
                 <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="body2">{comment.text}</Typography>
+                  {editingCommentId === comment.id ? (
+                    <TextField
+                      fullWidth
+                      size="small"
+                      value={editingCommentText}
+                      onChange={(e) => setEditingCommentText(e.target.value)}
+                    />
+                  ) : (
+                    <Typography variant="body2">{comment.text}</Typography>
+                  )}
                   <Typography variant="caption" color="gray">
-                    {getRelativeTime(comment.timestamp)}
+                    {comment.timestamp}
                   </Typography>
                 </Box>
-                <IconButton size="small" onClick={() => confirmDeleteComment(comment.id)}>
-                  🗑️
-                </IconButton>
+                {editingCommentId === comment.id ? (
+                  <Button size="small" onClick={() => setIsUpdateModalOpen(true)}>
+                    Save
+                  </Button>
+                ) : (
+                  <>
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setEditingCommentId(comment.id);
+                        setEditingCommentText(comment.text);
+                        setIsUpdateModalOpen(true);
+                      }}
+                    >
+                      ✏️
+                    </IconButton>
+                    <IconButton size="small" onClick={() => confirmDeleteComment(comment.id)}>
+                      🗑️
+                    </IconButton>
+                  </>
+                )}
               </Box>
             ))
           ) : (
@@ -192,6 +246,25 @@ function MemePost({
           )}
         </Box>
       </Box>
+
+      {/* Update Confirmation Modal */}
+      <Dialog open={isUpdateModalOpen} onClose={() => setIsUpdateModalOpen(false)}>
+        <DialogTitle>Edit Comment</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            size="small"
+            value={editingCommentText}
+            onChange={(e) => setEditingCommentText(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsUpdateModalOpen(false)}>Cancel</Button>
+          <Button onClick={handleUpdateComment} color="primary">
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <DeleteConfirmationModal
         open={isDeleteModalOpen}
