@@ -32,7 +32,6 @@ const deletePost = async function (post) {
 };
 
 // Service for comments
-
 const getComments = async function (postId) {
   const req = api.get(`/posts/${postId}/comments`).then(({ data }) => data);
   return await req;
@@ -40,7 +39,10 @@ const getComments = async function (postId) {
 
 const addComment = async function (postId, commentText) {
   const req = api
-    .post(`/posts/${postId}/comments`, { post_id: postId, text: commentText }) // expects commentText to be a string
+    .post(`/posts/${postId}/comments`, {
+      post_id: postId,
+      text: commentText,
+    })
     .then(({ data }) => data);
   return await req;
 };

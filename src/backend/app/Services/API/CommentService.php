@@ -27,10 +27,12 @@ class CommentService
         return Comment::create($data);
     }
 
-    public function updateComment($commentId, array $data)
+    public function updateComment($commentId, $postId, array $data)
     {
         try {
-            $comment = Comment::findOrFail($commentId);
+            $comment = Comment::where('id', $commentId)
+                ->where('post_id', $postId)
+                ->firstOrFail();
 
             // Ensure only the owner can update the comment
             if ($comment->user_id !== Auth::id()) {
@@ -40,29 +42,26 @@ class CommentService
             $comment->update($data);
             return $comment;
         } catch (ModelNotFoundException $e) {
-            throw new Exception("Comment not found.");
+            throw new Exception("Comment not found for this post.");
         } catch (Exception $e) {
-            throw new Exception("Failed to update comment.");
+            throw new Exception("Failed to update comment: " . $e->getMessage());
         }
     }
 
     public function deleteComment($commentId, $postId)
-{
-    $comment = Comment::where('id', $commentId)->where('post_id', $postId)->first();
-    
-    if (!$comment) {
-        throw new Exception("Comment not found.");
+    {
+        $comment = Comment::where('id', $commentId)
+            ->where('post_id', $postId)
+            ->first();
+
+        if (!$comment) {
+            throw new Exception("Comment not found for this post.");
+        }
+
+        if ($comment->user_id !== Auth::id()) {
+            throw new Exception("Unauthorized. You can only delete your own comments.");
+        }
+
+        $comment->delete();
     }
-    
-    // Debug
-    Log::info('User trying to delete: ' . Auth::id());
-    Log::info('Comment owner: ' . $comment->user_id);
-    
-    // Ensure only the owner can delete the comment
-    if ($comment->user_id !== Auth::id()) {
-        throw new Exception("Unauthorized. You can only delete your own comments.");
-    }
-    
-    $comment->delete();
-}
 }

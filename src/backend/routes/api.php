@@ -92,7 +92,7 @@ Route::post('/div', [calculateController::class, 'division']);
 Route::prefix('posts/{postId}/comments')->group(function () {
     Route::get('/', [CommentController::class, 'index']); // ✅ Get comments
     Route::post('/', [CommentController::class, 'store'])->middleware('auth:api'); // ✅ Add comment
-    Route::put('/{commentId}', [CommentController::class, 'update']); // ✅ Update comment
+    Route::put('/{commentId}', [CommentController::class, 'update'])->middleware('auth:api'); // ✅ Update comment
     Route::delete('/{commentId}', [CommentController::class, 'destroy'])->middleware('auth:api');
 });
 

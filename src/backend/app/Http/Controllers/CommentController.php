@@ -7,6 +7,7 @@ use App\Http\Resources\CommentResource;
 use App\Services\API\CommentService;
 use Illuminate\Http\JsonResponse;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 
 class CommentController extends Controller
 {
@@ -23,29 +24,35 @@ class CommentController extends Controller
         return CommentResource::collection($comments);
     }
 
-    public function store(CommentRequest $request)
+    public function store(CommentRequest $request, $postId)
     {
-        $comment = $this->commentService->addComment($request->validated());
+        // Merge the postId from the URL into the validated data
+        $data = array_merge($request->validated(), ['post_id' => $postId]);
+        
+        $comment = $this->commentService->addComment($data);
         return new CommentResource($comment);
     }
 
-     public function update(CommentRequest $request, $commentId): JsonResponse
+    public function update(CommentRequest $request, $postId, $commentId): JsonResponse
     {
         try {
-            $updatedComment = $this->commentService->updateComment($commentId, $request->validated());
+            // Merge the postId from the URL into the validated data
+            $data = array_merge($request->validated(), ['post_id' => $postId]);
+            
+            $updatedComment = $this->commentService->updateComment($commentId, $postId, $data);
             return response()->json(new CommentResource($updatedComment), 200);
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
-   public function destroy($postId, $commentId): JsonResponse
-{
-    try {
-        $this->commentService->deleteComment($commentId, $postId);
-        return response()->json(['message' => 'Comment deleted successfully.'], 200);
-    } catch (Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
+    public function destroy($postId, $commentId): JsonResponse
+    {
+        try {
+            $this->commentService->deleteComment($commentId, $postId);
+            return response()->json(['message' => 'Comment deleted successfully.'], 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
-}
 }
