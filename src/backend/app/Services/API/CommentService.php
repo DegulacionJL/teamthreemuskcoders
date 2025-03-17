@@ -12,7 +12,10 @@ class CommentService
 {
     public function getComments($postId)
     {
-        return Comment::where('post_id', $postId)->latest()->get();
+        return Comment::where('post_id', $postId)
+            ->with('user') // Include the user relationship
+            ->latest()
+            ->get();
     }
 
     public function addComment($data)
@@ -40,7 +43,9 @@ class CommentService
             }
 
             $comment->update($data);
-            return $comment;
+            
+            // Reload the comment with user relationship
+            return Comment::with('user')->find($commentId);
         } catch (ModelNotFoundException $e) {
             throw new Exception("Comment not found for this post.");
         } catch (Exception $e) {

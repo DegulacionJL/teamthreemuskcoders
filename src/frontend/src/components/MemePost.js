@@ -6,16 +6,15 @@ import {
   Avatar,
   Box,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   Menu,
   MenuItem,
   TextField,
   Typography,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
 } from '@mui/material';
 import DeleteConfirmationModal from './organisms/DeleteConfirmationModal';
 import EditPostModal from './organisms/EditPostModal';
@@ -37,6 +36,12 @@ function getRelativeTime(timestamp) {
   const days = Math.floor(diff / 86400);
   return `${days} day${days === 1 ? '' : 's'} ago`;
 }
+
+// Helper function to get initials from name
+const getInitials = (firstName, lastName) => {
+  if (!firstName && !lastName) return 'U';
+  return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`;
+};
 
 function MemePost({
   id,
@@ -114,11 +119,9 @@ function MemePost({
   const handleUpdateComment = async () => {
     if (!editingCommentText.trim()) return;
     try {
-      await updateComment(id, editingCommentId, editingCommentText);
+      const response = await updateComment(id, editingCommentId, editingCommentText);
       setPostComments((prev) =>
-        prev.map((comment) =>
-          comment.id === editingCommentId ? { ...comment, text: editingCommentText } : comment
-        )
+        prev.map((comment) => (comment.id === editingCommentId ? response.data : comment))
       );
       setEditingCommentId(null);
       setEditingCommentText('');
@@ -127,6 +130,7 @@ function MemePost({
       console.error('Error updating comment:', error);
     }
   };
+
   return (
     <Box
       sx={{
@@ -199,29 +203,55 @@ function MemePost({
         <Box sx={{ mt: 2 }}>
           {postComments.length > 0 ? (
             postComments.map((comment) => (
-              <Box key={comment.id} sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                <Avatar sx={{ mr: 1 }}>C</Avatar>
+              <Box
+                key={comment.id}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  mt: 2,
+                  pb: 2,
+                  borderBottom: '1px solid #eee',
+                }}
+              >
+                <Avatar
+                  src={comment.user?.avatar || ''}
+                  sx={{ mr: 1 }}
+                  alt={comment.user?.full_name || 'User'}
+                >
+                  {getInitials(comment.user?.first_name, comment.user?.last_name)}
+                </Avatar>
                 <Box sx={{ flexGrow: 1 }}>
+                  <Box
+                    sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                  >
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                      {comment.user?.full_name || 'Unknown User'}
+                    </Typography>
+                    <Typography variant="caption" color="gray">
+                      {comment.timestamp || comment.created_at}
+                    </Typography>
+                  </Box>
+
                   {editingCommentId === comment.id ? (
                     <TextField
                       fullWidth
                       size="small"
                       value={editingCommentText}
                       onChange={(e) => setEditingCommentText(e.target.value)}
+                      sx={{ mt: 1 }}
                     />
                   ) : (
-                    <Typography variant="body2">{comment.text}</Typography>
+                    <Typography variant="body2" sx={{ mt: 0.5 }}>
+                      {comment.text}
+                    </Typography>
                   )}
-                  <Typography variant="caption" color="gray">
-                    {comment.timestamp}
-                  </Typography>
                 </Box>
                 {editingCommentId === comment.id ? (
                   <Button size="small" onClick={() => setIsUpdateModalOpen(true)}>
                     Save
                   </Button>
                 ) : (
-                  <>
+                  <Box>
                     <IconButton
                       size="small"
                       onClick={() => {
@@ -235,7 +265,7 @@ function MemePost({
                     <IconButton size="small" onClick={() => confirmDeleteComment(comment.id)}>
                       🗑️
                     </IconButton>
-                  </>
+                  </Box>
                 )}
               </Box>
             ))
