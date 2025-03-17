@@ -13,6 +13,8 @@ use App\Http\Requests\API\Users\PostRequest;
 use App\Http\Requests\UpdatePostRequest;
 use App\Http\Requests\UpdateImagePostRequest;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
+
 
 
 
@@ -35,7 +37,7 @@ public function createMemePost(PostRequest $request): JsonResponse
 
         $caption = $request->input('caption');
         $image = $request->file('image');
-        $user_id = auth()->id(); // Get authenticated user ID
+        $user_id = auth()->id();
 
         $post = $this->postService->createMemePost($caption, $image, $user_id);
 
@@ -58,10 +60,10 @@ public function updatePost(UpdatePostRequest $request, Post $post): JsonResponse
 
             $this->response['data'] = new UpdatePostResource($updatedPost->load('image'));
         } catch (Exception $e) {
-            $this->response['error'] = $e->getMessage();
+            $this->response['error'] = $e->getMessage(); 
             $this->response['code'] = 500;
         }
-
+        $post->save();
         return response()->json($this->response, $this->response['code']);
     }
 
@@ -90,14 +92,14 @@ public function updatePost(UpdatePostRequest $request, Post $post): JsonResponse
 public function index()
 {
     return response()->json([
-        'posts' => Post::with('image')->get(), // Fetch all posts with image
+        'posts' => Post::with('image')->get(), 
     ]);
 }
 
 public function deletePost($id)
 {
     $post = Post::find($id);
-    if (!$post) {  // ✅ Fixed: Add $
+    if (!$post) {  
         return response()->json(['error' => 'Post not found'], 404);
     }
     

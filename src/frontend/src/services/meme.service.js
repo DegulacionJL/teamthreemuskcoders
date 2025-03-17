@@ -26,7 +26,6 @@ const updateImage = async function (post, updatedData) {
 
   return await req;
 };
-
 const deletePost = async function (post) {
   const req = api.delete(`/posts/${post}`).then(({ data }) => data);
   return await req;

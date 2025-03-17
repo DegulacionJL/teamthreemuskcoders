@@ -6,17 +6,13 @@ import {
   Avatar,
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   IconButton,
   Menu,
   MenuItem,
   TextField,
   Typography,
 } from '@mui/material';
+import DeleteConfirmationModal from './organisms/DeleteConfirmationModal';
 import EditPostModal from './organisms/EditPostModal';
 
 function getRelativeTime(timestamp) {
@@ -56,11 +52,16 @@ function MemePost({
   const [newComment, setNewComment] = useState('');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState(null);
+  const [isPostDeleteModalOpen, setIsPostDeleteModalOpen] = useState(false);
 
   const handleSave = async (newCaption, newImage) => {
     setCurrentCaption(newCaption);
     setCurrentImage(newImage);
     onUpdate(id, newCaption, newImage);
+  };
+  const handleConfirmDelete = () => {
+    onDelete(id); // Call delete function
+    setIsDeleteModalOpen(false);
   };
 
   // Fetch comments on component mount
@@ -106,31 +107,43 @@ function MemePost({
         backgroundColor: 'white',
         boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
         borderRadius: '8px',
+        border: '2px solid',
+        borderColor: 'red',
         maxWidth: '500px',
         margin: 'auto',
         mt: 4,
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Avatar sx={{ mr: 2 }}>U</Avatar>
-          <Typography variant="h6">User</Typography>
+      <>
+        {/* Post Header with Menu */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Avatar sx={{ mr: 2 }}>U</Avatar>
+            <Typography variant="h6">User</Typography>
+          </Box>
+          <Box>
+            <Typography variant="caption" sx={{ color: 'gray' }}>
+              {getRelativeTime(timestamp)}
+            </Typography>
+            <IconButton onClick={(event) => onMenuOpen(event, id)}>
+              <MoreVertIcon />
+            </IconButton>
+          </Box>
+          <Menu anchorEl={menuAnchor} open={isMenuOpen} onClose={onMenuClose}>
+            <MenuItem onClick={() => setIsEditModalOpen(true)}>Edit</MenuItem>
+            <MenuItem onClick={() => setIsPostDeleteModalOpen(true)} sx={{ color: 'red' }}>
+              Delete
+            </MenuItem>
+          </Menu>
         </Box>
-        <Box>
-          <Typography variant="caption" sx={{ color: 'gray' }}>
-            {getRelativeTime(timestamp)}
-          </Typography>
-          <IconButton onClick={(event) => onMenuOpen(event, id)}>
-            <MoreVertIcon />
-          </IconButton>
-        </Box>
-        <Menu anchorEl={menuAnchor} open={isMenuOpen} onClose={onMenuClose}>
-          <MenuItem onClick={() => setIsEditModalOpen(true)}>Edit</MenuItem>
-          <MenuItem onClick={() => onDelete(id)} sx={{ color: 'red' }}>
-            Delete
-          </MenuItem>
-        </Menu>
-      </Box>
+
+        <DeleteConfirmationModal
+          open={isPostDeleteModalOpen}
+          onClose={() => setIsPostDeleteModalOpen(false)}
+          onConfirm={handleConfirmDelete}
+          message="Are you sure you want to delete this POST? This action cannot be undone."
+        />
+      </>
 
       <Typography variant="body1" sx={{ mb: 2 }}>
         {currentCaption}
@@ -180,21 +193,12 @@ function MemePost({
         </Box>
       </Box>
 
-      {/* Delete Comment Confirmation Modal */}
-      <Dialog open={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
-        <DialogTitle>Confirm Deletion</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete this comment? This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsDeleteModalOpen(false)}>Cancel</Button>
-          <Button color="error" onClick={handleDeleteComment}>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <DeleteConfirmationModal
+        open={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteComment}
+        message="Are you sure you want to delete this comment? This action cannot be undone."
+      />
 
       <EditPostModal
         open={isEditModalOpen}
