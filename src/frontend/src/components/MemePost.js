@@ -38,6 +38,7 @@ function MemePost({
   caption,
   image,
   timestamp,
+  user,
   onDelete,
   onUpdate,
   onMenuOpen,
@@ -55,9 +56,15 @@ function MemePost({
   const [isPostDeleteModalOpen, setIsPostDeleteModalOpen] = useState(false);
 
   const handleSave = async (newCaption, newImage) => {
-    setCurrentCaption(newCaption);
-    setCurrentImage(newImage);
-    onUpdate(id, newCaption, newImage);
+    try {
+      const updatedPost = await onUpdate(id, newCaption, newImage);
+      if (updatedPost && updatedPost.image) {
+        setCurrentImage(updatedPost.image);
+      }
+      setCurrentCaption(newCaption);
+    } catch (error) {
+      console.error('Error updating post:', error);
+    }
   };
   const handleConfirmDelete = () => {
     onDelete(id); // Call delete function
@@ -107,8 +114,6 @@ function MemePost({
         backgroundColor: 'white',
         boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
         borderRadius: '8px',
-        border: '2px solid',
-        borderColor: 'red',
         maxWidth: '500px',
         margin: 'auto',
         mt: 4,
@@ -118,8 +123,20 @@ function MemePost({
         {/* Post Header with Menu */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Avatar sx={{ mr: 2 }}>U</Avatar>
-            <Typography variant="h6">User</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Avatar
+                src={user?.avatar || ''}
+                sx={{ mr: 2 }}
+                alt={`${user?.first_name} ${user?.last_name}`}
+              >
+                {user
+                  ? `${user.first_name?.charAt(0) || ''}${user.last_name?.charAt(0) || ''}`
+                  : 'U'}
+              </Avatar>
+              <Typography variant="h6">
+                {user ? `${user.first_name} ${user.last_name}` : 'Unknown User'}
+              </Typography>
+            </Box>
           </Box>
           <Box>
             <Typography variant="caption" sx={{ color: 'gray' }}>

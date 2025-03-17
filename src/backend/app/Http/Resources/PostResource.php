@@ -18,10 +18,11 @@ class PostResource extends JsonResource
             'id' => $this->id,
             'caption' => $this->caption,
             'image' => $this->image ? asset('storage/images/' . basename($this->image->image_path)) : null,
-            'user' => [
+            'user' => $this->user? [
                     'id' => $this->user->id,
-                    'name' => $this->user->name ?? 'Unknown User', 
-                     ],
+                    'name' => trim($this->user->first_name. ''.$this->user->last_name), 
+                    'avatar' => $this->user->avatar ?? null,
+                     ]: null,
             'created_at' => $this->created_at->format('y-m-d H:i:s'),
             'updated_at' => $this->updated_at->format('y-m-d H:i:s'),
            

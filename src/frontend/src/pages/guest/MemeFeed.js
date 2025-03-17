@@ -9,19 +9,13 @@ import {
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import { Avatar, Box, Button, IconButton, TextField, Typography } from '@mui/material';
 import MemePost from 'components/MemePost';
-import EditPostModal from 'components/organisms/EditPostModal';
 
 function MemeFeed() {
   const [caption, setCaption] = useState('');
   const [image, setImage] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
   const [posts, setPosts] = useState([]);
-
-  // State for Edit Post Modal
-  const [editPostId, setEditPostId] = useState(null);
-  const [editCaption, setEditCaption] = useState('');
-  const [editImage, setEditImage] = useState(null);
-  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   // State for menu handling
   const [anchorEl, setAnchorEl] = useState(null);
@@ -40,88 +34,6 @@ function MemeFeed() {
     setSelectedPostId(null);
   };
 
-  // Open edit modal with post details
-  const handleEditClick = (id, currentCaption, currentImage) => {
-    setEditPostId(id);
-    setEditCaption(currentCaption);
-    setEditImage(currentImage);
-    setEditModalOpen(true);
-  };
-
-  // Close edit modal
-  const handleCloseEditModal = () => {
-    setEditModalOpen(false);
-    setEditPostId(null);
-    setEditCaption('');
-    setEditImage(null);
-  };
-
-  // Handle update after editing
-  const handleUpdateCaption = async (updatedCaption) => {
-    if (!editPostId) return;
-
-    try {
-      // Call the API to update the post
-      const data = {
-        caption: updatedCaption,
-      };
-
-      const updatedPost = await updatePost(editPostId, data);
-
-      // Update the state locally with the updated post
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.id === editPostId ? { ...post, caption: updatedPost.caption } : post
-        )
-      );
-
-      // Close modal after update
-      handleCloseEditModal();
-    } catch (error) {
-      console.error('Error updating post:', error);
-    }
-  };
-
-  const handleUpdateImage = async (updatedImage) => {
-    if (!editPostId || !(updatedImage instanceof File)) return;
-
-    try {
-      const formData = new FormData();
-      formData.append('image', updatedImage); // Only keep the original file
-
-      // Call the API to update the image
-      const updatedPost = await updateImage(editPostId, formData); // Send FormData
-
-      // Update the post state with the new image path (assuming the response has image data)
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.id === editPostId
-            ? { ...post, image: updatedPost.image?.image_path } // Adjusted path (ensure this matches your response)
-            : post
-        )
-      );
-
-      handleCloseEditModal(); // Close the modal after updating
-    } catch (error) {
-      console.error('Error updating image:', error);
-    }
-  };
-
-  const handleSave = async (updatedCaption, updatedImage) => {
-    if (!editPostId) return;
-
-    try {
-      if (updatedCaption !== editCaption) {
-        await handleUpdateCaption(updatedCaption); // Update caption
-      }
-      if (updatedImage instanceof File) {
-        await handleUpdateImage(updatedImage); // Update image only if changed
-      }
-    } catch (error) {
-      console.error('Error updating post:', error);
-    }
-  };
-
   // Handle delete post
   const handleDelete = async (postId) => {
     try {
@@ -138,7 +50,7 @@ function MemeFeed() {
     try {
       const formData = new FormData();
       formData.append('caption', caption);
-      if (image) formData.append('image', image);
+      formData.append('image', image);
       formData.append('user_id', '1');
 
       const response = await createMemePost(formData);
@@ -147,15 +59,39 @@ function MemeFeed() {
         throw new Error('Failed to create post');
       }
 
+      // Extract image URL from response
+      const newImageUrl = response.data.image; // Make sure backend sends full URL
+
       setPosts((prevPosts) => [response.data, ...prevPosts]);
+
       console.log('Before reset:', caption, image, imagePreview);
 
+      // Reset caption & image, but keep the preview updated
       setCaption('');
       setImage(null);
-      setImagePreview(null);
+      setImagePreview(newImageUrl); // Update preview to show new image
     } catch (error) {
-      // console.error('Error creating post:', error);
-      console.log('After reset:', caption, image, imagePreview);
+      console.error('Error posting:', error);
+    }
+  };
+
+  const handleUpdatePost = async (postId, newCaption, newImage) => {
+    try {
+      console.log('Updating post:', { postId, newCaption, newImage });
+
+      if (newCaption) {
+        await updatePost(postId, { caption: newCaption });
+      }
+
+      if (newImage) {
+        const formData = new FormData();
+        formData.append('image', newImage);
+        await updateImage(postId, formData);
+      }
+
+      fetchPosts();
+    } catch (error) {
+      console.error('Error updating post:', error);
     }
   };
 
@@ -167,6 +103,10 @@ function MemeFeed() {
         throw new Error('Fetched posts is not an array!');
 
       setPosts(response.posts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+
+      if (response.currentUser) {
+        setCurrentUser(response.currentUser);
+      }
     } catch (error) {
       console.error('Error fetching posts:', error);
     }
@@ -175,10 +115,6 @@ function MemeFeed() {
   useEffect(() => {
     fetchPosts();
   }, []);
-
-  // useEffect(() => {
-  //   console.log('Posts data:', posts); // 🔍 Log posts data in the frontend
-  // }, [posts]);
 
   return (
     <Box>
@@ -195,9 +131,19 @@ function MemeFeed() {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Avatar sx={{ mr: 2 }}>U</Avatar>
-          <Typography variant="h6" gutterBottom>
-            Create a Post
+          <Avatar
+            src={currentUser?.avatar || ''}
+            sx={{ mr: 2 }}
+            alt={`${currentUser?.first_name} ${currentUser?.last_name}`}
+          >
+            {currentUser
+              ? `${currentUser.first_name?.charAt(0) || ''}${
+                  currentUser.last_name?.charAt(0) || ''
+                }`
+              : 'U'}
+          </Avatar>
+          <Typography variant="h6">
+            {currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : 'Unknown User'}
           </Typography>
         </Box>
         <TextField
@@ -246,8 +192,9 @@ function MemeFeed() {
           caption={post.caption}
           image={imagePreview || post.image.image_path}
           timestamp={post.created_at}
+          user={post.user}
           onDelete={handleDelete}
-          onUpdate={handleEditClick}
+          onUpdate={handleUpdatePost}
           onMenuOpen={handleMenuOpen}
           onMenuClose={handleMenuClose}
           menuAnchor={anchorEl}
@@ -255,15 +202,6 @@ function MemeFeed() {
           isMenuOpen={open && selectedPostId === post.id}
         />
       ))}
-
-      {/* Edit Post Modal */}
-      <EditPostModal
-        open={editModalOpen}
-        onClose={handleCloseEditModal}
-        currentCaption={editCaption}
-        currentImage={editImage}
-        onSave={handleSave}
-      />
     </Box>
   );
 }

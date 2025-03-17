@@ -14,6 +14,7 @@ use App\Http\Requests\UpdatePostRequest;
 use App\Http\Requests\UpdateImagePostRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 
 
@@ -89,24 +90,38 @@ public function updatePost(UpdatePostRequest $request, Post $post): JsonResponse
     }
 
 
-public function index()
-{
-    return response()->json([
-        'posts' => Post::with('image')->get(), 
-    ]);
-}
-
-public function deletePost($id)
-{
-    $post = Post::find($id);
-    if (!$post) {  
-        return response()->json(['error' => 'Post not found'], 404);
+    public function index() {
+        $posts = Post::with('user', 'image')->latest()->get();
+        
+        return response()->json([
+            'posts' => $posts,
+            'currentUser' => auth()->user(),
+        ]);
     }
+
+    public function deletePost($id)
+    {
+        $post = Post::findOrFail($id);
     
-    $post->delete();
+        // Check if the post has an image
+        if ($post->image) {
+            // Extract the image path
+            $imagePath = str_replace('/storage/', 'public/', $post->image->image_path);
     
-    return response()->json(['message' => 'Post deleted']);
-}
+            // Delete the image file from storage
+            if (Storage::exists($imagePath)) {
+                Storage::delete($imagePath);
+            }
+    
+            // Also delete the related image record from the database
+            $post->image()->delete();
+        }
+    
+        // Delete the post itself
+        $post->delete();
+    
+        return response()->json(['message' => 'Post and image deleted successfully']);
+    }
 
 
 }

@@ -40,12 +40,20 @@ function EditPostModal({ open, onClose, currentCaption, currentImage, onSave }) 
   };
 
   const handleSave = async () => {
+    console.log('EditPostModal: Saving post with', { caption, image });
+
     try {
       if (caption.trim()) {
-        await onSave(caption, image); // Call parent function from MemeFeed
+        const updatedPost = await onSave(caption, image); // Capture the updated post
+
+        if (updatedPost?.image) {
+          setImagePreview(`${updatedPost.image}?t=${new Date().getTime()}`); // Update preview
+        }
       }
-      onClose(); // Close modal after saving
+
+      onClose();
     } catch (error) {
+      console.error('onSave function is not defined!');
       console.error('Error updating post:', error);
     }
   };
@@ -78,7 +86,7 @@ function EditPostModal({ open, onClose, currentCaption, currentImage, onSave }) 
           style={{ width: '100%', minHeight: '100px', marginBottom: '10px' }}
         />
 
-        <input type="file" onChange={handleImageChange} accept="image/*" />
+        <input key={key} type="file" onChange={handleImageChange} accept="image/*" />
 
         {imagePreview && (
           <Box sx={{ mt: 2 }}>
