@@ -11,6 +11,32 @@ class CommentRequest extends FormRequest
         return true; // Change this based on your auth logic
     }
 
+  protected function prepareForValidation()
+{
+    // Ensure we get an array from the config
+    $badWords = config('badwords.words', []);
+
+    // Check if $badWords is an array
+    if (!is_array($badWords)) {
+        $badWords = [];
+    }
+
+    // Replace each bad word dynamically based on its length
+    $text = $this->text;
+
+    foreach ($badWords as $word) {
+        $wordPattern = '/\b' . preg_quote($word, '/') . '\b/i'; // Match exact word
+        $replacement = str_repeat('*', strlen($word)); // Generate correct number of asterisks
+        $text = preg_replace($wordPattern, $replacement, $text);
+    }
+
+    // Update request with the censored text
+    $this->merge([
+        'text' => $text,
+    ]);
+}
+
+
     public function rules()
     {
         // Base rules
