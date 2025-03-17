@@ -114,7 +114,9 @@ function MemePost({
         backgroundColor: 'white',
         boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
         borderRadius: '8px',
-        maxWidth: '500px',
+        width: '550px',
+        minHeight: '250px',
+        maxWidth: '100%',
         margin: 'auto',
         mt: 4,
       }}

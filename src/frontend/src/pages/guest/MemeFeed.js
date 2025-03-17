@@ -125,12 +125,12 @@ function MemeFeed() {
           backgroundColor: 'white',
           boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
           borderRadius: '8px',
-          maxWidth: '500px',
+          maxWidth: '550px',
           margin: '12px auto',
           mt: 4,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, fontSize: '10px' }}>
           <Avatar
             src={currentUser?.avatar || ''}
             sx={{ mr: 2 }}
@@ -151,10 +151,10 @@ function MemeFeed() {
           variant="outlined"
           fullWidth
           multiline
-          rows={4}
+          rows={1}
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
-          sx={{ mb: 2 }}
+          sx={{ mb: 2, height: '20px' }}
         />
         {imagePreview && (
           <Box sx={{ mb: 2 }}>
@@ -165,7 +165,14 @@ function MemeFeed() {
             />
           </Box>
         )}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mt: '25px',
+          }}
+        >
           <IconButton color="primary" component="label">
             <PhotoCamera />
             <input
