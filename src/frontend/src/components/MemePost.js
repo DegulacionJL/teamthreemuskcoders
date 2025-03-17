@@ -120,14 +120,26 @@ function MemePost({
     if (!editingCommentText.trim()) return;
     try {
       const response = await updateComment(id, editingCommentId, editingCommentText);
+
+      // Log the response to see what's coming back
+      console.log('Update comment response:', response);
+
+      // Make sure we're using the correct data structure
+      const updatedComment = response.data;
+
+      // Update the postComments state with the complete updated comment object
       setPostComments((prev) =>
-        prev.map((comment) => (comment.id === editingCommentId ? response.data : comment))
+        prev.map((comment) => (comment.id === editingCommentId ? updatedComment : comment))
       );
+
+      // Reset editing state
       setEditingCommentId(null);
       setEditingCommentText('');
       setIsUpdateModalOpen(false);
     } catch (error) {
       console.error('Error updating comment:', error);
+      // Show error to user
+      alert('Failed to update comment. Please try again.');
     }
   };
 

@@ -53,13 +53,18 @@ const deleteComment = async function (postId, commentId) {
 };
 
 const updateComment = async function (postId, commentId, updatedText) {
-  const req = api
-    .put(`/posts/${postId}/comments/${commentId}`, {
+  try {
+    const response = await api.put(`/posts/${postId}/comments/${commentId}`, {
       post_id: postId,
       text: updatedText,
-    })
-    .then(({ data }) => data);
-  return await req;
+    });
+
+    // Return the response directly
+    return response;
+  } catch (error) {
+    console.error('Error in updateComment service:', error);
+    throw error;
+  }
 };
 
 export {

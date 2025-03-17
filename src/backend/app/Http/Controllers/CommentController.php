@@ -34,17 +34,19 @@ class CommentController extends Controller
     }
 
     public function update(CommentRequest $request, $postId, $commentId): JsonResponse
-    {
-        try {
-            // Merge the postId from the URL into the validated data
-            $data = array_merge($request->validated(), ['post_id' => $postId]);
-            
-            $updatedComment = $this->commentService->updateComment($commentId, $postId, $data);
-            return response()->json(new CommentResource($updatedComment), 200);
-        } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+{
+    try {
+        // Merge the postId from the URL into the validated data
+        $data = array_merge($request->validated(), ['post_id' => $postId]);
+        
+        $updatedComment = $this->commentService->updateComment($commentId, $postId, $data);
+        
+        // Return a fresh CommentResource for the updated comment
+        return response()->json(new CommentResource($updatedComment), 200);
+    } catch (Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
     }
+}
 
     public function destroy($postId, $commentId): JsonResponse
     {
