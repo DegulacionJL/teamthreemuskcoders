@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Log;
 
 class CommentRequest extends FormRequest
 {
@@ -13,24 +14,31 @@ class CommentRequest extends FormRequest
 
   protected function prepareForValidation()
 {
-    // Ensure we get an array from the config
-    $badWords = config('badwords.words', []);
+    // Skip this if text is not set
+    if (!$this->has('text')) {
+        return;
+    }
 
-    // Check if $badWords is an array
+    $text = $this->text;
+    
+    // Log the incoming text
+    Log::debug('Comment text before processing:', ['text' => $text]);
+    
+    // Rest of your bad word filtering...
+    $badWords = config('badwords.words', []);
     if (!is_array($badWords)) {
         $badWords = [];
     }
 
-    // Replace each bad word dynamically based on its length
-    $text = $this->text;
-
     foreach ($badWords as $word) {
-        $wordPattern = '/\b' . preg_quote($word, '/') . '\b/i'; // Match exact word
-        $replacement = str_repeat('*', strlen($word)); // Generate correct number of asterisks
+        $wordPattern = '/\b' . preg_quote($word, '/') . '\b/i';
+        $replacement = str_repeat('*', strlen($word));
         $text = preg_replace($wordPattern, $replacement, $text);
     }
 
-    // Update request with the censored text
+    // Log the processed text
+    Log::debug('Comment text after processing:', ['text' => $text]);
+    
     $this->merge([
         'text' => $text,
     ]);
@@ -41,7 +49,9 @@ class CommentRequest extends FormRequest
     {
         // Base rules
         $rules = [
-            'text' => 'required|string|max:500',
+            'text' => 'string|max:500',
+            'parent_id' => 'nullable|exists:comments,id',
+            'image_url' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
         ];
         
         // No need to require post_id as it comes from the URL parameter

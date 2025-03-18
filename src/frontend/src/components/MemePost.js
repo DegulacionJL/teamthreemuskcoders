@@ -1,24 +1,25 @@
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { addComment, deleteComment, getComments, updateComment } from 'services/meme.service';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   Avatar,
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   IconButton,
   Menu,
   MenuItem,
   TextField,
   Typography,
 } from '@mui/material';
+import Comment from 'components/Comment';
 import TimeDisplay from 'components/atoms/TimeDisplay';
 import DeleteConfirmationModal from './organisms/DeleteConfirmationModal';
 import EditPostModal from './organisms/EditPostModal';
+
+// Import the Comment component
 
 // Helper function to get initials from name
 const getInitials = (firstName, lastName) => {
@@ -44,12 +45,14 @@ function MemePost({
   const [currentImage, setCurrentImage] = useState(image);
   const [postComments, setPostComments] = useState([]);
   const [newComment, setNewComment] = useState('');
+  const [commentImage, setCommentImage] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [commentToDelete, setCommentToDelete] = useState(null);
   const [isPostDeleteModalOpen, setIsPostDeleteModalOpen] = useState(false);
-  const [editingCommentId, setEditingCommentId] = useState(null);
-  const [editingCommentText, setEditingCommentText] = useState('');
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null); // This should be set from your auth context or similar
+
+  useEffect(() => {
+    setCurrentUserId(user?.id);
+  }, [user]);
 
   const handleSave = async (newCaption, newImage) => {
     try {
@@ -62,9 +65,10 @@ function MemePost({
       console.error('Error updating post:', error);
     }
   };
+
   const handleConfirmDelete = () => {
     onDelete(id); // Call delete function
-    setIsDeleteModalOpen(false);
+    setIsPostDeleteModalOpen(false);
   };
 
   // Fetch comments on component mount
@@ -81,55 +85,104 @@ function MemePost({
   }, [id]);
 
   const handleAddComment = async () => {
-    if (!newComment.trim()) return;
+    if (!newComment.trim() && !commentImage) return;
     try {
-      const addedComment = await addComment(id, newComment);
-      setPostComments((prev) => [...prev, addedComment.data]);
+      const addedComment = await addComment(id, newComment, commentImage);
+      setPostComments((prev) => [...prev, addedComment.data || addedComment]);
       setNewComment('');
+      setCommentImage(null);
+      toast.success('Comment added successfully!');
     } catch (error) {
       console.error('Error adding comment:', error);
+      toast.error('Failed to add comment');
     }
   };
 
-  const confirmDeleteComment = (commentId) => {
-    setCommentToDelete(commentId);
-    setIsDeleteModalOpen(true);
-  };
+  const handleCommentUpdate = (updatedComment, isEdit = false) => {
+    if (isEdit) {
+      // Handle editing existing comment
+      setPostComments((prev) => {
+        // First check if it's a top-level comment
+        const updatedComments = prev.map((comment) => {
+          if (comment.id === updatedComment.id) {
+            return updatedComment;
+          }
 
-  const handleDeleteComment = async () => {
-    if (commentToDelete) {
-      await deleteComment(id, commentToDelete);
-      setPostComments((prev) => prev.filter((comment) => comment.id !== commentToDelete));
+          // Check if it's a reply within any comment
+          if (comment.replies && comment.replies.length > 0) {
+            const updatedReplies = comment.replies.map((reply) =>
+              reply.id === updatedComment.id ? updatedComment : reply
+            );
+            return { ...comment, replies: updatedReplies };
+          }
+
+          return comment;
+        });
+
+        return updatedComments;
+      });
+    } else {
+      // Handle adding a reply to a comment
+      setPostComments((prev) => {
+        return prev.map((comment) => {
+          if (comment.id === updatedComment.parent_id) {
+            // Create a new object to ensure React detects the change
+            const updatedReplies = comment.replies
+              ? [...comment.replies, updatedComment]
+              : [updatedComment];
+            return { ...comment, replies: updatedReplies };
+          }
+
+          // Also check nested replies in case we're replying to a reply
+          if (comment.replies && comment.replies.length > 0) {
+            let found = false;
+            const updatedReplies = comment.replies.map((reply) => {
+              if (reply.id === updatedComment.parent_id) {
+                found = true;
+                const nestedReplies = reply.replies
+                  ? [...reply.replies, updatedComment]
+                  : [updatedComment];
+                return { ...reply, replies: nestedReplies };
+              }
+              return reply;
+            });
+
+            if (found) {
+              return { ...comment, replies: updatedReplies };
+            }
+          }
+
+          return comment;
+        });
+      });
     }
-    setCommentToDelete(null);
-    setIsDeleteModalOpen(false);
   };
 
-  // updating comments
-  const handleUpdateComment = async () => {
-    if (!editingCommentText.trim()) return;
-    try {
-      const response = await updateComment(id, editingCommentId, editingCommentText);
+  const handleCommentDelete = (commentId) => {
+    // Recursive function to remove comment from nested structure
+    const removeComment = (comments) => {
+      return comments.filter((comment) => {
+        if (comment.id === commentId) {
+          toast.success('Comment deleted successfully!');
+          return false;
+        }
 
-      // Log the response to see what's coming back
-      console.log('Update comment response:', response);
+        // Check for nested replies
+        if (comment.replies && comment.replies.length > 0) {
+          comment.replies = removeComment(comment.replies);
+        }
 
-      // Make sure we're using the correct data structure
-      const updatedComment = response.data;
+        return true;
+      });
+    };
 
-      // Update the postComments state with the complete updated comment object
-      setPostComments((prev) =>
-        prev.map((comment) => (comment.id === editingCommentId ? updatedComment : comment))
-      );
-
-      // Reset editing state
-      setEditingCommentId(null);
-      setEditingCommentText('');
-      setIsUpdateModalOpen(false);
-    } catch (error) {
-      console.error('Error updating comment:', error);
-      // Show error to user
-      alert('Failed to update comment. Please try again.');
+    // Update state with the filtered comments
+    setPostComments((prev) => removeComment([...prev])); // Create a new array to ensure React detects the change
+  };
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setCommentImage(file);
     }
   };
 
@@ -168,7 +221,6 @@ function MemePost({
           </Box>
           <Box
             sx={{
-              border: '1px solid red',
               padding: 1,
               display: 'flex',
               alignItems: 'center',
@@ -209,7 +261,7 @@ function MemePost({
       <Box sx={{ mt: 3 }}>
         <Typography variant="subtitle1">Comments</Typography>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, gap: 1 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', mt: 1, gap: 1 }}>
           <TextField
             fullWidth
             size="small"
@@ -217,79 +269,32 @@ function MemePost({
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
           />
-          <Button variant="contained" onClick={handleAddComment}>
-            Comment
-          </Button>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Button variant="contained" component="label" size="small">
+              Add Image
+              <input type="file" hidden accept="image/*" onChange={handleImageChange} />
+            </Button>
+            {commentImage && (
+              <Typography variant="caption">{commentImage.name || 'Image selected'}</Typography>
+            )}
+            <Button variant="contained" onClick={handleAddComment} sx={{ ml: 'auto' }}>
+              Comment
+            </Button>
+          </Box>
         </Box>
 
         <Box sx={{ mt: 2 }}>
           {postComments.length > 0 ? (
             postComments.map((comment) => (
-              <Box
+              <Comment
                 key={comment.id}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  mt: 2,
-                  pb: 2,
-                  borderBottom: '1px solid #eee',
-                }}
-              >
-                <Avatar
-                  src={comment.user?.avatar || ''}
-                  sx={{ mr: 1 }}
-                  alt={comment.user?.full_name || 'User'}
-                >
-                  {getInitials(comment.user?.first_name, comment.user?.last_name)}
-                </Avatar>
-                <Box sx={{ flexGrow: 1 }}>
-                  <Box
-                    sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                  >
-                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                      {comment.user?.full_name || 'Unknown User'}
-                    </Typography>
-                    <Typography variant="caption" color="gray">
-                      {comment.timestamp || comment.created_at}
-                    </Typography>
-                  </Box>
-
-                  {editingCommentId === comment.id ? (
-                    <TextField
-                      fullWidth
-                      size="small"
-                      value={editingCommentText}
-                      onChange={(e) => setEditingCommentText(e.target.value)}
-                      sx={{ mt: 1 }}
-                    />
-                  ) : (
-                    <Typography variant="body2" sx={{ mt: 0.5 }}>
-                      {comment.text}
-                    </Typography>
-                  )}
-                </Box>
-                {editingCommentId === comment.id ? (
-                  <Button size="small" onClick={() => setIsUpdateModalOpen(true)}>
-                    Save
-                  </Button>
-                ) : (
-                  <Box>
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        setEditingCommentId(comment.id);
-                        setEditingCommentText(comment.text);
-                        setIsUpdateModalOpen(true);
-                      }}
-                    >
-                      ✏️
-                    </IconButton>
-                    <IconButton size="small" onClick={() => confirmDeleteComment(comment.id)}>
-                      🗑️
-                    </IconButton>
-                  </Box>
-                )}
-              </Box>
+                comment={comment}
+                postId={id}
+                onCommentUpdate={handleCommentUpdate}
+                onCommentDelete={handleCommentDelete}
+                currentUserId={currentUserId}
+              />
             ))
           ) : (
             <Typography variant="body2" sx={{ color: 'gray', mt: 1 }}>
@@ -298,32 +303,6 @@ function MemePost({
           )}
         </Box>
       </Box>
-
-      {/* Update Confirmation Modal */}
-      <Dialog open={isUpdateModalOpen} onClose={() => setIsUpdateModalOpen(false)}>
-        <DialogTitle>Edit Comment</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            size="small"
-            value={editingCommentText}
-            onChange={(e) => setEditingCommentText(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsUpdateModalOpen(false)}>Cancel</Button>
-          <Button onClick={handleUpdateComment} color="primary">
-            Save Changes
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <DeleteConfirmationModal
-        open={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={handleDeleteComment}
-        message="Are you sure you want to delete this comment? This action cannot be undone."
-      />
 
       <EditPostModal
         open={isEditModalOpen}

@@ -11,6 +11,7 @@ class CommentResource extends JsonResource
         return [
             'id' => $this->id,
             'text' => $this->text,
+             'image_url' => $this->image_url ? asset('storage/' . $this->image_url) : null,
             'user' => $this->user ? [
                 'id' => $this->user->id,
                 // 'first_name' => $this->user->first_name,
@@ -19,9 +20,12 @@ class CommentResource extends JsonResource
                 'avatar' => $this->user->avatar,
             ] : null,
             'post_id' => $this->post_id,
+            'parent_id' => $this->parent_id,
             'created_at' => $this->created_at->diffForHumans(),
             'updated_at' => $this->updated_at->toDateTimeString(),
-            'timestamp' => $this->created_at->diffForHumans(), // Add this for easier access in frontend
+            'timestamp' => $this->created_at->diffForHumans(),
+             'replies' => $this->when($this->replies->count() > 0, 
+            CommentResource::collection($this->replies)) // Add this for easier access in frontend
         ];
     }
 }
