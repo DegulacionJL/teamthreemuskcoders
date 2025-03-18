@@ -197,7 +197,7 @@ function MemeFeed() {
           key={post.id}
           id={post.id}
           caption={post.caption}
-          image={imagePreview || post.image.image_path}
+          image={post.image ? post.image.image_path : null}
           timestamp={post.created_at}
           user={post.user}
           onDelete={handleDelete}

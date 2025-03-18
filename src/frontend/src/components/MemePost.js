@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
-import { addComment, deleteComment, getComments, updateComment } from 'services/meme.service';
+import { addComment, deleteComment, getComments, updateComment } from 'services/comment.service';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   Avatar,
@@ -350,6 +350,7 @@ MemePost.propTypes = {
   caption: PropTypes.string.isRequired,
   image: PropTypes.string,
   timestamp: PropTypes.string.isRequired,
+  user: PropTypes.object.isRequired,
   onDelete: PropTypes.func.isRequired,
   onUpdate: PropTypes.func,
   onMenuOpen: PropTypes.func.isRequired,
