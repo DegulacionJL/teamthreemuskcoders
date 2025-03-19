@@ -67,14 +67,4 @@ const updateComment = async function (postId, commentId, updatedText) {
   }
 };
 
-export {
-  createMemePost,
-  getMemePosts,
-  updatePost,
-  deletePost,
-  updateImage,
-  getComments,
-  addComment,
-  deleteComment,
-  updateComment,
-};
+export { createMemePost, getMemePosts, updatePost, deletePost, updateImage };

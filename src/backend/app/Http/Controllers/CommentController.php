@@ -25,23 +25,38 @@ class CommentController extends Controller
     }
 
     public function store(CommentRequest $request, $postId)
-    {
-        // Merge the postId from the URL into the validated data
-        $data = array_merge($request->validated(), ['post_id' => $postId]);
-        
-        $comment = $this->commentService->addComment($data);
-        return new CommentResource($comment);
+{
+    // Get validated data
+    $data = $request->validated();
+    
+    // Add the post_id
+    $data['post_id'] = $postId;
+    
+    // Handle file upload separately
+    if ($request->hasFile('image')) {
+        $data['image'] = $request->file('image');
     }
 
-    public function update(CommentRequest $request, $postId, $commentId): JsonResponse
+    $comment = $this->commentService->addComment($data);
+    return new CommentResource($comment);
+}
+
+public function update(CommentRequest $request, $postId, $commentId): JsonResponse
 {
     try {
-        // Merge the postId from the URL into the validated data
-        $data = array_merge($request->validated(), ['post_id' => $postId]);
+        // Get validated data
+        $data = $request->validated();
         
+        // Add the post_id
+        $data['post_id'] = $postId;
+        
+        // Handle file upload separately
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image');
+        }
+
         $updatedComment = $this->commentService->updateComment($commentId, $postId, $data);
-        
-        // Return a fresh CommentResource for the updated comment
+
         return response()->json(new CommentResource($updatedComment), 200);
     } catch (Exception $e) {
         return response()->json(['error' => $e->getMessage()], 500);
