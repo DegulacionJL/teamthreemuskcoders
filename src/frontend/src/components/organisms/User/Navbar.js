@@ -13,6 +13,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Switch from '@mui/material/Switch';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
+import { blueGrey } from '@mui/material/colors';
 import Button from 'components/atoms/Button';
 import LanguageSelect from 'components/atoms/LanguageSelect';
 import MenuLinks from 'components/atoms/MenuLinks';
@@ -69,11 +70,13 @@ function Navbar(props) {
       elevation={0}
       sx={{
         borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+        backgroundColor: blueGrey[900],
+        color: 'transparent',
       }}
     >
       <Container maxWidth="lg">
         <Toolbar sx={{ flexWrap: 'wrap' }} disableGutters>
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
+          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, mt: 0, mb: 0 }}>
             <Link to="/">
               <img src="/static/images/memema_black.png" alt={appName} height={48} />
             </Link>
