@@ -16,9 +16,8 @@ class CommentRequest extends FormRequest
         // Base rules
         $rules = [
             'text' => 'required|string|max:500',
+            'image' => 'nullable|string', // Base64 encoded image
         ];
-        
-        // No need to require post_id as it comes from the URL parameter
         
         return $rules;
     }

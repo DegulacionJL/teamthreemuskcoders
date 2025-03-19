@@ -1,79 +1,73 @@
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
-// Add this import
-import { Box, Button, IconButton, TextField, Typography } from '@mui/material';
-import AvatarWithInitials from '../atoms/AvatarWithInitials';
+import React from 'react';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import { Box, IconButton, Stack, Typography } from '@mui/material';
 
-const CommentItem = ({ comment, onEditComment, onDeleteComment }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingText, setEditingText] = useState(comment.text);
-
-  const handleSave = () => {
-    onEditComment(comment.id, editingText);
-    setIsEditing(false);
-  };
+function CommentItem({ comment, onEdit, onDelete, currentUser }) {
+  const isOwner = currentUser && comment.user && currentUser.id === comment.user.id;
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        mt: 2,
-        pb: 2,
-        borderBottom: '1px solid #eee',
-      }}
-    >
-      <AvatarWithInitials
-        src={comment.user?.avatar}
-        firstName={comment.user?.first_name}
-        lastName={comment.user?.last_name}
-        alt={comment.user?.full_name}
-      />
-      <Box sx={{ flexGrow: 1 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-            {comment.user?.full_name || 'Unknown User'}
+    <Box sx={{ py: 1, borderBottom: '1px solid #f0f0f0' }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+        <Box>
+          <Typography variant="subtitle2" component="span" sx={{ fontWeight: 'bold' }}>
+            {comment.user ? comment.user.full_name : 'Unknown User'}
           </Typography>
-          <Typography variant="caption" color="gray">
-            {comment.timestamp || comment.created_at}
+          <Typography variant="body2" component="span" sx={{ ml: 1, color: 'text.secondary' }}>
+            {comment.timestamp}
           </Typography>
-        </Box>
-        {isEditing ? (
-          <TextField
-            fullWidth
-            size="small"
-            value={editingText}
-            onChange={(e) => setEditingText(e.target.value)}
-            sx={{ mt: 1 }}
-          />
-        ) : (
           <Typography variant="body2" sx={{ mt: 0.5 }}>
             {comment.text}
           </Typography>
-        )}
-      </Box>
-      {isEditing ? (
-        <Button size="small" onClick={handleSave}>
-          Save
-        </Button>
-      ) : (
-        <Box>
-          <IconButton size="small" onClick={() => setIsEditing(true)}>
-            ✏️
-          </IconButton>
-          <IconButton size="small" onClick={() => onDeleteComment(comment.id)}>
-            🗑️
-          </IconButton>
+
+          {comment.image && (
+            <Box sx={{ mt: 1, mb: 1 }}>
+              <img
+                src={comment.image}
+                alt="Comment attachment"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '200px',
+                  borderRadius: '4px',
+                }}
+              />
+            </Box>
+          )}
         </Box>
-      )}
+
+        {isOwner && (
+          <Box>
+            <IconButton
+              size="small"
+              onClick={() => onEdit(comment.id, comment.text, comment.image)}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+            <IconButton size="small" onClick={() => onDelete(comment.id)}>
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        )}
+      </Stack>
     </Box>
   );
-};
+}
 
 CommentItem.propTypes = {
-  comment: PropTypes.object.isRequired,
-  onEditComment: PropTypes.func.isRequired,
-  onDeleteComment: PropTypes.func.isRequired,
+  comment: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    text: PropTypes.string.isRequired,
+    image: PropTypes.string,
+    timestamp: PropTypes.string.isRequired,
+    user: PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      full_name: PropTypes.string.isRequired,
+    }),
+  }).isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  currentUser: PropTypes.object,
 };
 
 export default CommentItem;

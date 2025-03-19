@@ -1,17 +1,7 @@
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import { addComment, deleteComment, getComments, updateComment } from 'services/comment.service';
-// Ensure this import is present
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField, // Add this import
-  Typography,
-} from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import DeleteConfirmationModal from './organisms/DeleteConfirmationModal';
 import EditPostModal from './organisms/EditPostModal';
 import PostComments from './organisms/PostComments';
@@ -29,6 +19,7 @@ function MemePost({
   onMenuClose,
   menuAnchor,
   isMenuOpen,
+  currentUser,
 }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentCaption, setCurrentCaption] = useState(caption);
@@ -37,9 +28,6 @@ function MemePost({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState(null);
   const [isPostDeleteModalOpen, setIsPostDeleteModalOpen] = useState(false);
-  const [editingCommentId, setEditingCommentId] = useState(null);
-  const [editingCommentText, setEditingCommentText] = useState('');
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
   const handleSave = async (newCaption, newImage) => {
     try {
@@ -70,10 +58,10 @@ function MemePost({
     fetchComments();
   }, [id]);
 
-  const handleAddComment = async (newComment) => {
-    if (!newComment.trim()) return;
+  const handleAddComment = async (commentText, imageBase64 = null) => {
+    if (!commentText.trim() && !imageBase64) return;
     try {
-      const addedComment = await addComment(id, newComment);
+      const addedComment = await addComment(id, commentText, imageBase64);
       setPostComments((prev) => [...prev, addedComment.data]);
     } catch (error) {
       console.error('Error adding comment:', error);
@@ -89,17 +77,14 @@ function MemePost({
     setIsDeleteModalOpen(false);
   };
 
-  const handleUpdateComment = async (commentId, newText) => {
-    if (!newText.trim()) return;
+  const handleUpdateComment = async (commentId, newText, imageBase64 = undefined) => {
+    if (!newText.trim() && imageBase64 === null) return;
     try {
-      const response = await updateComment(id, commentId, newText);
+      const response = await updateComment(id, commentId, newText, imageBase64);
       const updatedComment = response.data;
       setPostComments((prev) =>
         prev.map((comment) => (comment.id === commentId ? updatedComment : comment))
       );
-      setEditingCommentId(null);
-      setEditingCommentText('');
-      setIsUpdateModalOpen(false);
     } catch (error) {
       console.error('Error updating comment:', error);
       alert('Failed to update comment. Please try again.');
@@ -141,37 +126,13 @@ function MemePost({
       <PostComments
         comments={postComments}
         onAddComment={handleAddComment}
-        onEditComment={(commentId, newText) => {
-          setEditingCommentId(commentId);
-          setEditingCommentText(newText);
-          setIsUpdateModalOpen(true);
-        }}
+        onEditComment={handleUpdateComment}
         onDeleteComment={(commentId) => {
           setCommentToDelete(commentId);
           setIsDeleteModalOpen(true);
         }}
+        currentUser={currentUser}
       />
-
-      <Dialog open={isUpdateModalOpen} onClose={() => setIsUpdateModalOpen(false)}>
-        <DialogTitle>Edit Comment</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            size="small"
-            value={editingCommentText}
-            onChange={(e) => setEditingCommentText(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsUpdateModalOpen(false)}>Cancel</Button>
-          <Button
-            onClick={() => handleUpdateComment(editingCommentId, editingCommentText)}
-            color="primary"
-          >
-            Save Changes
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       <DeleteConfirmationModal
         open={isDeleteModalOpen}
@@ -204,6 +165,7 @@ MemePost.propTypes = {
   image: PropTypes.string,
   timestamp: PropTypes.string.isRequired,
   user: PropTypes.object.isRequired,
+  currentUser: PropTypes.object,
   onDelete: PropTypes.func.isRequired,
   onUpdate: PropTypes.func,
   onMenuOpen: PropTypes.func.isRequired,
