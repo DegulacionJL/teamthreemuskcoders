@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import { addComment, deleteComment, getComments, updateComment } from 'services/comment.service';
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import CloseIcon from '@mui/icons-material/Close';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   Avatar,
@@ -18,8 +20,6 @@ import {
 } from '@mui/material';
 import DeleteConfirmationModal from './organisms/DeleteConfirmationModal';
 import EditPostModal from './organisms/EditPostModal';
-import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
-import CloseIcon from '@mui/icons-material/Close';
 
 function getRelativeTime(timestamp) {
   const now = new Date();
@@ -71,6 +71,8 @@ function MemePost({
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [commentImage, setCommentImage] = useState(null);
   const [commentImagePreview, setCommentImagePreview] = useState(null);
+  const [updateCommentImagePreview, setUpdateCommentImagePreview] = useState(null);
+  const [updateCommentImage, setUpdateCommentImage] = useState(null);
 
   // File input for comment image
   const handleCommentImageChange = (e) => {
@@ -81,11 +83,19 @@ function MemePost({
     }
   };
 
-  // Clear image selection
-  const clearCommentImage = () => {
-    setCommentImage(null);
-    setCommentImagePreview(null);
+  const handleUpdateCommentImage = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setCommentImage(file);
+      setUpdateCommentImagePreview(URL.createObjectURL(file));
+    }
   };
+
+  // Clear image selection
+  // const clearCommentImage = () => {
+  //   setCommentImage(null);
+  //   setCommentImagePreview(null);
+  // };
 
   const handleSave = async (newCaption, newImage) => {
     try {
@@ -103,18 +113,25 @@ function MemePost({
     setIsDeleteModalOpen(false);
   };
 
-  // Fetch comments on component mount
-  useEffect(() => {
-    async function fetchComments() {
-      try {
-        const response = await getComments(id);
-        setPostComments(response?.data || []);
-      } catch (error) {
-        console.error('Error fetching comments:', error);
-      }
+  const fetchComments = async () => {
+    try {
+      const response = await getComments(id);
+      console.log('Fetched comments:', response.data); // Debugging
+      setPostComments(response.data || []);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      setPostComments([]); // Prevent undefined issues
     }
-    fetchComments();
-  }, [id]);
+  };
+
+  // Fetch comments on component mount
+  useEffect(
+    () => {
+      fetchComments();
+    },
+    [id],
+    [postComments]
+  );
 
   const handleAddComment = async () => {
     if (!newComment.trim() && !commentImage) return;
@@ -146,19 +163,30 @@ function MemePost({
   // updating comments
   const handleUpdateComment = async () => {
     if (!editingCommentText.trim() && !commentImage) return;
-    try {
-      const response = await updateComment(id, editingCommentId, editingCommentText, commentImage);
-      const updatedComment = response.data;
 
-      setPostComments((prev) =>
-        prev.map((comment) => (comment.id === editingCommentId ? updatedComment : comment))
-      );
+    try {
+      const formData = new FormData();
+      formData.append('text', editingCommentText || '');
+      console.log('updateCommentImagePreview: ', updateCommentImagePreview);
+      console.log('commentImage: ', commentImage);
+      // commentImage
+      //   ? formData.append('image', commentImage)
+      //   : formData.append('image', updateCommentImagePreview);
+      if (commentImage) {
+        formData.append('image', commentImage);
+      } else if (updateCommentImage) {
+        formData.append('image', updateCommentImage);
+      }
+      formData.append('_method', 'PUT');
+
+      await updateComment(id, editingCommentId, formData);
+
+      await fetchComments();
 
       setEditingCommentId(null);
       setEditingCommentText('');
-      setCommentImage(null);
-      setCommentImagePreview(null);
       setIsUpdateModalOpen(false);
+      setCommentImagePreview(null);
     } catch (error) {
       console.error('Error updating comment:', error);
       alert('Failed to update comment. Please try again.');
@@ -247,6 +275,7 @@ function MemePost({
             id="comment-image-upload"
             type="file"
             onChange={handleCommentImageChange}
+            // src={postComments.image}
           />
           <label htmlFor="comment-image-upload">
             <IconButton component="span" color="primary">
@@ -273,7 +302,7 @@ function MemePost({
                 right: 0,
                 backgroundColor: 'rgba(255,255,255,0.7)',
               }}
-              onClick={clearCommentImage}
+              onClick={() => setCommentImagePreview(null)}
             >
               <CloseIcon fontSize="small" />
             </IconButton>
@@ -313,13 +342,24 @@ function MemePost({
                   </Box>
 
                   {editingCommentId === comment.id ? (
-                    <TextField
-                      fullWidth
-                      size="small"
-                      value={editingCommentText}
-                      onChange={(e) => setEditingCommentText(e.target.value)}
-                      sx={{ mt: 1 }}
-                    />
+                    <>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        value={editingCommentText}
+                        onChange={(e) => setEditingCommentText(e.target.value)}
+                        sx={{ mt: 1 }}
+                      />
+                      {comment.image && (
+                        <Box sx={{ mt: 1 }}>
+                          <img
+                            src={comment.image}
+                            alt="Comment attachment"
+                            style={{ maxHeight: '200px', borderRadius: '4px', maxWidth: '100%' }}
+                          />
+                        </Box>
+                      )}
+                    </>
                   ) : (
                     <>
                       {comment.text && (
@@ -339,7 +379,7 @@ function MemePost({
                     </>
                   )}
                 </Box>
-                {editingCommentId === comment.id ? (
+                {isUpdateModalOpen === true ? (
                   <Button size="small" onClick={() => setIsUpdateModalOpen(true)}>
                     Save
                   </Button>
@@ -350,7 +390,9 @@ function MemePost({
                       onClick={() => {
                         setEditingCommentId(comment.id);
                         setEditingCommentText(comment.text);
+                        // setCommentImagePreview(comment.image);
                         setIsUpdateModalOpen(true);
+                        setUpdateCommentImagePreview(comment.image);
                       }}
                     >
                       ✏️
@@ -387,23 +429,29 @@ function MemePost({
               style={{ display: 'none' }}
               id="edit-comment-image"
               type="file"
-              onChange={handleCommentImageChange}
+              src={commentImagePreview}
+              onChange={handleUpdateCommentImage}
             />
             <label htmlFor="edit-comment-image">
               <Button component="span" variant="outlined" startIcon={<AddPhotoAlternateIcon />}>
-                {commentImagePreview ? 'Change Image' : 'Add Image'}
+                {updateCommentImagePreview ? 'Change Image' : 'Add Image'}
               </Button>
             </label>
-            {commentImagePreview && (
-              <IconButton onClick={clearCommentImage}>
+            {updateCommentImagePreview && (
+              <IconButton
+                onClick={() => {
+                  setUpdateCommentImage(updateCommentImagePreview);
+                  setUpdateCommentImagePreview(null);
+                }}
+              >
                 <CloseIcon />
               </IconButton>
             )}
           </Box>
-          {commentImagePreview && (
+          {updateCommentImagePreview && (
             <Box sx={{ mt: 2 }}>
               <img
-                src={commentImagePreview}
+                src={updateCommentImagePreview}
                 alt="Preview"
                 style={{ maxHeight: '150px', borderRadius: '4px' }}
               />

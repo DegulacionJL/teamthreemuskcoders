@@ -16,7 +16,7 @@ const getComments = async function (postId) {
   return await req;
 };
 
-const addComment = async function (postId, commentText, commentImage = null) {
+const addComment = async function (postId, commentText, commentImage) {
   // Create appropriate data structure based on presence of image
   let requestData;
   let config = {};
@@ -43,31 +43,51 @@ const deleteComment = async function (postId, commentId) {
   return await req;
 };
 
-const updateComment = async function (postId, commentId, updatedText, commentImage = null) {
+const updateComment = async function (postId, commentId, data) {
+  console.log('Update Service Data: ', Object.fromEntries(data.entries())); // Debugging
+
   try {
-    // Create appropriate data structure based on presence of image
-    let requestData;
-    let config = {};
+    data.append('_method', 'PUT');
 
-    if (commentImage) {
-      requestData = new FormData();
-      requestData.append('post_id', postId);
-      requestData.append('text', updatedText);
-      requestData.append('image', commentImage);
-      config = createRequestConfig(requestData);
-    } else {
-      requestData = {
-        post_id: postId,
-        text: updatedText,
-      };
-    }
+    const response = await api.post(`/posts/${postId}/comments/${commentId}`, data, {
+      headers: {
+        'Content-Type': 'multipart/form-data', // Fix typo: `multi-part/form-data` -> `multipart/form-data`
+      },
+    });
 
-    const response = await api.put(`/posts/${postId}/comments/${commentId}`, requestData, config);
-    return response;
+    return response.data;
   } catch (error) {
     console.error('Error in updateComment service:', error);
     throw error;
   }
 };
+
+// const updateComment = async function (postId, commentId, updatedText, commentImage = null) {
+//   try {
+
+//     const response = await api.put(`/posts/${postId}/comments/${commentId}`, requestData, config);
+//     // Create appropriate data structure based on presence of image
+//     let requestData;
+//     let config = {};
+//     requestData = new FormData();
+//     requestData.append('post_id', postId);
+//     requestData.append('text', updatedText);
+//     if (commentImage) {
+//       requestData.append('image', commentImage);
+//       config = createRequestConfig(requestData);
+//     } else {
+//       requestData = {
+//         post_id: postId,
+//         text: updatedText,
+//       };
+//     }
+
+//     const response = await api.put(`/posts/${postId}/comments/${commentId}`, requestData, config);
+//     return response;
+//   } catch (error) {
+//     console.error('Error in updateComment service:', error);
+//     throw error;
+//   }
+// };
 
 export { getComments, addComment, deleteComment, updateComment };
