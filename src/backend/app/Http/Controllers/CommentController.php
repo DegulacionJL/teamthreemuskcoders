@@ -70,6 +70,7 @@ class CommentController extends Controller
                 'text' => $request->getText(),
                 'post_id' => $postId,
                 'image' => $request->getImage(),
+                'parent_id' => $request->getParentId(),
             ];
 
             $comment = $this->commentService->addComment($data);

@@ -16,8 +16,7 @@ const getComments = async function (postId) {
   return await req;
 };
 
-const addComment = async function (postId, commentText, commentImage) {
-  // Create appropriate data structure based on presence of image
+const addComment = async function (postId, commentText, commentImage, parentId = null) {
   let requestData;
   let config = {};
 
@@ -26,11 +25,15 @@ const addComment = async function (postId, commentText, commentImage) {
     requestData.append('post_id', postId);
     requestData.append('text', commentText);
     requestData.append('image', commentImage);
+    if (parentId) {
+      requestData.append('parent_id', parentId);
+    }
     config = createRequestConfig(requestData);
   } else {
     requestData = {
       post_id: postId,
       text: commentText,
+      parent_id: parentId || null,
     };
   }
 

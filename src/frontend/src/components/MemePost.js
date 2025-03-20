@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import DeleteConfirmationModal from './organisms/DeleteConfirmationModal';
 import EditPostModal from './organisms/EditPostModal';
+import Comment from './Comment';
 
 function getRelativeTime(timestamp) {
   const now = new Date();
@@ -72,7 +73,12 @@ function MemePost({
   const [commentImage, setCommentImage] = useState(null);
   const [commentImagePreview, setCommentImagePreview] = useState(null);
   const [updateCommentImagePreview, setUpdateCommentImagePreview] = useState(null);
-  // const [updateCommentImage, setUpdateCommentImage] = useState(null);
+
+  // New state variables for reply functionality
+  const [replyToComment, setReplyToComment] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [replyImage, setReplyImage] = useState(null);
+  const [replyImagePreview, setReplyImagePreview] = useState(null);
 
   // File input for comment image
   const handleCommentImageChange = (e) => {
@@ -91,11 +97,22 @@ function MemePost({
     }
   };
 
-  // Clear image selection
-  // const clearCommentImage = () => {
-  //   setCommentImage(null);
-  //   setCommentImagePreview(null);
-  // };
+  // New helper function for reply image handling
+  const handleReplyImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setReplyImage(file);
+      setReplyImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  // Function to cancel reply
+  const handleCancelReply = () => {
+    setReplyToComment(null);
+    setReplyText('');
+    setReplyImage(null);
+    setReplyImagePreview(null);
+  };
 
   const handleSave = async (newCaption, newImage) => {
     try {
@@ -108,6 +125,7 @@ function MemePost({
       console.error('Error updating post:', error);
     }
   };
+
   const handleConfirmDelete = () => {
     onDelete(id); // Call delete function
     setIsDeleteModalOpen(false);
@@ -116,11 +134,13 @@ function MemePost({
   const fetchComments = async () => {
     try {
       const response = await getComments(id);
-      console.log('Fetched comments:', response.data); // Debugging
+      console.log('Fetched comments:', response.data);
       setPostComments(response.data || []);
+      setReplyToComment(null);
+      setReplyText('');
     } catch (error) {
       console.error('Error fetching comments:', error);
-      setPostComments([]); // Prevent undefined issues
+      setPostComments([]);
     }
   };
 
@@ -132,6 +152,36 @@ function MemePost({
     [id],
     [postComments]
   );
+
+  // Updated handleAddReply function
+  const handleAddReply = async (parentId) => {
+    if (!replyText.trim() && !replyImage) return;
+    try {
+      const addedComment = await addComment(id, replyText, replyImage, parentId);
+      // Update the comment list with the new reply
+      setPostComments((prev) => {
+        const updatedComments = [...prev];
+        const parentCommentIndex = updatedComments.findIndex((comment) => comment.id === parentId);
+
+        if (parentCommentIndex !== -1) {
+          if (!updatedComments[parentCommentIndex].replies) {
+            updatedComments[parentCommentIndex].replies = [];
+          }
+          updatedComments[parentCommentIndex].replies.push(addedComment.data);
+        }
+
+        return updatedComments;
+      });
+
+      // Reset reply state
+      setReplyText('');
+      setReplyImage(null);
+      setReplyImagePreview(null);
+      setReplyToComment(null);
+    } catch (error) {
+      console.error('Error adding reply:', error);
+    }
+  };
 
   const handleAddComment = async () => {
     if (!newComment.trim() && !commentImage) return;
@@ -151,42 +201,100 @@ function MemePost({
     setIsDeleteModalOpen(true);
   };
 
+  // Updated handleDeleteComment function
   const handleDeleteComment = async () => {
     if (commentToDelete) {
       await deleteComment(id, commentToDelete);
-      setPostComments((prev) => prev.filter((comment) => comment.id !== commentToDelete));
+
+      // Find if the comment is a top-level comment or a reply
+      const commentIndex = postComments.findIndex((c) => c.id === commentToDelete);
+
+      if (commentIndex !== -1) {
+        // If top-level comment, remove it completely
+        setPostComments((prev) => prev.filter((c) => c.id !== commentToDelete));
+      } else {
+        // If it's a reply, find its parent and remove from replies
+        setPostComments((prev) => {
+          return prev.map((comment) => {
+            if (comment.replies && comment.replies.some((r) => r.id === commentToDelete)) {
+              return {
+                ...comment,
+                replies: comment.replies.filter((r) => r.id !== commentToDelete),
+              };
+            }
+            return comment;
+          });
+        });
+      }
     }
     setCommentToDelete(null);
     setIsDeleteModalOpen(false);
   };
 
-  // updating comments
+  // Updated handleUpdateComment function
   const handleUpdateComment = async () => {
-    if (!editingCommentText.trim() && !commentImage) return;
+    if (!editingCommentText.trim() && !commentImage && !updateCommentImagePreview) return;
 
     try {
       const formData = new FormData();
       formData.append('text', editingCommentText || '');
 
+      // Handle image updates
       if (commentImage) {
-        // New image uploaded
-        formData.append('image', commentImage);
-      } else if (updateCommentImagePreview) {
-        // Keep existing image (do nothing)
-      } else {
-        // We want to remove the image - pass a special value
-        formData.append('remove_image', 'true');
+        formData.append('image', commentImage); // New image
+      } else if (!updateCommentImagePreview) {
+        formData.append('remove_image', 'true'); // Remove existing image
       }
 
-      formData.append('_method', 'PUT');
+      formData.append('_method', 'PUT'); // For Laravel's PUT method handling
 
       await updateComment(id, editingCommentId, formData);
 
-      await fetchComments();
+      // Update the comment in state
+      setPostComments((prev) => {
+        return prev.map((comment) => {
+          if (comment.id === editingCommentId) {
+            return {
+              ...comment,
+              text: editingCommentText,
+              image: commentImage
+                ? URL.createObjectURL(commentImage)
+                : updateCommentImagePreview
+                  ? updateCommentImagePreview
+                  : null,
+            };
+          }
 
+          // Check nested replies
+          if (comment.replies && comment.replies.length > 0) {
+            return {
+              ...comment,
+              replies: comment.replies.map((reply) => {
+                if (reply.id === editingCommentId) {
+                  return {
+                    ...reply,
+                    text: editingCommentText,
+                    image: commentImage
+                      ? URL.createObjectURL(commentImage)
+                      : updateCommentImagePreview
+                        ? updateCommentImagePreview
+                        : null,
+                  };
+                }
+                return reply;
+              }),
+            };
+          }
+
+          return comment;
+        });
+      });
+
+      // Reset states
       setEditingCommentId(null);
       setEditingCommentText('');
       setIsUpdateModalOpen(false);
+      setCommentImage(null);
       setCommentImagePreview(null);
       setUpdateCommentImagePreview(null);
     } catch (error) {
@@ -194,6 +302,166 @@ function MemePost({
       alert('Failed to update comment. Please try again.');
     }
   };
+
+  // Recursive function to render comments and their replies
+  const renderComment = (comment, depth = 0) => (
+    <Box
+      key={comment.id}
+      sx={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        mt: 2,
+        pb: 2,
+        borderBottom: '1px solid #eee',
+        ml: depth * 3, // Indent nested comments
+      }}
+    >
+      <Avatar
+        src={comment.user?.avatar || ''}
+        sx={{ mr: 1 }}
+        alt={comment.user?.full_name || 'User'}
+      >
+        {getInitials(comment.user?.first_name, comment.user?.last_name)}
+      </Avatar>
+      <Box sx={{ flexGrow: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+            {comment.user?.full_name || 'Unknown User'}
+          </Typography>
+          <Typography variant="caption" color="gray">
+            {comment.timestamp || comment.created_at}
+          </Typography>
+        </Box>
+
+        {editingCommentId === comment.id ? (
+          <>
+            <TextField
+              fullWidth
+              size="small"
+              value={editingCommentText}
+              onChange={(e) => setEditingCommentText(e.target.value)}
+              sx={{ mt: 1 }}
+            />
+            {comment.image && (
+              <Box sx={{ mt: 1 }}>
+                <img
+                  src={comment.image}
+                  alt="Comment attachment"
+                  style={{ maxHeight: '200px', borderRadius: '4px', maxWidth: '100%' }}
+                />
+              </Box>
+            )}
+          </>
+        ) : (
+          <>
+            {comment.text && (
+              <Typography variant="body2" sx={{ mt: 0.5 }}>
+                {comment.text}
+              </Typography>
+            )}
+            {comment.image && (
+              <Box sx={{ mt: 1 }}>
+                <img
+                  src={comment.image}
+                  alt="Comment attachment"
+                  style={{ maxHeight: '200px', borderRadius: '4px', maxWidth: '100%' }}
+                />
+              </Box>
+            )}
+          </>
+        )}
+
+        {/* Reply button */}
+        {replyToComment !== comment.id && (
+          <Button
+            size="small"
+            sx={{ mt: 1, textTransform: 'none' }}
+            onClick={() => setReplyToComment(comment.id)}
+          >
+            Reply
+          </Button>
+        )}
+
+        {/* Reply form */}
+        {replyToComment === comment.id && (
+          <Box sx={{ mt: 2, ml: 2 }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Write a reply..."
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              sx={{ mb: 1 }}
+            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <input
+                accept="image/*"
+                style={{ display: 'none' }}
+                id={`reply-image-upload-${comment.id}`}
+                type="file"
+                onChange={handleReplyImageChange}
+              />
+              <label htmlFor={`reply-image-upload-${comment.id}`}>
+                <IconButton component="span" color="primary" size="small">
+                  <AddPhotoAlternateIcon fontSize="small" />
+                </IconButton>
+              </label>
+              <Button variant="contained" size="small" onClick={() => handleAddReply(comment.id)}>
+                Reply
+              </Button>
+              <Button size="small" onClick={handleCancelReply}>
+                Cancel
+              </Button>
+            </Box>
+            {replyImagePreview && (
+              <Box sx={{ mt: 1, position: 'relative', display: 'inline-block' }}>
+                <img
+                  src={replyImagePreview}
+                  alt="Preview"
+                  style={{ maxHeight: '80px', borderRadius: '4px' }}
+                />
+                <IconButton
+                  size="small"
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    backgroundColor: 'rgba(255,255,255,0.7)',
+                  }}
+                  onClick={() => setReplyImagePreview(null)}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            )}
+          </Box>
+        )}
+
+        {/* Render replies */}
+        {comment.replies && comment.replies.length > 0 && (
+          <Box sx={{ mt: 2 }}>
+            {comment.replies.map((reply) => renderComment(reply, depth + 1))}
+          </Box>
+        )}
+      </Box>
+      <Box>
+        <IconButton
+          size="small"
+          onClick={() => {
+            setEditingCommentId(comment.id);
+            setEditingCommentText(comment.text);
+            setIsUpdateModalOpen(true);
+            setUpdateCommentImagePreview(comment.image);
+          }}
+        >
+          ✏️
+        </IconButton>
+        <IconButton size="small" onClick={() => confirmDeleteComment(comment.id)}>
+          🗑️
+        </IconButton>
+      </Box>
+    </Box>
+  );
 
   return (
     <Box
@@ -277,7 +545,6 @@ function MemePost({
             id="comment-image-upload"
             type="file"
             onChange={handleCommentImageChange}
-            // src={postComments.image}
           />
           <label htmlFor="comment-image-upload">
             <IconButton component="span" color="primary">
@@ -311,101 +578,10 @@ function MemePost({
           </Box>
         )}
 
+        {/* Updated comment rendering section */}
         <Box sx={{ mt: 2 }}>
           {postComments.length > 0 ? (
-            postComments.map((comment) => (
-              <Box
-                key={comment.id}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  mt: 2,
-                  pb: 2,
-                  borderBottom: '1px solid #eee',
-                }}
-              >
-                <Avatar
-                  src={comment.user?.avatar || ''}
-                  sx={{ mr: 1 }}
-                  alt={comment.user?.full_name || 'User'}
-                >
-                  {getInitials(comment.user?.first_name, comment.user?.last_name)}
-                </Avatar>
-                <Box sx={{ flexGrow: 1 }}>
-                  <Box
-                    sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                  >
-                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                      {comment.user?.full_name || 'Unknown User'}
-                    </Typography>
-                    <Typography variant="caption" color="gray">
-                      {comment.timestamp || comment.created_at}
-                    </Typography>
-                  </Box>
-
-                  {editingCommentId === comment.id ? (
-                    <>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        value={editingCommentText}
-                        onChange={(e) => setEditingCommentText(e.target.value)}
-                        sx={{ mt: 1 }}
-                      />
-                      {comment.image && (
-                        <Box sx={{ mt: 1 }}>
-                          <img
-                            src={comment.image}
-                            alt="Comment attachment"
-                            style={{ maxHeight: '200px', borderRadius: '4px', maxWidth: '100%' }}
-                          />
-                        </Box>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      {comment.text && (
-                        <Typography variant="body2" sx={{ mt: 0.5 }}>
-                          {comment.text}
-                        </Typography>
-                      )}
-                      {comment.image && (
-                        <Box sx={{ mt: 1 }}>
-                          <img
-                            src={comment.image}
-                            alt="Comment attachment"
-                            style={{ maxHeight: '200px', borderRadius: '4px', maxWidth: '100%' }}
-                          />
-                        </Box>
-                      )}
-                    </>
-                  )}
-                </Box>
-                {isUpdateModalOpen === true ? (
-                  <Button size="small" onClick={() => setIsUpdateModalOpen(true)}>
-                    Save
-                  </Button>
-                ) : (
-                  <Box>
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        setEditingCommentId(comment.id);
-                        setEditingCommentText(comment.text);
-                        // setCommentImagePreview(comment.image);
-                        setIsUpdateModalOpen(true);
-                        setUpdateCommentImagePreview(comment.image);
-                      }}
-                    >
-                      ✏️
-                    </IconButton>
-                    <IconButton size="small" onClick={() => confirmDeleteComment(comment.id)}>
-                      🗑️
-                    </IconButton>
-                  </Box>
-                )}
-              </Box>
-            ))
+            postComments.map((comment) => renderComment(comment))
           ) : (
             <Typography variant="body2" sx={{ color: 'gray', mt: 1 }}>
               No comments yet.

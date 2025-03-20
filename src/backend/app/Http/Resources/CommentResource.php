@@ -11,18 +11,20 @@ class CommentResource extends JsonResource
         return [
             'id' => $this->id,
             'text' => $this->text,
-             'image' => $this->image ? asset('storage/' . $this->image) . '?t=' . time() : null,
+            'image' => $this->image ? asset('storage/' . $this->image) . '?t=' . time() : null,
             'user' => $this->user ? [
                 'id' => $this->user->id,
-                // 'first_name' => $this->user->first_name,
-                // 'last_name' => $this->user->last_name,
                 'full_name' => $this->user->first_name . ' ' . $this->user->last_name,
                 'avatar' => $this->user->avatar,
             ] : null,
             'post_id' => $this->post_id,
+            'parent_id' => $this->parent_id,
+            'replies' => $this->whenLoaded('replies', function () {
+                return CommentResource::collection($this->replies);
+            }),
             'created_at' => $this->created_at->diffForHumans(),
             'updated_at' => $this->updated_at->toDateTimeString(),
-            'timestamp' => $this->created_at->diffForHumans(), // Add this for easier access in frontend
+            'timestamp' => $this->created_at->diffForHumans(),
         ];
     }
 }

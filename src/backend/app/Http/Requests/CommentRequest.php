@@ -13,7 +13,7 @@ class CommentRequest extends FormRequest
      */
     public function authorize()
     {
-        return true; // Change this based on your auth logic
+        return true;
     }
 
     /**
@@ -27,6 +27,7 @@ class CommentRequest extends FormRequest
             'text' => 'required|string|max:500',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
             'remove_image' => 'nullable|string',
+            'parent_id' => 'nullable|exists:comments,id',
         ];
     }
 
@@ -58,5 +59,15 @@ class CommentRequest extends FormRequest
     public function getRemoveImage()
     {
         return $this->input('remove_image') === 'true' ? true : null;
+    }
+
+    /**
+     * Get the parent_id.
+     *
+     * @return int|null
+     */
+    public function getParentId()
+    {
+        return $this->input('parent_id');
     }
 }
