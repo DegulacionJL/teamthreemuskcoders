@@ -7,6 +7,7 @@ use App\Services\API\UserService;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProfileResource;
 use App\Http\Requests\API\UpdateProfileRequest;
+use Exception;
 
 /**
  * @group Profile Management

@@ -9,13 +9,24 @@ class Comment extends Model
 {
     use HasFactory;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
     protected $fillable = ['post_id', 'user_id', 'text', 'image'];
 
+    /**
+     * Get the post that owns the comment.
+     */
     public function post()
     {
         return $this->belongsTo(Post::class);
     }
 
+    /**
+     * Get the user who authored the comment.
+     */
     public function user()
     {
         return $this->belongsTo(User::class);

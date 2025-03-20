@@ -2,80 +2,145 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\CommentRequest;
 use App\Http\Resources\CommentResource;
 use App\Services\API\CommentService;
 use Illuminate\Http\JsonResponse;
-use Exception;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
 
+/**
+ * @group Comment Management
+ */
 class CommentController extends Controller
 {
+    /** @var App\Services\API\CommentService */
     protected $commentService;
 
+    /**
+     * CommentController constructor.
+     *
+     * @param App\Services\API\CommentService $commentService
+     */
     public function __construct(CommentService $commentService)
     {
+        parent::__construct();
         $this->commentService = $commentService;
     }
 
+    /**
+     * List Comments
+     *
+     * Retrieves all comments for a specific post.
+     *
+     * @param int $postId
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     */
     public function index($postId)
     {
-        $comments = $this->commentService->getComments($postId);
-        return CommentResource::collection($comments);
-    }
-
-    public function store(CommentRequest $request, $postId)
-{
-    // Get validated data
-    $data = $request->validated();
-    
-    // Add the post_id
-    $data['post_id'] = $postId;
-    
-    // Handle file upload separately
-    if ($request->hasFile('image')) {
-        $data['image'] = $request->file('image');
-    }
-
-    $comment = $this->commentService->addComment($data);
-    return new CommentResource($comment);
-}
-
-public function update(CommentRequest $request, $postId, $commentId): JsonResponse
-    {
         try {
-            // The request is already validated by CommentRequest
-            $data = $request->validated();
+            $comments = $this->commentService->getComments($postId);
+            $this->response['data'] = CommentResource::collection($comments);
+        } catch (Exception $e) {
+            $this->response = [
+                'error' => $e->getMessage(),
+                'code' => 500,
+            ];
+        }
 
-            // Add the post_id
-            $data['post_id'] = $postId;
+        return response()->json($this->response, $this->response['code']);
+    }
 
-            // Handle file upload separately
-            if ($request->hasFile('image')) {
-                $data['image'] = $request->file('image');
-            }
+    /**
+     * Create Comment
+     *
+     * Creates a new comment for a specific post.
+     *
+     * @authenticated
+     * @param App\Http\Requests\API\CommentRequest $request
+     * @param int $postId
+     * @return JsonResponse
+     */
+    public function store(CommentRequest $request, $postId)
+    {
+        $request->validated();
 
-            // Handle the remove_image flag
-            if ($request->has('remove_image') && $request->remove_image === 'true') {
-                $data['remove_image'] = true;
-            }
+        try {
+            $data = [
+                'text' => $request->getText(),
+                'post_id' => $postId,
+                'image' => $request->getImage(),
+            ];
+
+            $comment = $this->commentService->addComment($data);
+            $this->response['data'] = new CommentResource($comment);
+        } catch (Exception $e) {
+            $this->response = [
+                'error' => $e->getMessage(),
+                'code' => 500,
+            ];
+        }
+
+        return response()->json($this->response, $this->response['code']);
+    }
+
+    /**
+     * Update Comment
+     *
+     * Updates an existing comment.
+     *
+     * @authenticated
+     * @param App\Http\Requests\API\CommentRequest $request
+     * @param int $postId
+     * @param int $commentId
+     * @return JsonResponse
+     */
+    public function update(CommentRequest $request, $postId, $commentId): JsonResponse
+    {
+        $request->validated();
+
+        try {
+            $data = [
+                'text' => $request->getText(),
+                'post_id' => $postId,
+                'image' => $request->getImage(),
+                'remove_image' => $request->getRemoveImage(),
+            ];
 
             $updatedComment = $this->commentService->updateComment($commentId, $postId, $data);
-
-            return response()->json(new CommentResource($updatedComment), 200);
+            $this->response['data'] = new CommentResource($updatedComment);
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            $this->response = [
+                'error' => $e->getMessage(),
+                'code' => 500,
+            ];
         }
+
+        return response()->json($this->response, $this->response['code']);
     }
 
+    /**
+     * Delete Comment
+     *
+     * Deletes a comment.
+     *
+     * @authenticated
+     * @param int $postId
+     * @param int $commentId
+     * @return JsonResponse
+     */
     public function destroy($postId, $commentId): JsonResponse
     {
         try {
             $this->commentService->deleteComment($commentId, $postId);
-            return response()->json(['message' => 'Comment deleted successfully.'], 200);
+            $this->response['message'] = 'Comment deleted successfully.';
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            $this->response = [
+                'error' => $e->getMessage(),
+                'code' => 500,
+            ];
         }
+
+        return response()->json($this->response, $this->response['code']);
     }
 }

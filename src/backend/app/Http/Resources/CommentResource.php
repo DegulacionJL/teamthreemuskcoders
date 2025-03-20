@@ -11,7 +11,7 @@ class CommentResource extends JsonResource
         return [
             'id' => $this->id,
             'text' => $this->text,
-            'image' => $this->image ? asset('storage/' . $this->image) : null,
+             'image' => $this->image ? asset('storage/' . $this->image) . '?t=' . time() : null,
             'user' => $this->user ? [
                 'id' => $this->user->id,
                 // 'first_name' => $this->user->first_name,
