@@ -72,7 +72,7 @@ function MemePost({
   const [commentImage, setCommentImage] = useState(null);
   const [commentImagePreview, setCommentImagePreview] = useState(null);
   const [updateCommentImagePreview, setUpdateCommentImagePreview] = useState(null);
-  const [updateCommentImage, setUpdateCommentImage] = useState(null);
+  // const [updateCommentImage, setUpdateCommentImage] = useState(null);
 
   // File input for comment image
   const handleCommentImageChange = (e) => {
@@ -442,7 +442,6 @@ function MemePost({
             {updateCommentImagePreview && (
               <IconButton
                 onClick={() => {
-                  setUpdateCommentImage(updateCommentImagePreview);
                   setUpdateCommentImagePreview(null);
                 }}
               >
