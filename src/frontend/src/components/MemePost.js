@@ -167,16 +167,17 @@ function MemePost({
     try {
       const formData = new FormData();
       formData.append('text', editingCommentText || '');
-      console.log('updateCommentImagePreview: ', updateCommentImagePreview);
-      console.log('commentImage: ', commentImage);
-      // commentImage
-      //   ? formData.append('image', commentImage)
-      //   : formData.append('image', updateCommentImagePreview);
+
       if (commentImage) {
+        // New image uploaded
         formData.append('image', commentImage);
-      } else if (updateCommentImage) {
-        formData.append('image', updateCommentImage);
+      } else if (updateCommentImagePreview) {
+        // Keep existing image (do nothing)
+      } else {
+        // We want to remove the image - pass a special value
+        formData.append('remove_image', 'true');
       }
+
       formData.append('_method', 'PUT');
 
       await updateComment(id, editingCommentId, formData);
@@ -187,6 +188,7 @@ function MemePost({
       setEditingCommentText('');
       setIsUpdateModalOpen(false);
       setCommentImagePreview(null);
+      setUpdateCommentImagePreview(null);
     } catch (error) {
       console.error('Error updating comment:', error);
       alert('Failed to update comment. Please try again.');

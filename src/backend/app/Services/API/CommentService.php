@@ -5,7 +5,6 @@ namespace App\Services\API;
 use App\Models\Comment;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage; 
 use Exception;
 
@@ -36,6 +35,7 @@ class CommentService
 
     return Comment::create($data);
 }
+
 public function updateComment($commentId, $postId, array $data)
 {
     try {
@@ -48,8 +48,19 @@ public function updateComment($commentId, $postId, array $data)
             throw new Exception("Unauthorized. You can only update your own comments.");
         }
 
-        // Handle image if present
-        if (isset($data['image']) && $data['image']->isValid()) {
+        // Handle image removal flag
+        if (isset($data['remove_image']) && $data['remove_image'] === true) {
+            // Delete old image if exists
+            if ($comment->image && Storage::disk('public')->exists($comment->image)) {
+                Storage::disk('public')->delete($comment->image);
+            }
+            // Set image to null explicitly
+            $comment->image = null;
+            // Remove flag from data before update
+            unset($data['remove_image']);
+        }
+        // Handle new image upload
+        elseif (isset($data['image']) && $data['image']->isValid()) {
             // Delete old image if exists
             if ($comment->image && Storage::disk('public')->exists($comment->image)) {
                 Storage::disk('public')->delete($comment->image);
@@ -69,6 +80,7 @@ public function updateComment($commentId, $postId, array $data)
         throw new Exception("Failed to update comment: " . $e->getMessage());
     }
 }
+
     public function deleteComment($commentId, $postId)
     {
         $comment = Comment::where('id', $commentId)
