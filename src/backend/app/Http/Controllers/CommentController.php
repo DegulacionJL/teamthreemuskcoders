@@ -42,43 +42,32 @@ class CommentController extends Controller
     return new CommentResource($comment);
 }
 
-public function update(Request $request, $postId, $commentId): JsonResponse
-{
-    try {
-        // Check for the remove_image flag first, before validation
-        $removeImage = $request->has('remove_image') && $request->remove_image === 'true';
-        
-        // If we're removing the image, do custom validation without image validation
-        if ($removeImage) {
-            $data = $request->validate([
-                'text' => 'required|string|max:500',
-            ]);
-            
-            // Add the remove_image flag to the data array
-            $data['remove_image'] = true;
-        } else {
-            // Default validation with original CommentRequest
-            $data = $request->validate([
-                'text' => 'required|string|max:500',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
-            ]);
-        }
-        
-        // Add the post_id
-        $data['post_id'] = $postId;
-        
-        // Handle file upload separately
-        if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image');
-        }
+public function update(CommentRequest $request, $postId, $commentId): JsonResponse
+    {
+        try {
+            // The request is already validated by CommentRequest
+            $data = $request->validated();
 
-        $updatedComment = $this->commentService->updateComment($commentId, $postId, $data);
+            // Add the post_id
+            $data['post_id'] = $postId;
 
-        return response()->json(new CommentResource($updatedComment), 200);
-    } catch (Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
+            // Handle file upload separately
+            if ($request->hasFile('image')) {
+                $data['image'] = $request->file('image');
+            }
+
+            // Handle the remove_image flag
+            if ($request->has('remove_image') && $request->remove_image === 'true') {
+                $data['remove_image'] = true;
+            }
+
+            $updatedComment = $this->commentService->updateComment($commentId, $postId, $data);
+
+            return response()->json(new CommentResource($updatedComment), 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
-}
 
     public function destroy($postId, $commentId): JsonResponse
     {
