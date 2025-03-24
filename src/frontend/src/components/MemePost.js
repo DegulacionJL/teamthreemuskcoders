@@ -20,7 +20,6 @@ import {
 } from '@mui/material';
 import DeleteConfirmationModal from './organisms/DeleteConfirmationModal';
 import EditPostModal from './organisms/EditPostModal';
-import Comment from './Comment';
 
 function getRelativeTime(timestamp) {
   const now = new Date();
@@ -149,8 +148,8 @@ function MemePost({
     () => {
       fetchComments();
     },
-    [id],
-    [postComments]
+    [id]
+    // [postComments]
   );
 
   // Updated handleAddReply function
@@ -158,20 +157,32 @@ function MemePost({
     if (!replyText.trim() && !replyImage) return;
     try {
       const addedComment = await addComment(id, replyText, replyImage, parentId);
-      // Update the comment list with the new reply
-      setPostComments((prev) => {
-        const updatedComments = [...prev];
-        const parentCommentIndex = updatedComments.findIndex((comment) => comment.id === parentId);
 
-        if (parentCommentIndex !== -1) {
-          if (!updatedComments[parentCommentIndex].replies) {
-            updatedComments[parentCommentIndex].replies = [];
+      // Helper function to find and update a comment by ID at any nesting level
+      const findAndAddReply = (comments, targetId, newReply) => {
+        return comments.map((comment) => {
+          // Check if this is the target comment
+          if (comment.id === targetId) {
+            return {
+              ...comment,
+              replies: [...(comment.replies || []), newReply],
+            };
           }
-          updatedComments[parentCommentIndex].replies.push(addedComment.data);
-        }
 
-        return updatedComments;
-      });
+          // If this comment has replies, search through them too
+          if (comment.replies && comment.replies.length > 0) {
+            return {
+              ...comment,
+              replies: findAndAddReply(comment.replies, targetId, newReply),
+            };
+          }
+
+          return comment;
+        });
+      };
+
+      // Update state using the helper function
+      setPostComments((prevComments) => findAndAddReply(prevComments, parentId, addedComment.data));
 
       // Reset reply state
       setReplyText('');
@@ -180,6 +191,8 @@ function MemePost({
       setReplyToComment(null);
     } catch (error) {
       console.error('Error adding reply:', error);
+      // On error, refresh all comments to ensure state is consistent
+      fetchComments();
     }
   };
 
@@ -204,31 +217,38 @@ function MemePost({
   // Updated handleDeleteComment function
   const handleDeleteComment = async () => {
     if (commentToDelete) {
-      await deleteComment(id, commentToDelete);
+      try {
+        // Make the API call to delete the comment
+        await deleteComment(id, commentToDelete);
 
-      // Find if the comment is a top-level comment or a reply
-      const commentIndex = postComments.findIndex((c) => c.id === commentToDelete);
+        // Helper function to recursively filter out the deleted comment
+        const filterDeletedComment = (comments) => {
+          // First filter at the current level
+          return comments
+            .filter((comment) => comment.id !== commentToDelete)
+            .map((comment) => {
+              // If this comment has replies, filter them too
+              if (comment.replies && comment.replies.length > 0) {
+                return {
+                  ...comment,
+                  replies: filterDeletedComment(comment.replies),
+                };
+              }
+              return comment;
+            });
+        };
 
-      if (commentIndex !== -1) {
-        // If top-level comment, remove it completely
-        setPostComments((prev) => prev.filter((c) => c.id !== commentToDelete));
-      } else {
-        // If it's a reply, find its parent and remove from replies
-        setPostComments((prev) => {
-          return prev.map((comment) => {
-            if (comment.replies && comment.replies.some((r) => r.id === commentToDelete)) {
-              return {
-                ...comment,
-                replies: comment.replies.filter((r) => r.id !== commentToDelete),
-              };
-            }
-            return comment;
-          });
-        });
+        // Update state using the recursive filter function
+        setPostComments((prevComments) => filterDeletedComment(prevComments));
+      } catch (error) {
+        console.error('Error deleting comment:', error);
+        // Optionally refresh comments from the server if the delete fails
+        fetchComments();
       }
+
+      setCommentToDelete(null);
+      setIsDeleteModalOpen(false);
     }
-    setCommentToDelete(null);
-    setIsDeleteModalOpen(false);
   };
 
   // Updated handleUpdateComment function
@@ -250,45 +270,42 @@ function MemePost({
 
       await updateComment(id, editingCommentId, formData);
 
-      // Update the comment in state
-      setPostComments((prev) => {
-        return prev.map((comment) => {
-          if (comment.id === editingCommentId) {
+      // Create a new image URL if there's a new image
+      const newImageUrl = commentImage
+        ? URL.createObjectURL(commentImage)
+        : updateCommentImagePreview;
+
+      // Updated recursive function to update comments at any nesting level
+      const updateCommentRecursively = (comments, targetId) => {
+        return comments.map((comment) => {
+          // If this is the comment we're editing
+          if (comment.id === targetId) {
             return {
               ...comment,
               text: editingCommentText,
-              image: commentImage
-                ? URL.createObjectURL(commentImage)
-                : updateCommentImagePreview
-                  ? updateCommentImagePreview
-                  : null,
+              image: newImageUrl,
             };
           }
 
-          // Check nested replies
+          // If this comment has replies, check them too
           if (comment.replies && comment.replies.length > 0) {
-            return {
-              ...comment,
-              replies: comment.replies.map((reply) => {
-                if (reply.id === editingCommentId) {
-                  return {
-                    ...reply,
-                    text: editingCommentText,
-                    image: commentImage
-                      ? URL.createObjectURL(commentImage)
-                      : updateCommentImagePreview
-                        ? updateCommentImagePreview
-                        : null,
-                  };
-                }
-                return reply;
-              }),
-            };
+            const updatedReplies = updateCommentRecursively(comment.replies, targetId);
+            // Only create a new object if something changed
+            if (updatedReplies !== comment.replies) {
+              return {
+                ...comment,
+                replies: updatedReplies,
+              };
+            }
           }
 
+          // Return unchanged if not the target and no replies were updated
           return comment;
         });
-      });
+      };
+
+      // Update state with immutable pattern to ensure React detects the changes
+      setPostComments((prevComments) => updateCommentRecursively(prevComments, editingCommentId));
 
       // Reset states
       setEditingCommentId(null);
@@ -297,9 +314,14 @@ function MemePost({
       setCommentImage(null);
       setCommentImagePreview(null);
       setUpdateCommentImagePreview(null);
+
+      // Optionally fetch fresh comments from the server to ensure consistency
+      // fetchComments();
     } catch (error) {
       console.error('Error updating comment:', error);
       alert('Failed to update comment. Please try again.');
+      // On error, refresh all comments to ensure state is consistent
+      fetchComments();
     }
   };
 

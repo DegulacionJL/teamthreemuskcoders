@@ -21,7 +21,7 @@ class CommentService
         // Get only top-level comments (no parent)
         return Comment::where('post_id', $postId)
             ->whereNull('parent_id')
-            ->with(['user', 'replies.user'])
+            ->with(['user', 'replies.user', 'replies.replies.user', 'replies.replies.replies.user'])
             ->latest()
             ->get();
     }
