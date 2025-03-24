@@ -1,4 +1,5 @@
 import admin from './admin';
+import user from './user';
 
 const routes = [
   // Dont Remove. Handle 404 Pages
@@ -77,7 +78,9 @@ const routes = [
     component: 'pages/guest/MemeFeed',
     auth: true,
   },
+
   ...admin,
+  ...user,
 ];
 
 // Don't include styleguide in production routes

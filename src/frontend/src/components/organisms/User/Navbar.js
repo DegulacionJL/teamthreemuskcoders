@@ -65,20 +65,22 @@ function Navbar(props) {
 
   return (
     <AppBar
-      position="static"
+      position="sticky"
       color="transparent"
       elevation={0}
       sx={{
         borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
         backgroundColor: blueGrey[900],
         color: 'transparent',
+        top: 0,
+        zIndex: 1000,
       }}
     >
       <Container maxWidth="lg">
-        <Toolbar sx={{ flexWrap: 'wrap' }} disableGutters>
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, mt: 0, mb: 0 }}>
+        <Toolbar sx={{ height: '64px', minHeight: '64px', position: 'relative' }} disableGutters>
+          <Box sx={{ flexGrow: 4, display: { xs: 'none', md: 'flex' }, mt: 0, mb: 0 }}>
             <Link to="/">
-              <img src="/static/images/memema_black.png" alt={appName} height={48} />
+              <img src="/static/images/memema_black.png" alt={appName} height={130} />
             </Link>
           </Box>
 

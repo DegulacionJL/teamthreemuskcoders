@@ -75,6 +75,8 @@ const en = {
         status: 'Status',
         role: 'Role',
         delete_confirmation: 'Are you sure you want to delete the selected user?',
+        user_name: 'User Name',
+        name: 'Name',
       },
       activate: {
         heading: 'Activate Account',
@@ -190,6 +192,7 @@ const en = {
       broadcast: 'Broadcast',
       calculate: 'calculate',
       memefeed: 'meme feed',
+      userlist: 'User List',
     },
     table: {
       no_data: 'No data.',

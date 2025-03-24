@@ -62,17 +62,12 @@ function MemeFeed() {
         throw new Error('Failed to create post');
       }
 
-      // Extract image URL from response
-      const newImageUrl = response.data.image; // Make sure backend sends full URL
+      // Fetch updated posts from backend after posting
+      await fetchPosts();
 
-      setPosts((prevPosts) => [response.data, ...prevPosts]);
-
-      console.log('Before reset:', caption, image, imagePreview);
-
-      // Reset caption & image, but keep the preview updated
       setCaption('');
       setImage(null);
-      setImagePreview(newImageUrl); // Update preview to show new image
+      setImagePreview(null);
     } catch (error) {
       console.error('Error posting:', error);
     }
@@ -92,7 +87,7 @@ function MemeFeed() {
         await updateImage(postId, formData);
       }
 
-      fetchPosts();
+      await fetchPosts(); // Same approach as handlePost
     } catch (error) {
       console.error('Error updating post:', error);
     }

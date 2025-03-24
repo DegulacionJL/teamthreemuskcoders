@@ -15,6 +15,7 @@ use App\Http\Controllers\calculateController;
 use App\Http\Controllers\CommentController;
 use Laravel\Passport\Http\Controllers\AccessTokenController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\UserListController;
 
 /*
 |--------------------------------------------------------------------------
@@ -63,6 +64,15 @@ Route::post('password/reset', [PasswordController::class, 'reset']);
 Route::prefix('users')
     ->group(function () {
         Route::get('/', [UserController::class, 'index']);
+        Route::post('/', [UserController::class, 'create']);
+        Route::get('{id}', [UserController::class, 'read']);
+        Route::put('{id}', [UserController::class, 'update']);
+        Route::delete('bulk-delete', [UserController::class, 'bulkDelete']);
+        Route::delete('{id}', [UserController::class, 'delete']);
+    });
+    Route::prefix('userlist')
+    ->group(function () {
+        Route::get('/', [UserListController::class, 'index'])->middleware('auth:api');
         Route::post('/', [UserController::class, 'create']);
         Route::get('{id}', [UserController::class, 'read']);
         Route::put('{id}', [UserController::class, 'update']);

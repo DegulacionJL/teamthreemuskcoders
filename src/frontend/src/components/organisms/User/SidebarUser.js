@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import { List, styled } from '@mui/material';
 import MuiDrawer from '@mui/material/Drawer';
 import { blueGrey } from '@mui/material/colors';
-import { SidebarMenu } from 'components/organisms/User/SidebarMenu';
+import { SidebarMenu } from 'components/molecules/SidebarMenuUser';
 
 const drawerWidth = 240; // Full width when expanded
 const collapsedWidth = 48; // Just enough for icons

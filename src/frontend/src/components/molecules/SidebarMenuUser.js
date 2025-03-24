@@ -12,29 +12,29 @@ import Typography from '@mui/material/Typography';
 
 const links = [
   {
-    label: 'Dashboard',
-    path: '/admin',
+    label: 'User List',
+    path: '/userlist',
     icon: <DashboardIcon sx={{ color: 'white' }} />, // Set color to white
   },
   {
     label: 'Users',
-    path: '/admin/users',
+    path: '/routes/users',
     icon: <PeopleIcon sx={{ color: 'white' }} />,
   },
   {
     label: 'Roles',
-    path: '/admin/roles',
+    path: '/routes/roles',
     icon: <RoomPreferencesIcon sx={{ color: 'white' }} />,
   },
   // DEMO PURPOSES ONLY. REMOVE ON ACTUAL PROJECT
   {
     label: 'Broadcast',
-    path: '/admin/broadcast',
+    path: '/routes/broadcast',
     icon: <CampaignIcon sx={{ color: 'white' }} />,
   },
   {
     label: 'Integrations',
-    path: '/admin/integrations',
+    path: '/routes/integrations',
     icon: <LayersIcon sx={{ color: 'white' }} />,
   },
 ];
@@ -46,7 +46,7 @@ function SidebarMenu() {
 
   // add localization to menu items
   localizeLinks.map((link) => {
-    link.label = t(`menu.${link.path.replace('/admin/', '')}`);
+    link.label = t(`menu.${link.path.split('/').pop()}`);
     return link;
   });
 

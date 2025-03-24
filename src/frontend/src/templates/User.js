@@ -5,9 +5,8 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import { logout } from 'services/auth';
 import { setProfile } from 'store/slices/profileSlice';
 import { Box } from '@mui/material';
-import Footer from 'components/organisms/User/Footer';
 import Navbar from 'components/organisms/User/Navbar';
-import SidebarPost from 'components/organisms/User/SidebarPost';
+import SidebarPost from 'components/organisms/User/SidebarUser';
 import api from 'utils/api';
 
 export default function User() {
