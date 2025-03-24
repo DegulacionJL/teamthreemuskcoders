@@ -6,6 +6,16 @@ const api = axios.create({ baseURL: process.env.REACT_APP_API_URL });
 const access_token = localStorage.getItem('access_token');
 if (access_token) api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
 
+// Add utility functions directly to the api object
+api.createRequestConfig = (data) => {
+  return {
+    headers:
+      data instanceof FormData
+        ? { 'Content-Type': undefined }
+        : { 'Content-Type': 'application/json' },
+  };
+};
+
 const handleResponse = (response) => response;
 const handleError = (error) => {
   const code = error.response && parseInt(error.response.status);
@@ -60,5 +70,15 @@ const handleError = (error) => {
 
 // Add a response error interceptor
 api.interceptors.response.use(handleResponse, handleError);
+
+// // Helper method to handle image upload
+// export const createRequestConfig = (data) => {
+//   return {
+//     headers:
+//       data instanceof FormData
+//         ? { 'Content-Type': undefined }
+//         : { 'Content-Type': 'application/json' },
+//   };
+// };
 
 export default api;

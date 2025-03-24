@@ -1,16 +1,6 @@
 // comment.service.js
 import api from 'utils/api';
 
-// Helper method to handle image upload
-const createRequestConfig = (data) => {
-  return {
-    headers:
-      data instanceof FormData
-        ? { 'Content-Type': undefined }
-        : { 'Content-Type': 'application/json' },
-  };
-};
-
 const getComments = async function (postId) {
   const req = api.get(`/posts/${postId}/comments`).then(({ data }) => data);
   return await req;
@@ -28,7 +18,7 @@ const addComment = async function (postId, commentText, commentImage, parentId =
     if (parentId) {
       requestData.append('parent_id', parentId);
     }
-    config = createRequestConfig(requestData);
+    config = api.createRequestConfig(requestData);
   } else {
     requestData = {
       post_id: postId,
