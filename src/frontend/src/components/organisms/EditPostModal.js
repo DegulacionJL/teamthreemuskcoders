@@ -1,123 +1,132 @@
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
-import { Box, Button, Modal, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+} from '@mui/material';
+import ImagePreview from '../atoms/ImagePreview';
+import ImageUploadButton from '../molecules/ImageUploadButton';
 
-function EditPostModal({ open, onClose, currentCaption, currentImage, onSave }) {
-  const [caption, setCaption] = useState(currentCaption);
-  const [image, setImage] = useState(currentImage);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [key, setKey] = useState(Date.now());
+const EditPostModal = ({ open, onClose, caption, image, onSave }) => {
+  const [editedCaption, setEditedCaption] = useState('');
+  const [editedImage, setEditedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [removeImage, setRemoveImage] = useState(false);
 
   useEffect(() => {
-    setCaption(currentCaption);
-    setImage(currentImage);
-
-    if (typeof currentImage === 'string') {
-      setImagePreview(currentImage); // Use as URL
-    } else if (currentImage instanceof File) {
-      setImagePreview(URL.createObjectURL(currentImage)); // Generate preview
+    if (open) {
+      // Reset state when modal opens
+      setEditedCaption(caption || '');
+      setImagePreview(image || '');
+      setEditedImage(null);
+      setRemoveImage(false);
+      setIsSubmitting(false);
     }
-  }, [currentCaption, currentImage]);
+  }, [open, caption, image]);
 
-  const handleCaptionChange = (e) => setCaption(e.target.value);
-
-  const handleImageChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-        setImage(file);
-        setKey(Date.now());
-      };
-      reader.readAsDataURL(file);
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setEditedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+      setRemoveImage(false);
     }
   };
 
-  const handleImageRemove = () => {
-    setImage(null);
-    setImagePreview(null);
+  const handleRemoveImage = () => {
+    setImagePreview('');
+    setEditedImage(null);
+    setRemoveImage(true);
   };
 
   const handleSave = async () => {
-    console.log('EditPostModal: Saving post with', { caption, image });
-
     try {
-      if (caption.trim()) {
-        const updatedPost = await onSave(caption, image); // Capture the updated post
-
-        if (updatedPost?.image) {
-          setImagePreview(`${updatedPost.image}?t=${new Date().getTime()}`); // Update preview
-        }
-      }
-
+      setIsSubmitting(true);
+      await onSave(editedCaption, editedImage, removeImage);
       onClose();
     } catch (error) {
-      console.error('onSave function is not defined!');
-      console.error('Error updating post:', error);
+      console.error('Error saving post:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  return (
-    <Modal open={open} onClose={onClose}>
-      <Box
-        sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '90%',
-          maxWidth: '500px',
-          maxHeight: '80vh',
-          overflowY: 'auto',
-          bgcolor: 'white',
-          boxShadow: 24,
-          p: 3,
-          borderRadius: '8px',
-        }}
-      >
-        <Typography variant="h6" gutterBottom>
-          Edit Post
-        </Typography>
+  const handleCancel = () => {
+    // Discard changes and close
+    onClose();
+  };
 
-        <textarea
-          value={caption}
-          onChange={handleCaptionChange}
-          style={{ width: '100%', minHeight: '100px', marginBottom: '10px' }}
+  return (
+    <Dialog
+      open={open}
+      onClose={handleCancel}
+      maxWidth="sm"
+      fullWidth
+      disableEscapeKeyDown={isSubmitting} // Prevent closing while submitting
+      disableBackdropClick={isSubmitting}
+    >
+      <DialogTitle>Edit Post</DialogTitle>
+      <DialogContent>
+        <TextField
+          autoFocus
+          margin="dense"
+          label="Caption"
+          type="text"
+          fullWidth
+          multiline
+          rows={4}
+          value={editedCaption}
+          onChange={(e) => setEditedCaption(e.target.value)}
+          disabled={isSubmitting}
         />
 
-        <input key={key} type="file" onChange={handleImageChange} accept="image/*" />
-
-        {imagePreview && (
+        {imagePreview ? (
+          <Box sx={{ mt: 2, textAlign: 'center' }}>
+            <ImagePreview src={imagePreview} onRemove={handleRemoveImage} maxHeight="200px" />
+          </Box>
+        ) : (
           <Box sx={{ mt: 2 }}>
-            <img
-              src={imagePreview}
-              alt="Preview"
-              style={{ maxWidth: '100%', borderRadius: '8px' }}
+            <ImageUploadButton
+              onChange={handleImageChange}
+              id="edit-post-image-upload"
+              buttonVariant="button"
+              buttonText="Add Image"
+              buttonProps={{ disabled: isSubmitting }}
             />
-            <Button onClick={handleImageRemove} sx={{ display: 'block', mt: 1 }}>
-              Remove Image
-            </Button>
           </Box>
         )}
-
-        <Button
-          onClick={handleSave}
-          variant="contained"
-          sx={{ mt: 2, display: 'block', width: '100%' }}
-        >
-          Save Changes
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleCancel} disabled={isSubmitting}>
+          Cancel
         </Button>
-      </Box>
-    </Modal>
+        <Button onClick={handleSave} color="primary" variant="contained" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
+              Saving...
+            </>
+          ) : (
+            'Save'
+          )}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
-}
+};
 
 EditPostModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  currentCaption: PropTypes.string.isRequired,
-  currentImage: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(File)]),
+  caption: PropTypes.string,
+  image: PropTypes.string,
   onSave: PropTypes.func.isRequired,
 };
 

@@ -21,7 +21,7 @@ class CommentService
         // Get only top-level comments (no parent)
         return Comment::where('post_id', $postId)
             ->whereNull('parent_id')
-            ->with(['user', 'replies.user', 'replies.replies.user', 'replies.replies.replies.user'])
+            ->with(['user', 'replies.user', 'replies.replies.user', 'replies.replies.replies.user', 'replies.replies.replies.replies.user'])
             ->latest()
             ->get();
     }
@@ -63,50 +63,58 @@ class CommentService
      * @return Comment
      * @throws Exception
      */
-    public function updateComment($commentId, $postId, array $data)
-    {
-        try {
-            $comment = Comment::where('id', $commentId)
-                ->where('post_id', $postId)
-                ->firstOrFail();
+   public function updateComment($commentId, $postId, array $data)
+{
+    try {
+        $comment = Comment::where('id', $commentId)
+            ->where('post_id', $postId)
+            ->firstOrFail();
 
-            // Ensure only the owner can update the comment
-            if ($comment->user_id !== Auth::id()) {
-                throw new Exception("Unauthorized. You can only update your own comments.");
-            }
-
-            // Handle image removal flag
-            if (isset($data['remove_image']) && $data['remove_image'] === true) {
-                // Delete old image if exists
-                if ($comment->image && Storage::disk('public')->exists($comment->image)) {
-                    Storage::disk('public')->delete($comment->image);
-                }
-                // Set image to null explicitly
-                $comment->image = null;
-                // Remove flag from data before update
-                unset($data['remove_image']);
-            }
-            // Handle new image upload
-            elseif (isset($data['image']) && $data['image']->isValid()) {
-                // Delete old image if exists
-                if ($comment->image && Storage::disk('public')->exists($comment->image)) {
-                    Storage::disk('public')->delete($comment->image);
-                }
-                
-                $imagePath = $data['image']->store('comment_images', 'public');
-                $data['image'] = $imagePath;
-            }
-
-            $comment->update($data);
-
-            // Reload the comment with user relationship
-            return Comment::with(['user', 'replies.user'])->find($commentId);
-        } catch (ModelNotFoundException $e) {
-            throw new Exception("Comment not found for this post.");
-        } catch (Exception $e) {
-            throw new Exception("Failed to update comment: " . $e->getMessage());
+        // Ensure only the owner can update the comment
+        if ($comment->user_id !== Auth::id()) {
+            throw new Exception("Unauthorized. You can only update your own comments.");
         }
+
+        // Create a copy of data that we'll use for update
+        $updateData = $data;
+        
+        // Handle image removal flag
+        if (isset($data['remove_image']) && $data['remove_image'] === true) {
+            // Delete old image if exists
+            if ($comment->image && Storage::disk('public')->exists($comment->image)) {
+                Storage::disk('public')->delete($comment->image);
+            }
+            // Set image to null explicitly
+            $comment->image = null;
+            // Remove flag from data before update
+            unset($updateData['remove_image']);
+        }
+        // Handle new image upload
+        elseif (isset($data['image']) && $data['image']->isValid()) {
+            // Delete old image if exists
+            if ($comment->image && Storage::disk('public')->exists($comment->image)) {
+                Storage::disk('public')->delete($comment->image);
+            }
+            
+            $imagePath = $data['image']->store('comment_images', 'public');
+            $updateData['image'] = $imagePath;
+        }
+        // Important: remove 'image' from updateData if not explicitly set
+        // to preserve the existing image relationship
+        else {
+            unset($updateData['image']);
+        }
+
+        $comment->update($updateData);
+
+        // Reload the comment with user relationship
+        return Comment::with(['user', 'replies.user'])->find($commentId);
+    } catch (ModelNotFoundException $e) {
+        throw new Exception("Comment not found for this post.");
+    } catch (Exception $e) {
+        throw new Exception("Failed to update comment: " . $e->getMessage());
     }
+}
 
     /**
      * Delete a comment.
