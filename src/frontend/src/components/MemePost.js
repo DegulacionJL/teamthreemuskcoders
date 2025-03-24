@@ -1,21 +1,33 @@
+'use client';
+
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { addComment, deleteComment, getComments, updateComment } from 'services/meme.service';
+import { ChatBubbleOutline, FavoriteBorder, Send, Share } from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   Avatar,
   Box,
   Button,
+  Card,
+  CardActions,
+  CardContent,
+  CardHeader,
+  CardMedia,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   IconButton,
+  InputAdornment,
   Menu,
   MenuItem,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
+import { useTheme as useCustomTheme } from '../theme/ThemeContext';
 import DeleteConfirmationModal from './organisms/DeleteConfirmationModal';
 import EditPostModal from './organisms/EditPostModal';
 
@@ -55,7 +67,10 @@ function MemePost({
   onMenuClose,
   menuAnchor,
   isMenuOpen,
+  darkMode,
 }) {
+  const theme = useTheme(); // MUI theme
+  const { darkMode: contextDarkMode } = useCustomTheme(); // Our custom theme context
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentCaption, setCurrentCaption] = useState(caption);
   const [currentImage, setCurrentImage] = useState(image);
@@ -67,6 +82,10 @@ function MemePost({
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentText, setEditingCommentText] = useState('');
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+
+  // Use the darkMode prop if provided, otherwise use the context value
+  const isDarkMode = darkMode !== undefined ? darkMode : contextDarkMode;
 
   const handleSave = async (newCaption, newImage) => {
     try {
@@ -75,13 +94,15 @@ function MemePost({
         setCurrentImage(updatedPost.image);
       }
       setCurrentCaption(newCaption);
+      setIsEditModalOpen(false);
     } catch (error) {
       console.error('Error updating post:', error);
     }
   };
+
   const handleConfirmDelete = () => {
     onDelete(id); // Call delete function
-    setIsDeleteModalOpen(false);
+    setIsPostDeleteModalOpen(false);
   };
 
   // Fetch comments on component mount
@@ -127,189 +148,269 @@ function MemePost({
     if (!editingCommentText.trim()) return;
     try {
       const response = await updateComment(id, editingCommentId, editingCommentText);
-
-      // Log the response to see what's coming back
-      console.log('Update comment response:', response);
-
-      // Make sure we're using the correct data structure
       const updatedComment = response.data;
-
-      // Update the postComments state with the complete updated comment object
       setPostComments((prev) =>
         prev.map((comment) => (comment.id === editingCommentId ? updatedComment : comment))
       );
-
-      // Reset editing state
       setEditingCommentId(null);
       setEditingCommentText('');
       setIsUpdateModalOpen(false);
     } catch (error) {
       console.error('Error updating comment:', error);
-      // Show error to user
       alert('Failed to update comment. Please try again.');
     }
   };
 
   return (
-    <Box
+    <Card
       sx={{
-        p: 2,
-        backgroundColor: 'white',
-        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-        borderRadius: '8px',
-        width: '550px',
-        minHeight: '250px',
-        maxWidth: '100%',
-        margin: 'auto',
-        mt: 4,
+        mb: 3,
+        borderRadius: 3,
+        overflow: 'hidden',
+        backgroundColor: theme.palette.background.paper,
+        transition: 'background-color 0.3s, color 0.3s',
       }}
     >
-      <>
-        {/* Post Header with Menu */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <CardHeader
+        avatar={
+          <Avatar
+            src={user?.avatar || ''}
+            alt={`${user?.first_name} ${user?.last_name}`}
+            sx={{
+              bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
+            }}
+          >
+            {user ? `${user.first_name?.charAt(0) || ''}${user.last_name?.charAt(0) || ''}` : 'U'}
+          </Avatar>
+        }
+        action={
+          <IconButton onClick={(event) => onMenuOpen(event, id)}>
+            <MoreVertIcon />
+          </IconButton>
+        }
+        title={
+          <Typography variant="subtitle1" fontWeight="medium">
+            {user ? `${user.first_name} ${user.last_name}` : 'Unknown User'}
+          </Typography>
+        }
+        subheader={
+          <Typography variant="caption" color="text.secondary">
+            {getRelativeTime(timestamp)}
+          </Typography>
+        }
+      />
+
+      <Menu anchorEl={menuAnchor} open={isMenuOpen} onClose={onMenuClose}>
+        <MenuItem onClick={() => setIsEditModalOpen(true)}>Edit</MenuItem>
+        <MenuItem onClick={() => setIsPostDeleteModalOpen(true)} sx={{ color: 'red' }}>
+          Delete
+        </MenuItem>
+      </Menu>
+
+      <CardContent sx={{ pt: 0, pb: 1 }}>
+        <Typography variant="body1" sx={{ mb: 2 }}>
+          {currentCaption}
+        </Typography>
+      </CardContent>
+
+      {currentImage && (
+        <CardMedia
+          component="img"
+          image={currentImage}
+          alt="Meme"
+          sx={{
+            maxHeight: 500,
+            objectFit: 'contain',
+            bgcolor: isDarkMode ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)',
+          }}
+        />
+      )}
+
+      <CardActions disableSpacing>
+        <Button
+          startIcon={<FavoriteBorder />}
+          size="small"
+          sx={{ color: theme.palette.text.secondary }}
+        >
+          245
+        </Button>
+        <Button
+          startIcon={<ChatBubbleOutline />}
+          size="small"
+          onClick={() => setShowComments(!showComments)}
+          sx={{ color: theme.palette.text.secondary }}
+        >
+          {postComments.length}
+        </Button>
+        <Button startIcon={<Share />} size="small" sx={{ color: theme.palette.text.secondary }}>
+          Share
+        </Button>
+      </CardActions>
+
+      {showComments && (
+        <>
+          <Divider />
+          <CardContent>
+            <Typography variant="subtitle1" sx={{ mb: 2 }}>
+              Comments
+            </Typography>
+
+            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
               <Avatar
-                src={user?.avatar || ''}
-                sx={{ mr: 2 }}
-                alt={`${user?.first_name} ${user?.last_name}`}
+                sx={{
+                  width: 32,
+                  height: 32,
+                  bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
+                }}
               >
                 {user
                   ? `${user.first_name?.charAt(0) || ''}${user.last_name?.charAt(0) || ''}`
                   : 'U'}
               </Avatar>
-              <Typography variant="h6">
-                {user ? `${user.first_name} ${user.last_name}` : 'Unknown User'}
-              </Typography>
-            </Box>
-          </Box>
-          <Box>
-            <Typography variant="caption" sx={{ color: 'gray' }}>
-              {getRelativeTime(timestamp)}
-            </Typography>
-            <IconButton onClick={(event) => onMenuOpen(event, id)}>
-              <MoreVertIcon />
-            </IconButton>
-          </Box>
-          <Menu anchorEl={menuAnchor} open={isMenuOpen} onClose={onMenuClose}>
-            <MenuItem onClick={() => setIsEditModalOpen(true)}>Edit</MenuItem>
-            <MenuItem onClick={() => setIsPostDeleteModalOpen(true)} sx={{ color: 'red' }}>
-              Delete
-            </MenuItem>
-          </Menu>
-        </Box>
-
-        <DeleteConfirmationModal
-          open={isPostDeleteModalOpen}
-          onClose={() => setIsPostDeleteModalOpen(false)}
-          onConfirm={handleConfirmDelete}
-          message="Are you sure you want to delete this POST? This action cannot be undone."
-        />
-      </>
-
-      <Typography variant="body1" sx={{ mb: 2 }}>
-        {currentCaption}
-      </Typography>
-      {currentImage && (
-        <img src={currentImage} alt="Meme" style={{ maxWidth: '100%', borderRadius: '8px' }} />
-      )}
-
-      {/* Comment Section */}
-      <Box sx={{ mt: 3 }}>
-        <Typography variant="subtitle1">Comments</Typography>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, gap: 1 }}>
-          <TextField
-            fullWidth
-            size="small"
-            placeholder="Add a comment..."
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-          />
-          <Button variant="contained" onClick={handleAddComment}>
-            Comment
-          </Button>
-        </Box>
-
-        <Box sx={{ mt: 2 }}>
-          {postComments.length > 0 ? (
-            postComments.map((comment) => (
-              <Box
-                key={comment.id}
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="Add a comment..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
                 sx={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  mt: 2,
-                  pb: 2,
-                  borderBottom: '1px solid #eee',
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor:
+                      theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                    borderRadius: 2,
+                  },
                 }}
-              >
-                <Avatar
-                  src={comment.user?.avatar || ''}
-                  sx={{ mr: 1 }}
-                  alt={comment.user?.full_name || 'User'}
-                >
-                  {getInitials(comment.user?.first_name, comment.user?.last_name)}
-                </Avatar>
-                <Box sx={{ flexGrow: 1 }}>
-                  <Box
-                    sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                  >
-                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                      {comment.user?.full_name || 'Unknown User'}
-                    </Typography>
-                    <Typography variant="caption" color="gray">
-                      {comment.timestamp || comment.created_at}
-                    </Typography>
-                  </Box>
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        edge="end"
+                        color="primary"
+                        onClick={handleAddComment}
+                        sx={{ color: '#8a4fff' }}
+                      >
+                        <Send />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Box>
 
-                  {editingCommentId === comment.id ? (
-                    <TextField
-                      fullWidth
-                      size="small"
-                      value={editingCommentText}
-                      onChange={(e) => setEditingCommentText(e.target.value)}
-                      sx={{ mt: 1 }}
-                    />
-                  ) : (
-                    <Typography variant="body2" sx={{ mt: 0.5 }}>
-                      {comment.text}
-                    </Typography>
-                  )}
-                </Box>
-                {editingCommentId === comment.id ? (
-                  <Button size="small" onClick={() => setIsUpdateModalOpen(true)}>
-                    Save
-                  </Button>
-                ) : (
-                  <Box>
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        setEditingCommentId(comment.id);
-                        setEditingCommentText(comment.text);
-                        setIsUpdateModalOpen(true);
+            {postComments.length > 0 ? (
+              postComments.map((comment) => (
+                <Box
+                  key={comment.id}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    mt: 2,
+                    pb: 2,
+                    borderBottom: `1px solid ${theme.palette.divider}`,
+                  }}
+                >
+                  <Avatar
+                    src={comment.user?.avatar || ''}
+                    sx={{
+                      mr: 1,
+                      width: 32,
+                      height: 32,
+                      bgcolor:
+                        theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
+                    }}
+                    alt={comment.user?.full_name || 'User'}
+                  >
+                    {getInitials(comment.user?.first_name, comment.user?.last_name)}
+                  </Avatar>
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
                       }}
                     >
-                      ✏️
-                    </IconButton>
-                    <IconButton size="small" onClick={() => confirmDeleteComment(comment.id)}>
-                      🗑️
-                    </IconButton>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                        {comment.user?.full_name || 'Unknown User'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {comment.timestamp || comment.created_at}
+                      </Typography>
+                    </Box>
+
+                    {editingCommentId === comment.id ? (
+                      <TextField
+                        fullWidth
+                        size="small"
+                        value={editingCommentText}
+                        onChange={(e) => setEditingCommentText(e.target.value)}
+                        sx={{
+                          mt: 1,
+                          '& .MuiOutlinedInput-root': {
+                            bgcolor:
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(255,255,255,0.05)'
+                                : 'rgba(0,0,0,0.02)',
+                            borderRadius: 2,
+                          },
+                        }}
+                      />
+                    ) : (
+                      <Typography variant="body2" sx={{ mt: 0.5 }}>
+                        {comment.text}
+                      </Typography>
+                    )}
                   </Box>
-                )}
-              </Box>
-            ))
-          ) : (
-            <Typography variant="body2" sx={{ color: 'gray', mt: 1 }}>
-              No comments yet.
-            </Typography>
-          )}
-        </Box>
-      </Box>
+                  {editingCommentId === comment.id ? (
+                    <Button
+                      size="small"
+                      onClick={() => setIsUpdateModalOpen(true)}
+                      sx={{ color: '#8a4fff' }}
+                    >
+                      Save
+                    </Button>
+                  ) : (
+                    <Box>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          setEditingCommentId(comment.id);
+                          setEditingCommentText(comment.text);
+                          setIsUpdateModalOpen(true);
+                        }}
+                      >
+                        ✏️
+                      </IconButton>
+                      <IconButton size="small" onClick={() => confirmDeleteComment(comment.id)}>
+                        🗑️
+                      </IconButton>
+                    </Box>
+                  )}
+                </Box>
+              ))
+            ) : (
+              <Typography
+                variant="body2"
+                sx={{ color: theme.palette.text.secondary, textAlign: 'center', py: 1 }}
+              >
+                No comments yet.
+              </Typography>
+            )}
+          </CardContent>
+        </>
+      )}
 
       {/* Update Confirmation Modal */}
-      <Dialog open={isUpdateModalOpen} onClose={() => setIsUpdateModalOpen(false)}>
+      <Dialog
+        open={isUpdateModalOpen}
+        onClose={() => setIsUpdateModalOpen(false)}
+        PaperProps={{
+          sx: {
+            bgcolor: theme.palette.background.paper,
+            borderRadius: 3,
+          },
+        }}
+      >
         <DialogTitle>Edit Comment</DialogTitle>
         <DialogContent>
           <TextField
@@ -317,11 +418,28 @@ function MemePost({
             size="small"
             value={editingCommentText}
             onChange={(e) => setEditingCommentText(e.target.value)}
+            sx={{
+              mt: 1,
+              '& .MuiOutlinedInput-root': {
+                bgcolor:
+                  theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                borderRadius: 2,
+              },
+            }}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setIsUpdateModalOpen(false)}>Cancel</Button>
-          <Button onClick={handleUpdateComment} color="primary">
+          <Button
+            onClick={handleUpdateComment}
+            sx={{
+              bgcolor: '#8a4fff',
+              color: 'white',
+              '&:hover': {
+                bgcolor: '#7a3fef',
+              },
+            }}
+          >
             Save Changes
           </Button>
         </DialogActions>
@@ -334,6 +452,13 @@ function MemePost({
         message="Are you sure you want to delete this comment? This action cannot be undone."
       />
 
+      <DeleteConfirmationModal
+        open={isPostDeleteModalOpen}
+        onClose={() => setIsPostDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        message="Are you sure you want to delete this POST? This action cannot be undone."
+      />
+
       <EditPostModal
         open={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -341,7 +466,7 @@ function MemePost({
         currentImage={currentImage}
         onSave={handleSave}
       />
-    </Box>
+    </Card>
   );
 }
 
@@ -350,12 +475,14 @@ MemePost.propTypes = {
   caption: PropTypes.string.isRequired,
   image: PropTypes.string,
   timestamp: PropTypes.string.isRequired,
+  user: PropTypes.object,
   onDelete: PropTypes.func.isRequired,
   onUpdate: PropTypes.func,
   onMenuOpen: PropTypes.func.isRequired,
   onMenuClose: PropTypes.func.isRequired,
   menuAnchor: PropTypes.object,
   isMenuOpen: PropTypes.bool.isRequired,
+  darkMode: PropTypes.bool,
 };
 
 export default MemePost;

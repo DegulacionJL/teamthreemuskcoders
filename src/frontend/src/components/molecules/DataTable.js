@@ -79,9 +79,10 @@ DataTable.propTypes = {
   handleSearch: PropTypes.func,
   handleDelete: PropTypes.func,
   handleEdit: PropTypes.func,
-  handleAdd: PropTypes.bool,
+  handleAdd: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]),
   toolbar: PropTypes.bool,
   actions: PropTypes.bool,
+  alignSearchRight: PropTypes.bool,
 };
 
 DataTable.defaultProps = {

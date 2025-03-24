@@ -189,6 +189,19 @@ class UserController extends Controller
         return response()->json($this->response, $this->response['code']);
     }
 
+    public function follow($id)
+    {
+        try{
+            $this->response['data'] = $this->userService->follow((int)$id);
+        }
+        catch (Exception $e) {
+            $this->response = [
+                'error' => $e->getMessage(),
+                'code' => 500,
+            ];
+        }
+    }
+
     /**
      * Bulk Delete
      *

@@ -1,5 +1,7 @@
+'use client';
+
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   createMemePost,
   deletePost,
@@ -7,18 +9,41 @@ import {
   updateImage,
   updatePost,
 } from 'services/meme.service';
+import { LocalFireDepartment, Star, ThumbUp, TrendingUp, Whatshot } from '@mui/icons-material';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
-import { Avatar, Box, Button, IconButton, TextField, Typography } from '@mui/material';
-import { grey } from '@mui/material/colors';
-import MemePost from 'components/MemePost';
-import AnimatedMemeCategories from 'components/organisms/AnimatedMemeCategories';
+import {
+  Avatar,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Paper,
+  Tab,
+  Tabs,
+  TextField,
+  Typography,
+  useTheme,
+} from '@mui/material';
+import MemePost from '../../components/MemePost';
+import { useTheme as useCustomTheme } from '../../theme/ThemeContext';
 
 function MemeFeed() {
+  const theme = useTheme(); // MUI theme
+  const { darkMode } = useCustomTheme(); // Our custom theme context
   const [caption, setCaption] = useState('');
   const [image, setImage] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
   const [posts, setPosts] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  const [tabValue, setTabValue] = useState(0);
 
   // State for menu handling
   const [anchorEl, setAnchorEl] = useState(null);
@@ -114,84 +139,158 @@ function MemeFeed() {
     fetchPosts();
   }, []);
 
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
+  // Sample data for UI enhancements
+  const categories = [
+    { id: 1, name: 'Popular Memes', icon: <LocalFireDepartment color="primary" />, active: true },
+    { id: 2, name: 'Trending Now', icon: <TrendingUp />, active: false },
+    { id: 3, name: 'New Arrivals', icon: <Star />, active: false },
+    { id: 4, name: 'Top Picks', icon: <ThumbUp />, active: false },
+  ];
+
+  const trendingTags = [
+    { id: 1, label: '#MemeMonday', color: 'primary' },
+    { id: 2, label: '#GabingLagum', color: 'primary' },
+    { id: 3, label: '#MlbbFunnyMoments', color: 'primary' },
+    { id: 4, label: '#ProgrammerHumor', color: 'secondary' },
+    { id: 5, label: '#DadJokes', color: 'success' },
+  ];
+
+  const leaderboard = [
+    { id: 1, name: 'MemeKing', points: 10450, rank: 1 },
+    { id: 2, name: 'FunnyGuy', points: 8230, rank: 2 },
+    { id: 3, name: 'MemeLord', points: 6780, rank: 3 },
+  ];
+
   return (
     <Box
       sx={{
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'start',
-        gap: 0.5,
+        gap: 3,
         width: '100%',
         maxWidth: '100vw',
         margin: 'auto',
-        px: 0.5,
-        border: '2px solid',
-        // borderColor: 'red',
+        px: 2,
         position: 'sticky',
         mx: 0,
+        bgcolor: theme.palette.background.default,
+        color: theme.palette.text.primary,
+        transition: 'background-color 0.3s, color 0.3s',
+        pt: 2,
       }}
     >
+      {/* Left Sidebar */}
       <Box
         sx={{
-          // width: '15%',
-          backgroundColor: grey[200],
-          p: 1,
-          marginLeft: 0,
-          mt: 0,
-          // border: '2px solid',
-          // borderColor: 'blue',
-          textAlign: 'start',
-          alignItems: 'start',
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'sticky',
           width: '100%',
           maxWidth: '20%',
+          position: 'sticky',
+          top: 0,
           height: '100vh',
+          pt: 2,
+          display: { xs: 'none', md: 'block' },
         }}
       >
-        <Box
-          sx={{
-            alignItems: 'start',
-            justifyContent: 'start',
-            display: 'flex',
-            gap: 2,
-            // border: '2px solid',
-            // borderColor: 'green',
-            width: '100%',
-            flextDirection: 'column',
-            mx: 0,
-            p: 1,
-            mt: 2,
-            mb: 3,
-            ':hover': { cursor: 'pointer' },
-          }}
-        >
-          <Avatar
-            sx={{ width: 180, height: 80, borderRadius: '5%' }}
-            src={currentUser?.avatar || ''}
-            alt={`${currentUser?.first_name} ${currentUser?.last_name}`}
-          >
-            {currentUser
-              ? `${currentUser.first_name?.charAt(0) || ''}${
-                  currentUser.last_name?.charAt(0) || ''
-                }`
-              : 'U'}
-          </Avatar>
-        </Box>
-        <Box
-          sx={{
-            alignItems: 'start',
-            justifyContent: 'start',
-            display: 'flex',
-            flexDirection: 'column',
-            width: '100%',
-          }}
-        >
-          {/* Use the Animated Component Instead */}
-          <AnimatedMemeCategories />
-        </Box>
+        {/* Meme Categories */}
+        <Card sx={{ mb: 3 }}>
+          <CardHeader
+            title="Meme Categories"
+            sx={{
+              bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
+              color: '#ffffff',
+              py: 1.5,
+            }}
+          />
+          <List disablePadding>
+            {categories.map((category) => (
+              <ListItemButton
+                key={category.id}
+                selected={category.active}
+                sx={{
+                  borderLeft: category.active ? 4 : 0,
+                  borderColor: theme.palette.primary.main,
+                  pl: category.active ? 2 : 3,
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>{category.icon}</ListItemIcon>
+                <ListItemText
+                  primary={category.name}
+                  primaryTypographyProps={{
+                    fontWeight: category.active ? 'medium' : 'regular',
+                  }}
+                />
+              </ListItemButton>
+            ))}
+          </List>
+        </Card>
+
+        {/* Daily Challenge */}
+        <Card>
+          <CardHeader
+            title="Daily Challenge"
+            sx={{
+              bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
+              color: '#ffffff',
+              py: 1.5,
+            }}
+          />
+          <CardContent>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                mb: 2,
+                bgcolor: theme.palette.mode === 'dark' ? '#2a2a3a' : theme.palette.secondary.light,
+                color: theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.secondary.dark,
+                borderRadius: 2,
+              }}
+            >
+              <Typography variant="subtitle1" fontWeight="medium">
+                Caption This!
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                Create the funniest caption
+              </Typography>
+              <Box
+                sx={{
+                  height: 120,
+                  bgcolor:
+                    theme.palette.mode === 'dark' ? '#1e1e2e' : theme.palette.background.paper,
+                  borderRadius: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mb: 1,
+                }}
+              >
+                <PhotoCamera sx={{ fontSize: 40, color: theme.palette.text.disabled }} />
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  sx={{
+                    bgcolor: '#ffb300',
+                    color: '#000000',
+                    '&:hover': {
+                      bgcolor: '#ffa000',
+                    },
+                  }}
+                >
+                  Participate
+                </Button>
+              </Box>
+            </Paper>
+          </CardContent>
+        </Card>
       </Box>
+
       {/* Center Content (Create Post + Posts) */}
       <Box
         sx={{
@@ -199,79 +298,101 @@ function MemeFeed() {
           flexDirection: 'column',
           alignItems: 'center',
           width: '100%',
-          maxWidth: '55%',
+          maxWidth: { xs: '100%', md: '55%' },
           mt: 2,
         }}
       >
         {/* Create Post Section */}
-        <Box
-          sx={{
-            p: 2,
-            backgroundColor: 'white',
-            boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-            borderRadius: '8px',
-            width: '100%',
-            maxWidth: '550px',
-            mb: 2,
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-            <Avatar
-              src={currentUser?.avatar || ''}
-              sx={{ mr: 2 }}
-              alt={`${currentUser?.first_name} ${currentUser?.last_name}`}
-            >
-              {currentUser
-                ? `${currentUser.first_name?.charAt(0) || ''}${
-                    currentUser.last_name?.charAt(0) || ''
-                  }`
-                : 'U'}
-            </Avatar>
-            <Typography variant="h6">
-              {currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : 'Unknown User'}
-            </Typography>
-          </Box>
-
-          <TextField
-            placeholder="Write something funny..."
-            variant="outlined"
-            multiline
-            rows={1}
-            value={caption}
-            onChange={(e) => setCaption(e.target.value)}
-            sx={{ width: '100%', maxWidth: '100%' }}
-          />
-
-          {imagePreview && (
-            <Box sx={{ mt: 2, textAlign: 'center' }}>
-              <img
-                src={imagePreview}
-                alt="Preview"
-                style={{ maxWidth: '100%', borderRadius: '8px', display: 'block', margin: 'auto' }}
-              />
+        <Card sx={{ width: '100%', mb: 3 }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Avatar
+                src={currentUser?.avatar || ''}
+                sx={{ mr: 2 }}
+                alt={`${currentUser?.first_name} ${currentUser?.last_name}`}
+              >
+                {currentUser
+                  ? `${currentUser.first_name?.charAt(0) || ''}${
+                      currentUser.last_name?.charAt(0) || ''
+                    }`
+                  : 'JD'}
+              </Avatar>
+              <Typography variant="h6">
+                {currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : 'john degz'}
+              </Typography>
             </Box>
-          )}
 
-          <Box
-            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}
-          >
-            <IconButton color="primary" component="label">
-              <PhotoCamera />
-              <input
-                type="file"
-                hidden
-                accept="image/*"
-                onChange={(e) => {
-                  setImage(e.target.files[0]);
-                  setImagePreview(URL.createObjectURL(e.target.files[0]));
+            <TextField
+              placeholder="Write something funny..."
+              variant="outlined"
+              multiline
+              rows={3}
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              sx={{
+                width: '100%',
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  bgcolor:
+                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                  borderRadius: 1,
+                },
+              }}
+            />
+
+            {imagePreview && (
+              <Box sx={{ mt: 2, mb: 2, textAlign: 'center' }}>
+                <img
+                  src={imagePreview || '/placeholder.svg'}
+                  alt="Preview"
+                  style={{
+                    maxWidth: '100%',
+                    borderRadius: '8px',
+                    display: 'block',
+                    margin: 'auto',
+                  }}
+                />
+              </Box>
+            )}
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Button
+                variant="outlined"
+                startIcon={<PhotoCamera />}
+                component="label"
+                sx={{ borderRadius: 4 }}
+              >
+                Upload
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setImage(e.target.files[0]);
+                      setImagePreview(URL.createObjectURL(e.target.files[0]));
+                    }
+                  }}
+                />
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handlePost}
+                disabled={!caption && !image}
+                sx={{
+                  borderRadius: 4,
+                  bgcolor: '#8a4fff',
+                  '&:hover': {
+                    bgcolor: '#7a3fef',
+                  },
                 }}
-              />
-            </IconButton>
-            <Button variant="contained" color="primary" onClick={handlePost}>
-              Post
-            </Button>
-          </Box>
-        </Box>
+              >
+                POST
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
 
         {/* Meme Posts */}
         <Box sx={{ width: '100%' }}>
@@ -290,88 +411,169 @@ function MemeFeed() {
               menuAnchor={anchorEl}
               selectedPostId={selectedPostId}
               isMenuOpen={open && selectedPostId === post.id}
+              darkMode={darkMode}
             />
           ))}
         </Box>
       </Box>
+
       {/* Right Sidebar */}
       <Box
         sx={{
           width: '100%',
           maxWidth: '25%',
-          p: 1,
-          mx: 0,
-          mt: 0,
-          // border: '2px solid',
-          //
-          borderRadius: '8px',
-          textAlign: 'center',
-          alignItems: 'end',
-          justifyContent: 'end',
-          // position: 'sticky',
-          top: '80px',
-          height: 'auto',
+          position: 'sticky',
+          top: 0,
+          height: '100vh',
+          pt: 2,
           overflowY: 'auto',
+          display: { xs: 'none', md: 'block' },
         }}
       >
-        <Box
-          sx={{
-            backgroundImage: 'linear-gradient(to left, gray, darkgray, lightgray, lightgray)',
-            borderRadius: '8px',
-            p: 2,
-            boxSizing: 'border-box',
-          }}
-        >
-          <Box
+        {/* Suggested Users */}
+        <Card sx={{ mb: 3 }}>
+          <CardHeader
+            title="Suggested Users"
             sx={{
-              alignItems: 'end',
-              justifyContent: 'end',
-              width: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              px: 2,
-              mt: 2,
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
+              color: '#ffffff',
+              py: 1.5,
             }}
-          >
-            <Typography variant="h6">Suggested Users</Typography>
-            {/* Example suggested users */}
-            {[1, 2, 3].map((_, index) => (
-              <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
-                <Avatar sx={{ width: 40, height: 40 }}>U{index + 1}</Avatar>
-                <Typography variant="body1">User {index + 1}</Typography>
-                <Button variant="contained" size="small">
-                  Follow
-                </Button>
-              </Box>
+          />
+          <List disablePadding>
+            {[1, 2, 3].map((index) => (
+              <ListItem
+                key={index}
+                secondaryAction={
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    size="small"
+                    sx={{
+                      borderRadius: 4,
+                      color: '#8a4fff',
+                      borderColor: '#8a4fff',
+                      '&:hover': {
+                        borderColor: '#7a3fef',
+                        bgcolor: 'rgba(138, 79, 255, 0.08)',
+                      },
+                    }}
+                  >
+                    Follow
+                  </Button>
+                }
+                divider
+              >
+                <ListItemAvatar>
+                  <Avatar sx={{ bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : '#e0e0ff' }}>
+                    U{index}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText primary={`User ${index}`} secondary={`@user${index}`} />
+              </ListItem>
             ))}
-          </Box>
-          <Box
-            sx={{
-              alignItems: 'end',
-              justifyContent: 'end',
-              width: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              px: 2,
-            }}
-          >
-            <Typography variant="h6" sx={{ mt: 4 }}>
-              Trending Memes
-            </Typography>
-            <Typography variant="body2">#lumay</Typography>
-            <Typography variant="body2">#GabiNgLagum</Typography>
-            <Typography variant="body2">#MlbbFunnyMoments</Typography>
+          </List>
+        </Card>
 
-            <Typography variant="h6" sx={{ mt: 4 }}>
-              Leader Board
-            </Typography>
+        {/* Trending Tags */}
+        <Card sx={{ mb: 3 }}>
+          <CardHeader
+            title="Trending Memes"
+            sx={{
+              bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
+              color: '#ffffff',
+              py: 1.5,
+            }}
+          />
+          <CardContent>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {trendingTags.map((tag) => (
+                <Chip
+                  key={tag.id}
+                  label={tag.label}
+                  color={tag.color}
+                  variant="filled"
+                  clickable
+                  sx={{
+                    bgcolor:
+                      tag.color === 'primary'
+                        ? '#4a3b6b'
+                        : tag.color === 'secondary'
+                        ? '#5d4037'
+                        : '#2e7d32',
+                    color: '#ffffff',
+                    '&:hover': {
+                      bgcolor:
+                        tag.color === 'primary'
+                          ? '#5a4b7b'
+                          : tag.color === 'secondary'
+                          ? '#6d5047'
+                          : '#3e8d42',
+                    },
+                  }}
+                />
+              ))}
+            </Box>
+          </CardContent>
+        </Card>
+
+        {/* Leaderboard */}
+        <Card>
+          <CardHeader
+            title="Leaderboard"
+            sx={{
+              bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
+              color: '#ffffff',
+              py: 1.5,
+            }}
+          />
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs value={tabValue} onChange={handleTabChange} variant="fullWidth">
+              <Tab label="Daily" />
+              <Tab label="Weekly" />
+              <Tab label="Monthly" />
+            </Tabs>
           </Box>
-        </Box>
+          <List disablePadding>
+            {leaderboard.map((user) => (
+              <ListItem key={user.id} divider>
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <Avatar
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      bgcolor:
+                        user.rank === 1 ? '#ffb300' : user.rank === 2 ? 'grey.500' : '#CD7F32',
+                      color: user.rank === 1 ? '#000000' : '#ffffff',
+                    }}
+                  >
+                    {user.rank}
+                  </Avatar>
+                </ListItemIcon>
+                <ListItemText
+                  primary={user.name}
+                  secondary={`${user.points.toLocaleString()} points`}
+                />
+                {user.rank === 1 && (
+                  <Chip
+                    icon={<Whatshot />}
+                    label="King"
+                    size="small"
+                    sx={{
+                      bgcolor: '#ffb300',
+                      color: '#000000',
+                    }}
+                  />
+                )}
+              </ListItem>
+            ))}
+          </List>
+        </Card>
       </Box>
     </Box>
   );
 }
+
 MemeFeed.propTypes = {
   currentUser: PropTypes.shape({
     avatar: PropTypes.string,

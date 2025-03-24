@@ -69,6 +69,7 @@ Route::prefix('users')
         Route::put('{id}', [UserController::class, 'update']);
         Route::delete('bulk-delete', [UserController::class, 'bulkDelete']);
         Route::delete('{id}', [UserController::class, 'delete']);
+        Route::post('{id}/follow', [UserController::class, 'follow']);
     });
     Route::prefix('userlist')
     ->group(function () {

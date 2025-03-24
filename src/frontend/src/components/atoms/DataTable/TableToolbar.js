@@ -10,7 +10,7 @@ import InputBase from '@mui/material/InputBase';
 import Button from 'components/atoms/Button';
 
 function TableToolbar(props) {
-  const { handleSearch, handleAdd } = props;
+  const { handleSearch, handleAdd, user } = props;
   const { t } = useTranslation();
   const searchEl = useRef(null);
   const [submitted, setSubmitted] = useState(false);
@@ -58,7 +58,7 @@ function TableToolbar(props) {
         </Box>
       </Box>
 
-      {handleAdd && (
+      {user?.role === 'admin' && handleAdd && (
         <Button onClick={handleAdd} startIcon={<AddIcon />}>
           {t('labels.add_new')}
         </Button>
@@ -66,10 +66,16 @@ function TableToolbar(props) {
     </Box>
   );
 }
+TableToolbar.defaultProps = {
+  user: { role: '' }, // Provide a default user object
+};
 
 TableToolbar.propTypes = {
   handleSearch: PropTypes.func,
-  handleAdd: PropTypes.bool,
+  handleAdd: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]),
+  user: PropTypes.shape({
+    role: PropTypes.string.isRequired,
+  }).isRequired,
 };
 
 export default TableToolbar;

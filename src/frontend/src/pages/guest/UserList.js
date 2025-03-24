@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import { searchUsers } from 'services/user.list.service';
-import { followUser, retrieveUser } from 'services/user.service';
+import { followUser } from 'services/user.service';
 import Box from '@mui/material/Box';
 import DataTable from 'components/molecules/DataTable';
 import AddEditModal from 'components/molecules/users/AddEditModal';
@@ -11,7 +11,7 @@ import { criteria, meta as defaultMeta } from 'config/search';
 function Users() {
   const { t } = useTranslation();
   const [data, setData] = useState([]);
-  const [user, setUser] = useState(null);
+  const [user] = useState(null);
   const [query, setQuery] = useState(criteria);
   const [meta, setMeta] = useState(defaultMeta);
   const [open, setOpen] = useState(false);
@@ -65,18 +65,14 @@ function Users() {
     setQuery({ ...query, ...{ keyword, page: 1 } });
   };
 
-  const handleEdit = async (id) => {
-    const user = await retrieveUser(id);
-    setOpen(true);
-    setUser(user);
-  };
-
   const handleFollow = async (id) => {
+    console.log('Follow button clicked for ID:', id); // Debugging line
     try {
       await followUser(id);
       toast(t('pages.users.user_followed'), { type: 'success' });
       fetchUsers(); // Refresh user list
     } catch (error) {
+      console.error('Follow request failed:', error);
       toast(t('pages.users.follow_failed'), { type: 'error' });
     }
   };
@@ -110,10 +106,11 @@ function Users() {
           handleChangePage={handleChangePage}
           handleSort={handleSort}
           handleSearch={handleSearch}
-          handleEdit={handleEdit}
-          handleDelete={handleDelete}
+          handleEdit={false}
+          handleDelete={false}
+          handleFollow={handleFollow}
           showAddNew={false}
-          handleAdd={false}
+          handleAdd={user?.role === 'admin' ? () => setOpen(true) : false}
           toolbar={true}
           alignSearchRight={true}
         />

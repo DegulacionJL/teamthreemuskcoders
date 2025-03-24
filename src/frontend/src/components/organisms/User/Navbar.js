@@ -1,196 +1,110 @@
-import PropTypes from 'prop-types';
-import { Fragment, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
-import MenuIcon from '@mui/icons-material/Menu';
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
-import IconButton from '@mui/material/IconButton';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import Switch from '@mui/material/Switch';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import { blueGrey } from '@mui/material/colors';
-import Button from 'components/atoms/Button';
-import LanguageSelect from 'components/atoms/LanguageSelect';
-import MenuLinks from 'components/atoms/MenuLinks';
-import AvatarNavDropdown from 'components/molecules/AvatarNavDropdown';
-import NotificationIcon from 'components/molecules/NotificationIcon';
+'use client';
 
-function Navbar(props) {
-  const { user = null } = props;
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const [anchorMobileNav, setAnchorMobileNav] = useState(null);
-  const [darkMode, setDarkMode] = useState(false);
+import { Link as RouterLink, useLocation } from 'react-router-dom';
+import { DarkMode, LightMode, Notifications } from '@mui/icons-material';
+import {
+  AppBar,
+  Avatar,
+  Box,
+  Button,
+  Container,
+  IconButton,
+  Toolbar,
+  Typography,
+  useTheme,
+} from '@mui/material';
+import { useTheme as useCustomTheme } from '../../../theme/ThemeContext';
 
-  useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
-    }
-  }, [darkMode]);
+function Navbar() {
+  const theme = useTheme();
+  const { darkMode, toggleDarkMode } = useCustomTheme();
+  const location = useLocation();
 
-  const menus = [
-    { label: t('menu.about'), url: '/about' },
-    { label: t('menu.inquiry'), url: '/inquiry' },
-    { label: t('menu.faq'), url: '/faq' },
-    { label: t('menu.styleguide'), url: '/styleguide' },
+  const navItems = [
+    { name: 'ABOUT', path: '/about' },
+    { name: 'INQUIRY', path: '/inquiry' },
+    { name: 'FAQ', path: '/faq' },
+    { name: 'STYLEGUIDE', path: '/styleguide' },
+    { name: 'MEME FEED', path: '/meme-feed' },
   ];
-
-  if (user) {
-    menus.push({ label: t('menu.memefeed'), url: '/memefeed' });
-  }
-
-  const appName = process.env.REACT_APP_SITE_TITLE;
-
-  const handleOpenNavMenu = (event) => setAnchorMobileNav(event.currentTarget);
-  const handleCloseNavMenu = (url) => {
-    setAnchorMobileNav(null);
-    navigate(url, { replace: true });
-  };
-
-  const links = [
-    { label: t('menu.profile'), url: '/profile' },
-    { label: t('menu.logout'), url: '/logout' },
-  ];
-
-  const handleDarkModeToggle = () => {
-    setDarkMode((prevMode) => !prevMode);
-  };
 
   return (
     <AppBar
       position="sticky"
-      color="transparent"
-      elevation={0}
       sx={{
-        borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
-        backgroundColor: blueGrey[900],
-        color: 'transparent',
-        top: 0,
-        zIndex: 1000,
+        backgroundColor: theme.palette.mode === 'dark' ? '#121824' : theme.palette.primary.main,
+        boxShadow: 'none',
+        borderBottom: `1px solid ${theme.palette.divider}`,
       }}
     >
-      <Container maxWidth="lg">
-        <Toolbar sx={{ height: '64px', minHeight: '64px', position: 'relative' }} disableGutters>
-          <Box sx={{ flexGrow: 4, display: { xs: 'none', md: 'flex' }, mt: 0, mb: 0 }}>
-            <Link to="/">
-              <img src="/static/images/memema_black.png" alt={appName} height={130} />
-            </Link>
-          </Box>
-
-          <Box
-            component="nav"
-            sx={{
-              flexGrow: 1,
-              display: { xs: 'none', md: 'flex' },
-              justifyContent: 'center', // Centers the menu
+      <Container maxWidth="xl">
+        <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
+          {/* Logo */}
+          <RouterLink
+            to="/"
+            style={{
+              textDecoration: 'none',
+              color: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
             }}
           >
-            <MenuLinks items={menus} />
+            <Typography
+              variant="h5"
+              noWrap
+              sx={{
+                fontWeight: 700,
+                color: '#ffb300',
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              MemeMa
+              <span role="img" aria-label="laughing emoji">
+                😂
+              </span>
+            </Typography>
+          </RouterLink>
+
+          {/* Navigation Links */}
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2 }}>
+            {navItems.map((item) => (
+              <Button
+                key={item.name}
+                component={RouterLink}
+                to={item.path}
+                sx={{
+                  color: location.pathname === item.path ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
+                  fontWeight: location.pathname === item.path ? 700 : 400,
+                  '&:hover': {
+                    color: '#ffffff',
+                  },
+                }}
+              >
+                {item.name}
+              </Button>
+            ))}
           </Box>
 
-          {/** Mobile Menu */}
-          <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
+          {/* Right Side Icons */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <IconButton
-              size="large"
-              aria-label="main menu"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleOpenNavMenu}
               color="inherit"
+              onClick={toggleDarkMode}
+              sx={{ color: theme.palette.mode === 'dark' ? '#ffb300' : '#ffffff' }}
             >
-              <MenuIcon />
+              {darkMode ? <LightMode /> : <DarkMode />}
             </IconButton>
-
-            <Box
-              onClick={() => navigate('/')}
-              sx={{
-                display: { xs: 'flex', md: 'none' },
-                flexGrow: 1,
-                justifyContent: 'center',
-              }}
-            >
-              <img src="/static/images/sprobe-icon.png" alt={appName} height={48} />
-            </Box>
-
-            <Menu
-              id="menu-appbar"
-              anchorEl={anchorMobileNav}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'left',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'left',
-              }}
-              open={Boolean(anchorMobileNav)}
-              onClose={handleCloseNavMenu}
-              sx={{
-                display: { xs: 'block', md: 'none' },
-              }}
-              MenuListProps={{
-                style: {
-                  width: 200,
-                },
-              }}
-            >
-              {menus.map((menu, key) => (
-                <MenuItem key={key} onClick={() => handleCloseNavMenu(menu.url)}>
-                  <Typography textAlign="center">{menu.label}</Typography>
-                </MenuItem>
-              ))}
-
-              {!user && (
-                <Box>
-                  <MenuItem onClick={() => handleCloseNavMenu('/signup')}>
-                    <Typography textAlign="center">{t('labels.signup')}</Typography>
-                  </MenuItem>
-
-                  <MenuItem onClick={() => handleCloseNavMenu('/login')}>
-                    <Typography textAlign="center">{t('labels.login')}</Typography>
-                  </MenuItem>
-                </Box>
-              )}
-            </Menu>
+            <IconButton color="inherit">
+              <Notifications />
+            </IconButton>
+            <Avatar sx={{ bgcolor: '#8a4fff' }}>JD</Avatar>
           </Box>
-
-          <LanguageSelect sx={{ ml: 1 }} />
-
-          <Switch checked={darkMode} onChange={handleDarkModeToggle} />
-
-          {user ? (
-            <Fragment>
-              <NotificationIcon user={user} />
-              <AvatarNavDropdown user={user} links={links} />
-            </Fragment>
-          ) : (
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
-              <Button component={Link} to="/signup" variant="outlined">
-                {t('labels.signup')}
-              </Button>
-
-              <Button component={Link} to="/login">
-                {t('labels.login')}
-              </Button>
-            </Box>
-          )}
         </Toolbar>
       </Container>
     </AppBar>
   );
 }
-
-Navbar.propTypes = {
-  onLogout: PropTypes.func,
-  user: PropTypes.object,
-};
 
 export default Navbar;

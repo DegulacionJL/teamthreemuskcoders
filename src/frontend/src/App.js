@@ -1,30 +1,27 @@
-import { HelmetProvider } from 'react-helmet-async';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.min.css';
-import { CssBaseline } from '@mui/material';
-import { ThemeProvider } from '@mui/material/styles';
-import Router from './router';
-import theme from './theme';
+import { Route, Routes } from 'react-router-dom';
+import { Box } from '@mui/material';
+import Navbar from './components/organisms/User/Navbar';
+import About from './pages/guest/About';
+import FAQ from './pages/guest/About';
+import Inquiry from './pages/guest/About';
+import StyleGuide from './pages/guest/About';
+import MemeFeed from './pages/guest/MemeFeed';
 
 function App() {
   return (
-    <HelmetProvider>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-
-        <Router />
-      </ThemeProvider>
-
-      <ToastContainer
-        position="bottom-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        draggable
-      />
-    </HelmetProvider>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <Navbar />
+      <Box component="main" sx={{ flexGrow: 1 }}>
+        <Routes>
+          <Route path="/" element={<MemeFeed />} />
+          <Route path="/meme-feed" element={<MemeFeed />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/inquiry" element={<Inquiry />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/styleguide" element={<StyleGuide />} />
+        </Routes>
+      </Box>
+    </Box>
   );
 }
 
