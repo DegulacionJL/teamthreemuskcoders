@@ -3,13 +3,10 @@ import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
+import './i18n';
 import store from './store';
-// If you're using Redux
 import { ThemeProvider } from './theme/ThemeContext';
 
-// If you're using Redux
-
-// Use this if you're using Redux
 ReactDOM.render(
   <React.StrictMode>
     <Provider store={store}>

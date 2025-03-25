@@ -1,44 +1,94 @@
-'use client';
-
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import { DarkMode, LightMode, Notifications } from '@mui/icons-material';
+import { DarkMode, LightMode, Menu as MenuIcon, Notifications } from '@mui/icons-material';
 import {
   AppBar,
-  Avatar,
   Box,
   Button,
   Container,
   IconButton,
+  Menu,
+  MenuItem,
   Toolbar,
   Typography,
-  useTheme,
 } from '@mui/material';
+import AvatarNavDropdown from 'components/molecules/AvatarNavDropdown';
 import { useTheme as useCustomTheme } from '../../../theme/ThemeContext';
 
 function Navbar() {
-  const theme = useTheme();
+  const { t } = useTranslation();
   const { darkMode, toggleDarkMode } = useCustomTheme();
   const location = useLocation();
+  const [anchorMobileNav, setAnchorMobileNav] = useState(null);
 
-  const navItems = [
-    { name: 'ABOUT', path: '/about' },
-    { name: 'INQUIRY', path: '/inquiry' },
-    { name: 'FAQ', path: '/faq' },
-    { name: 'STYLEGUIDE', path: '/styleguide' },
-    { name: 'MEME FEED', path: '/meme-feed' },
+  // Mock user data (replace with actual user logic)
+  const user = {
+    full_name: 'John Doe',
+    avatar: null, // Replace with actual avatar URL if available
+  };
+
+  // Navigation menu items
+  const menus = [
+    { label: t('menu.header_about'), url: '/about' },
+    { label: t('menu.inquiry'), url: '/inquiry' },
+    { label: t('menu.faq'), url: '/faq' },
+    { label: t('menu.styleguide'), url: '/styleguide' },
   ];
+
+  if (user) {
+    menus.push({ label: t('menu.memefeed'), url: '/memefeed' });
+  }
+
+  const links = [
+    { label: t('menu.profile'), url: '/profile' },
+    { label: t('menu.logout'), url: '/logout' },
+  ];
+
+  const handleOpenNavMenu = (event) => {
+    setAnchorMobileNav(event.currentTarget);
+  };
+
+  const handleCloseNavMenu = () => {
+    setAnchorMobileNav(null);
+  };
 
   return (
     <AppBar
       position="sticky"
       sx={{
-        backgroundColor: theme.palette.mode === 'dark' ? '#121824' : theme.palette.primary.main,
+        backgroundColor: darkMode ? '#121824' : '#8a4fff', // Updated color
         boxShadow: 'none',
-        borderBottom: `1px solid ${theme.palette.divider}`,
+        borderBottom: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)'}`,
       }}
     >
       <Container maxWidth="xl">
         <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
+          {/* Mobile Menu Button */}
+          <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
+            <IconButton size="large" color="inherit" onClick={handleOpenNavMenu}>
+              <MenuIcon />
+            </IconButton>
+            <Menu
+              anchorEl={anchorMobileNav}
+              open={Boolean(anchorMobileNav)}
+              onClose={handleCloseNavMenu}
+              sx={{ display: { xs: 'block', md: 'none' } }}
+            >
+              {menus.map((item) => (
+                <MenuItem key={item.label} onClick={handleCloseNavMenu}>
+                  <Button
+                    component={RouterLink}
+                    to={item.url}
+                    sx={{ color: darkMode ? '#ffffff' : '#000000' }} // Fixed dark mode color
+                  >
+                    {item.label}
+                  </Button>
+                </MenuItem>
+              ))}
+            </Menu>
+          </Box>
+
           {/* Logo */}
           <RouterLink
             to="/"
@@ -60,29 +110,26 @@ function Navbar() {
                 alignItems: 'center',
               }}
             >
-              MemeMa
-              <span role="img" aria-label="laughing emoji">
-                😂
-              </span>
+              MemeMa 😂
             </Typography>
           </RouterLink>
 
-          {/* Navigation Links */}
+          {/* Desktop Navigation Links */}
           <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2 }}>
-            {navItems.map((item) => (
+            {menus.map((item) => (
               <Button
-                key={item.name}
+                key={item.label}
                 component={RouterLink}
-                to={item.path}
+                to={item.url}
                 sx={{
-                  color: location.pathname === item.path ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
-                  fontWeight: location.pathname === item.path ? 700 : 400,
+                  color: location.pathname === item.url ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
+                  fontWeight: location.pathname === item.url ? 700 : 400,
                   '&:hover': {
                     color: '#ffffff',
                   },
                 }}
               >
-                {item.name}
+                {item.label}
               </Button>
             ))}
           </Box>
@@ -92,14 +139,16 @@ function Navbar() {
             <IconButton
               color="inherit"
               onClick={toggleDarkMode}
-              sx={{ color: theme.palette.mode === 'dark' ? '#ffb300' : '#ffffff' }}
+              sx={{ color: darkMode ? '#ffb300' : '#ffffff' }}
             >
               {darkMode ? <LightMode /> : <DarkMode />}
             </IconButton>
             <IconButton color="inherit">
               <Notifications />
             </IconButton>
-            <Avatar sx={{ bgcolor: '#8a4fff' }}>JD</Avatar>
+
+            {/* Avatar Dropdown */}
+            <AvatarNavDropdown user={user} links={links} />
           </Box>
         </Toolbar>
       </Container>

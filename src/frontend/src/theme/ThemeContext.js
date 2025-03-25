@@ -1,21 +1,16 @@
-'use client';
-
 import PropTypes from 'prop-types';
 import { createContext, useContext, useEffect, useState } from 'react';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider as MUIThemeProvider, createTheme } from '@mui/material/styles';
 
-// Create the context
 const ThemeContext = createContext();
 
-// Custom hook to use the theme context
 export const useTheme = () => useContext(ThemeContext);
 
 export const ThemeProvider = ({ children }) => {
-  // Check if dark mode was previously set in localStorage
   const [darkMode, setDarkMode] = useState(() => {
     const savedMode = localStorage.getItem('darkMode');
-    return savedMode ? JSON.parse(savedMode) : true; // Default to dark mode
+    return savedMode ? JSON.parse(savedMode) : true;
   });
 
   // Create the MUI theme based on dark mode state
@@ -23,19 +18,19 @@ export const ThemeProvider = ({ children }) => {
     palette: {
       mode: darkMode ? 'dark' : 'light',
       primary: {
-        main: '#8a4fff', // Bright purple for buttons and accents
+        main: '#8a4fff',
         light: '#b07fff',
         dark: '#6a3fd0',
         contrastText: '#ffffff',
       },
       secondary: {
-        main: '#ffb300', // Amber/gold for secondary elements
+        main: '#ffb300',
         light: '#ffe54c',
         dark: '#c68400',
         contrastText: '#000000',
       },
       background: {
-        default: darkMode ? '#121824' : '#F9FAFB', // Dark navy background
+        default: darkMode ? '#121824' : '#F9FAFB',
         paper: darkMode ? '#1a2235' : '#FFFFFF', // Slightly lighter navy for cards
       },
       text: {

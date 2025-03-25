@@ -9,46 +9,27 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
 
 const links = [
-  {
-    label: 'User List',
-    path: '/userlist',
-    icon: <DashboardIcon sx={{ color: 'white' }} />, // Set color to white
-  },
-  {
-    label: 'Users',
-    path: '/routes/users',
-    icon: <PeopleIcon sx={{ color: 'white' }} />,
-  },
-  {
-    label: 'Roles',
-    path: '/routes/roles',
-    icon: <RoomPreferencesIcon sx={{ color: 'white' }} />,
-  },
-  // DEMO PURPOSES ONLY. REMOVE ON ACTUAL PROJECT
-  {
-    label: 'Broadcast',
-    path: '/routes/broadcast',
-    icon: <CampaignIcon sx={{ color: 'white' }} />,
-  },
-  {
-    label: 'Integrations',
-    path: '/routes/integrations',
-    icon: <LayersIcon sx={{ color: 'white' }} />,
-  },
+  { label: 'User List', path: '/userlist', icon: <DashboardIcon /> },
+  { label: 'Users', path: '/routes/users', icon: <PeopleIcon /> },
+  { label: 'Roles', path: '/routes/roles', icon: <RoomPreferencesIcon /> },
+  { label: 'Broadcast', path: '/routes/broadcast', icon: <CampaignIcon /> },
+  { label: 'Integrations', path: '/routes/integrations', icon: <LayersIcon /> },
 ];
 
 function SidebarMenu() {
+  const theme = useTheme(); // Get theme
   const location = useLocation();
   const { t } = useTranslation();
-  const localizeLinks = [...links];
+  const localizeLinks = links.map((link) => ({
+    ...link,
+    label: t(`menu.${link.path.split('/').pop()}`),
+  }));
 
-  // add localization to menu items
-  localizeLinks.map((link) => {
-    link.label = t(`menu.${link.path.split('/').pop()}`);
-    return link;
-  });
+  const textColor =
+    theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary;
 
   return (
     <>
@@ -59,13 +40,13 @@ function SidebarMenu() {
           to={item.path}
           selected={location.pathname === item.path}
         >
-          <ListItemIcon sx={{ color: 'white' }}>{item.icon}</ListItemIcon>{' '}
-          {/* Ensure icons are white */}
+          <ListItemIcon sx={{ color: textColor }}>{item.icon}</ListItemIcon>{' '}
+          {/* Dynamic icon color */}
           <ListItemText
             primary={
-              <Typography variant="body2" sx={{ color: 'white' }}>
+              <Typography variant="body2" sx={{ color: textColor }}>
                 {' '}
-                {/* Text also white */}
+                {/* Dynamic text color */}
                 {item.label}
               </Typography>
             }

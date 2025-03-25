@@ -9,7 +9,13 @@ function CallToAction() {
   const { t } = useTranslation();
 
   return (
-    <Box sx={(theme) => ({ display: 'flex', mb: -8, background: theme.palette.primary.main })}>
+    <Box
+      sx={(theme) => ({
+        display: 'flex',
+        mb: -8,
+        background: theme.palette.primary.memema_main,
+      })}
+    >
       <Container>
         <Grid container spacing={4} sx={{ width: '100%', alignItems: 'center', py: 6 }}>
           <Grid item xs={12} md={8}>

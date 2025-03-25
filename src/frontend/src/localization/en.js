@@ -172,6 +172,7 @@ const en = {
     menu: {
       home: 'Home',
       about: 'About',
+      header_about: 'About',
       inquiry: 'Inquiry',
       faq: 'FAQ',
       dashboard: 'Dashboard',

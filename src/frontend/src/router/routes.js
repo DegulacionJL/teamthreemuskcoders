@@ -78,6 +78,11 @@ const routes = [
     component: 'pages/guest/MemeFeed',
     auth: true,
   },
+  {
+    path: '/logout',
+    component: 'pages/guest/Logout', // ✅ Add this line
+    auth: true, // Logout should only be accessible to authenticated users
+  },
 
   ...admin,
   ...user,

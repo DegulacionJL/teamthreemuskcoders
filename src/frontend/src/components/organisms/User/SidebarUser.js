@@ -9,22 +9,20 @@ const collapsedWidth = 48; // Just enough for icons
 
 const Drawer = styled(MuiDrawer)(({ theme }) => ({
   '& .MuiDrawer-paper': {
-    position: 'absolute', // Overlay sidebar instead of pushing content
+    position: 'absolute',
     top: 0,
     left: 0,
-    // height: '200vh',
     whiteSpace: 'nowrap',
-    width: collapsedWidth, // Default: collapsed
-    backgroundColor: blueGrey[900], // Sidebar color
-    color: theme.palette.common.white,
+    width: collapsedWidth,
+    backgroundColor: theme.palette.mode === 'dark' ? blueGrey[900] : blueGrey[50], // Dynamic color
+    color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
     transition: theme.transitions.create('width', {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
     }),
     boxSizing: 'border-box',
-    overflowX: 'hidden', // Prevent horizontal scroll
+    overflowX: 'hidden',
 
-    // Expand when hovered
     '&:hover': {
       width: drawerWidth,
     },

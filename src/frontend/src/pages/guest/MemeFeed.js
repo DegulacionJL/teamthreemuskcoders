@@ -171,7 +171,7 @@ function MemeFeed() {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'start',
-        gap: 3,
+        gap: 2,
         width: '100%',
         maxWidth: '100vw',
         margin: 'auto',
@@ -303,7 +303,7 @@ function MemeFeed() {
         }}
       >
         {/* Create Post Section */}
-        <Card sx={{ width: '100%', mb: 3 }}>
+        <Card sx={{ width: '100%', mb: 3, maxWidth: '80%' }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <Avatar
@@ -395,7 +395,7 @@ function MemeFeed() {
         </Card>
 
         {/* Meme Posts */}
-        <Box sx={{ width: '100%' }}>
+        <Box sx={{ width: '100%', maxWidth: '80%' }}>
           {posts.map((post) => (
             <MemePost
               key={post.id}
