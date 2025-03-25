@@ -10,10 +10,12 @@ import InputBase from '@mui/material/InputBase';
 import Button from 'components/atoms/Button';
 
 function TableToolbar(props) {
-  const { handleSearch, handleAdd } = props;
+  const { handleSearch, handleAdd, user } = props;
   const { t } = useTranslation();
   const searchEl = useRef(null);
   const [submitted, setSubmitted] = useState(false);
+
+  console.log('handleAdd value:', handleAdd); // Debugging
 
   const handleClear = () => {
     setSubmitted(false);
@@ -30,7 +32,7 @@ function TableToolbar(props) {
   };
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, width: '100%' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2, width: '100%' }}>
       <Box
         sx={(theme) => ({
           display: 'flex',
@@ -56,16 +58,24 @@ function TableToolbar(props) {
         </Box>
       </Box>
 
-      <Button onClick={() => handleAdd()} startIcon={<AddIcon />}>
-        {t('labels.add_new')}
-      </Button>
+      {user?.role === 'admin' && handleAdd && (
+        <Button onClick={handleAdd} startIcon={<AddIcon />}>
+          {t('labels.add_new')}
+        </Button>
+      )}
     </Box>
   );
 }
+TableToolbar.defaultProps = {
+  user: { role: '' }, // Provide a default user object
+};
 
 TableToolbar.propTypes = {
   handleSearch: PropTypes.func,
-  handleAdd: PropTypes.func,
+  handleAdd: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]),
+  user: PropTypes.shape({
+    role: PropTypes.string.isRequired,
+  }).isRequired,
 };
 
 export default TableToolbar;

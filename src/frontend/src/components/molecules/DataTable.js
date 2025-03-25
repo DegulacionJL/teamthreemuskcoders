@@ -25,11 +25,18 @@ function DataTable(props) {
     handleAdd,
     toolbar,
     actions,
+    alignSearchRight,
   } = props;
 
   return (
     <Box sx={{ width: '100%' }}>
-      {toolbar && <TableToolbar handleSearch={handleSearch} handleAdd={handleAdd} />}
+      {toolbar && (
+        <TableToolbar
+          handleSearch={handleSearch}
+          handleAdd={handleAdd}
+          alignSearchRight={alignSearchRight}
+        />
+      )}
 
       <Paper sx={{ width: '100%', mb: 2 }}>
         <TableContainer>
@@ -72,9 +79,10 @@ DataTable.propTypes = {
   handleSearch: PropTypes.func,
   handleDelete: PropTypes.func,
   handleEdit: PropTypes.func,
-  handleAdd: PropTypes.func,
+  handleAdd: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]),
   toolbar: PropTypes.bool,
   actions: PropTypes.bool,
+  alignSearchRight: PropTypes.bool,
 };
 
 DataTable.defaultProps = {

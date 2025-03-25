@@ -54,7 +54,6 @@ function Landing() {
     comment: faker.lorem.words(15),
     rating: Math.random() * (5 - 1) + 1,
   }));
-
   return (
     <>
       <Seo
@@ -63,36 +62,39 @@ function Landing() {
         image="http://test.com/"
       />
 
-      <HeroImage image="/static/images/background_memema2.jpg" height="calc(100vh - 100px)">
-        <Box
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}
-        >
-          <Box>
-            <Typography
-              component="h2"
-              variant="h2"
-              align="center"
-              color="text.primary"
-              gutterBottom
-              sx={{ fontWeight: 'bold', color: 'white', textShadow: '2px 2px rgba(0, 0, 0, 0.5)' }}
-            >
-              {t('pages.landing.main_heading')}
-            </Typography>
-            <Typography
-              variant="h5"
-              align="center"
-              color="text.secondary"
-              component="p"
-              sx={{ color: 'white' }}
-            >
-              {t('pages.landing.sub_heading')}
-            </Typography>
-
-            <Box textAlign="center" sx={{ mt: 2 }}>
-              <ButtonRound component={Link} to="/signup" disableElevation>
-                {t('labels.get_started')}
-              </ButtonRound>
-            </Box>
+      <HeroImage
+        image="/static/images/background_memema2.jpg"
+        height="calc(100vh - 64px)" // Adjust for navbar height
+        sx={{
+          flexGrow: 1, // Take up remaining space
+          display: 'flex',
+          alignItems: 'center', // Center vertically
+          justifyContent: 'center', // Center horizontally
+        }}
+      >
+        <Box sx={{ textAlign: 'center', maxWidth: '600px' }}>
+          {' '}
+          {/* Ensures proper content alignment */}
+          <Typography
+            component="h2"
+            variant="h2"
+            color="text.primary"
+            gutterBottom
+            sx={{
+              fontWeight: 'bold',
+              color: 'white',
+              textShadow: '2px 2px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            {t('pages.landing.main_heading')}
+          </Typography>
+          <Typography variant="h5" color="text.secondary" sx={{ color: 'white' }}>
+            {t('pages.landing.sub_heading')}
+          </Typography>
+          <Box sx={{ mt: 2 }}>
+            <ButtonRound component={Link} to="/signup" disableElevation>
+              {t('labels.get_started')}
+            </ButtonRound>
           </Box>
         </Box>
       </HeroImage>

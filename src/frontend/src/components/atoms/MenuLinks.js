@@ -16,7 +16,7 @@ function MenuLinks(props) {
 
   const linkStyles = {
     textDecoration: 'none',
-    color: theme.palette.text.primary,
+    color: 'white',
     textTransform: 'uppercase',
     padding: '6px 16px',
     letterSpacing: 1,

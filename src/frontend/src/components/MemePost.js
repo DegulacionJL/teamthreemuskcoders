@@ -1,3 +1,5 @@
+'use client';
+
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { addComment, deleteComment, getComments, updateComment } from 'services/comment.service';
@@ -11,6 +13,7 @@ import {
   DialogTitle,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
 import ImagePreview from './atoms/ImagePreview';
 import ImageUploadButton from './molecules/ImageUploadButton';
@@ -31,7 +34,10 @@ function MemePost({
   onMenuClose,
   menuAnchor,
   isMenuOpen,
+  darkMode,
 }) {
+  const theme = useTheme(); // MUI theme
+  const { darkMode: contextDarkMode } = useCustomTheme(); // Our custom theme context
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentCaption, setCurrentCaption] = useState(caption);
   const [currentImage, setCurrentImage] = useState(image);
@@ -278,7 +284,7 @@ function MemePost({
   }, []);
 
   return (
-    <Box
+    <Card
       sx={{
         mb: 4,
         p: 2,
@@ -460,6 +466,7 @@ MemePost.propTypes = {
   onMenuClose: PropTypes.func.isRequired,
   menuAnchor: PropTypes.object,
   isMenuOpen: PropTypes.bool.isRequired,
+  darkMode: PropTypes.bool,
 };
 
 export default MemePost;
