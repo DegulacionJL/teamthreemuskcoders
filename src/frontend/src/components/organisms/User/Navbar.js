@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { DarkMode, LightMode, Menu as MenuIcon, Notifications } from '@mui/icons-material';
 import {
@@ -23,10 +24,7 @@ function Navbar() {
   const [anchorMobileNav, setAnchorMobileNav] = useState(null);
 
   // Mock user data (replace with actual user logic)
-  const user = {
-    full_name: 'John Doe',
-    avatar: null, // Replace with actual avatar URL if available
-  };
+  const user = useSelector((state) => state.profile.user);
 
   // Navigation menu items
   const menus = [
@@ -147,8 +145,19 @@ function Navbar() {
               <Notifications />
             </IconButton>
 
-            {/* Avatar Dropdown */}
-            <AvatarNavDropdown user={user} links={links} />
+            {/* Avatar Dropdown or Signup/Login Buttons */}
+            {user ? (
+              <AvatarNavDropdown user={user} links={links} />
+            ) : (
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button component={RouterLink} to="/signup" variant="outlined">
+                  {t('labels.signup')}
+                </Button>
+                <Button component={RouterLink} to="/login">
+                  {t('labels.login')}
+                </Button>
+              </Box>
+            )}
           </Box>
         </Toolbar>
       </Container>
