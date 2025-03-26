@@ -192,7 +192,7 @@ const en = {
       roles: 'Roles',
       broadcast: 'Broadcast',
       calculate: 'calculate',
-      memefeed: 'meme feed',
+      memefeed: 'Meme Feed',
       userlist: 'User List',
     },
     table: {

@@ -16,7 +16,7 @@ const CommentsList = ({
   onEditingTextChange,
 }) => {
   return (
-    <Box sx={{ mt: 2 }}>
+    <Box sx={{ mt: 2, ml: 2 }}>
       {comments.length > 0 ? (
         comments.map((comment) => (
           <CommentItem
