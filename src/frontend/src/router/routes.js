@@ -1,4 +1,5 @@
 import admin from './admin';
+import user from './user';
 
 const routes = [
   // Dont Remove. Handle 404 Pages
@@ -77,7 +78,14 @@ const routes = [
     component: 'pages/guest/MemeFeed',
     auth: true,
   },
+  {
+    path: '/logout',
+    component: 'pages/guest/Logout', // ✅ Add this line
+    auth: true, // Logout should only be accessible to authenticated users
+  },
+
   ...admin,
+  ...user,
 ];
 
 // Don't include styleguide in production routes

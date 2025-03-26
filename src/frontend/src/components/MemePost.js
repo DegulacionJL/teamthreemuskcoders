@@ -1,17 +1,32 @@
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { addComment, deleteComment, getComments, updateComment } from 'services/comment.service';
+import { ChatBubbleOutline, FavoriteBorder, Send, Share } from '@mui/icons-material';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
+  Avatar,
   Box,
   Button,
+  Card,
+  CardActions,
+  CardContent,
+  CardHeader,
+  CardMedia,
   CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
+  IconButton,
+  InputAdornment,
+  Menu,
+  MenuItem,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
+import { useTheme as useCustomTheme } from '../theme/ThemeContext';
 import ImagePreview from './atoms/ImagePreview';
 import ImageUploadButton from './molecules/ImageUploadButton';
 import PostHeader from './molecules/PostHeader';
@@ -31,7 +46,11 @@ function MemePost({
   onMenuClose,
   menuAnchor,
   isMenuOpen,
+  darkMode,
 }) {
+  const theme = useTheme(); // MUI theme
+  const { darkMode: contextDarkMode } = useCustomTheme(); // Our custom theme context
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentCaption, setCurrentCaption] = useState(caption);
   const [currentImage, setCurrentImage] = useState(image);
@@ -46,9 +65,12 @@ function MemePost({
   const [updateCommentImagePreview, setUpdateCommentImagePreview] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [tempEditingText, setTempEditingText] = useState('');
-
+  const [showComments, setShowComments] = useState(false);
   // State for reply functionality
+
   const [replyToComment, setReplyToComment] = useState(null);
+
+  const isDarkMode = darkMode !== undefined ? darkMode : contextDarkMode;
 
   // Memoize handlers to prevent unnecessary re-renders
   const handleSave = useCallback(
@@ -277,18 +299,35 @@ function MemePost({
     setUpdateCommentImagePreview(null);
   }, []);
 
+  function getRelativeTime(timestamp) {
+    const now = new Date();
+    const postedTime = new Date(timestamp);
+    const diff = Math.floor((now - postedTime) / 1000);
+
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) {
+      const minutes = Math.floor(diff / 60);
+      return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+    }
+    if (diff < 86400) {
+      const hours = Math.floor(diff / 3600);
+      return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+    }
+    const days = Math.floor(diff / 86400);
+    return `${days} day${days === 1 ? '' : 's'} ago`;
+  }
+
   return (
-    <Box
+    <Card
       sx={{
-        mb: 4,
-        p: 2,
-        bgcolor: 'background.paper',
-        borderRadius: 1,
-        boxShadow: 1,
-        maxWidth: '800px', // Set a maximum width for the post container
+        mb: 3,
+        borderRadius: 3,
+        overflow: 'hidden',
+        backgroundColor: theme.palette.background.paper,
+        transition: 'background-color 0.3s, color 0.3s',
+        maxWidth: '800px',
         width: '100%',
-        mx: 'auto', // Center the box
-        overflow: 'hidden', // Prevent content overflow
+        mx: 'auto',
         position: 'relative',
       }}
     >
@@ -311,38 +350,81 @@ function MemePost({
         </Box>
       )}
 
-      <PostHeader
-        user={user}
-        timestamp={timestamp}
-        onMenuOpen={onMenuOpen}
-        onMenuClose={onMenuClose}
-        menuAnchor={menuAnchor}
-        isMenuOpen={isMenuOpen}
-        id={id}
-        onEdit={() => setIsEditModalOpen(true)}
-        onDelete={() => setIsPostDeleteModalOpen(true)}
+      <CardHeader
+        avatar={
+          <Avatar
+            src={user?.avatar || ''}
+            alt={`${user?.first_name} ${user?.last_name}`}
+            sx={{
+              bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
+            }}
+          >
+            {user ? `${user.first_name?.charAt(0) || ''}${user.last_name?.charAt(0) || ''}` : 'U'}
+          </Avatar>
+        }
+        action={
+          <IconButton onClick={(event) => onMenuOpen(event, id)}>
+            <MoreVertIcon />
+          </IconButton>
+        }
+        title={
+          <Typography variant="subtitle1" fontWeight="medium">
+            {user ? `${user.first_name} ${user.last_name}` : 'Unknown User'}
+          </Typography>
+        }
+        subheader={
+          <Typography variant="caption" color="text.secondary">
+            {getRelativeTime(timestamp)}
+          </Typography>
+        }
       />
 
-      {currentImage && (
-        <Box sx={{ mt: 2, textAlign: 'center' }}>
-          <img
-            src={currentImage}
-            alt="Post Content"
-            style={{
-              maxWidth: '100%',
-              maxHeight: '400px',
-              borderRadius: '4px',
-              objectFit: 'contain', // Ensure the image maintains aspect ratio
-            }}
-          />
-        </Box>
-      )}
+      <Menu anchorEl={menuAnchor} open={isMenuOpen} onClose={onMenuClose}>
+        <MenuItem onClick={() => setIsEditModalOpen(true)}>Edit</MenuItem>
+        <MenuItem onClick={() => setIsPostDeleteModalOpen(true)} sx={{ color: 'red' }}>
+          Delete
+        </MenuItem>
+      </Menu>
 
-      {currentCaption && (
-        <Typography variant="body1" sx={{ mt: 2 }}>
+      <CardContent sx={{ pt: 0, pb: 1 }}>
+        <Typography variant="body1" sx={{ mb: 2 }}>
           {currentCaption}
         </Typography>
+      </CardContent>
+
+      {currentImage && (
+        <CardMedia
+          component="img"
+          image={currentImage}
+          alt="Meme"
+          sx={{
+            maxHeight: 500,
+            objectFit: 'contain',
+            bgcolor: isDarkMode ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)',
+          }}
+        />
       )}
+
+      <CardActions disableSpacing>
+        <Button
+          startIcon={<FavoriteBorder />}
+          size="small"
+          sx={{ color: theme.palette.text.secondary }}
+        >
+          Like
+        </Button>
+        <Button
+          startIcon={<ChatBubbleOutline />}
+          size="small"
+          onClick={() => setShowComments(!showComments)}
+          sx={{ color: theme.palette.text.secondary }}
+        >
+          {postComments.length} Comments
+        </Button>
+        <Button startIcon={<Share />} size="small" sx={{ color: theme.palette.text.secondary }}>
+          Share
+        </Button>
+      </CardActions>
 
       <CommentSection
         comments={postComments}
@@ -444,7 +526,7 @@ function MemePost({
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </Card>
   );
 }
 
@@ -460,6 +542,7 @@ MemePost.propTypes = {
   onMenuClose: PropTypes.func.isRequired,
   menuAnchor: PropTypes.object,
   isMenuOpen: PropTypes.bool.isRequired,
+  darkMode: PropTypes.bool,
 };
 
 export default MemePost;

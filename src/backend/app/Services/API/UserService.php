@@ -184,6 +184,13 @@ class UserService
         return $this->user->whereIn('id', $ids)->delete();
     }
 
+    public function follow(int $id): User
+    {
+        $user = $this->findById($id);
+        $user->followers()->attached(auth()->user()->id);
+        return $user;
+    }
+
     /**
      * Service function that activates the user account.
      */
