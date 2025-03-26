@@ -28,10 +28,10 @@ function Navbar() {
 
   // Navigation menu items
   const menus = [
-    { label: t('menu.header_about'), url: '/about' },
-    { label: t('menu.inquiry'), url: '/inquiry' },
-    { label: t('menu.faq'), url: '/faq' },
-    { label: t('menu.styleguide'), url: '/styleguide' },
+    // { label: t('menu.header_about'), url: '/about' },
+    // { label: t('menu.inquiry'), url: '/inquiry' },
+    // { label: t('menu.faq'), url: '/faq' },
+    // { label: t('menu.styleguide'), url: '/styleguide' },
   ];
 
   if (user) {
@@ -62,7 +62,7 @@ function Navbar() {
       }}
     >
       <Container maxWidth="xl">
-        <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
+        <Toolbar disableGutters sx={{ justifyContent: 'flex-end' }}>
           {/* Mobile Menu Button */}
           <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
             <IconButton size="large" color="inherit" onClick={handleOpenNavMenu}>
@@ -96,6 +96,7 @@ function Navbar() {
               color: 'inherit',
               display: 'flex',
               alignItems: 'center',
+              marginRight: 'auto', // Push the logo to the left
             }}
           >
             <Typography
@@ -133,8 +134,18 @@ function Navbar() {
             ))}
           </Box>
 
+          {/* Divider */}
+          <Box
+            sx={{
+              height: '32px',
+              width: '1px',
+              backgroundColor: darkMode ? '#ffffff' : '#000000', // White in dark mode, black in light mode
+              mx: 2, // Add horizontal margin
+            }}
+          />
+
           {/* Right Side Icons */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mr: 2, ml: 2 }}>
             <IconButton
               color="inherit"
               onClick={toggleDarkMode}
