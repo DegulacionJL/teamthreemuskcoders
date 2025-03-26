@@ -58,7 +58,7 @@ function TableToolbar(props) {
         </Box>
       </Box>
 
-      {user?.role === 'admin' && handleAdd && (
+      {user?.role === 'user' && handleAdd && (
         <Button onClick={handleAdd} startIcon={<AddIcon />}>
           {t('labels.add_new')}
         </Button>
@@ -72,6 +72,7 @@ TableToolbar.defaultProps = {
 
 TableToolbar.propTypes = {
   handleSearch: PropTypes.func,
+  handleFollow: PropTypes.func,
   handleAdd: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]),
   user: PropTypes.shape({
     role: PropTypes.string.isRequired,

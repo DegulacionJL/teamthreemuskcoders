@@ -110,7 +110,7 @@ function Users() {
           handleDelete={false}
           handleFollow={handleFollow}
           showAddNew={false}
-          handleAdd={user?.role === 'admin' ? () => setOpen(true) : false}
+          handleAdd={user?.role === 'user' ? () => setOpen(true) : false}
           toolbar={true}
           alignSearchRight={true}
         />

@@ -1,7 +1,5 @@
-'use client';
-
 import PropTypes from 'prop-types';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { addComment, deleteComment, getComments, updateComment } from 'services/comment.service';
 import { ChatBubbleOutline, FavoriteBorder, Share } from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -19,13 +17,16 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Fade,
   IconButton,
   Menu,
   MenuItem,
+  Popper,
   TextField,
   Typography,
   useTheme,
 } from '@mui/material';
+import AnimatedEmoji from '../components/atoms/animation/AnimatedEmoji';
 import { useTheme as useCustomTheme } from '../theme/ThemeContext';
 import ImagePreview from './atoms/ImagePreview';
 import ImageUploadButton from './molecules/ImageUploadButton';
@@ -66,10 +67,22 @@ function MemePost({
   const [tempEditingText, setTempEditingText] = useState('');
   const [showComments, setShowComments] = useState(false);
   // State for reply functionality
-
   const [replyToComment, setReplyToComment] = useState(null);
 
+  // State for reaction hover
+  const [showReactions, setShowReactions] = useState(false);
+  const [hasReacted, setHasReacted] = useState(false);
+  const likeButtonRef = useRef(null);
+
   const isDarkMode = darkMode !== undefined ? darkMode : contextDarkMode;
+
+  // Handle emoji reaction click
+  const handleReaction = useCallback(() => {
+    setHasReacted(true);
+    setShowReactions(false);
+    // Here you would typically call an API to record the reaction
+    console.log('User reacted with 😂 to post:', id);
+  }, [id]);
 
   // Memoize handlers to prevent unnecessary re-renders
   const handleSave = useCallback(
@@ -164,6 +177,11 @@ function MemePost({
   useEffect(() => {
     fetchComments();
   }, [fetchComments]);
+
+  // Add this useEffect to sync the currentImage state with the image prop
+  useEffect(() => {
+    setCurrentImage(image);
+  }, [image]);
 
   const handleAddReply = useCallback(
     async (parentId, text, image) => {
@@ -405,13 +423,75 @@ function MemePost({
       )}
 
       <CardActions disableSpacing>
-        <Button
-          startIcon={<FavoriteBorder />}
-          size="small"
-          sx={{ color: theme.palette.text.secondary }}
-        >
-          Like
-        </Button>
+        <Box sx={{ position: 'relative' }}>
+          <Button
+            ref={likeButtonRef}
+            startIcon={
+              hasReacted ? (
+                <Typography sx={{ fontSize: '16px' }}>😂</Typography>
+              ) : (
+                <FavoriteBorder />
+              )
+            }
+            size="small"
+            sx={{ color: theme.palette.text.secondary }}
+            onMouseEnter={() => !hasReacted && setShowReactions(true)}
+            onMouseLeave={() => setTimeout(() => setShowReactions(false), 300)}
+            onClick={() => hasReacted && setHasReacted(false)} // Toggle reaction off if already reacted
+          >
+            {hasReacted ? 'Haha' : 'Like'}
+          </Button>
+
+          <Popper
+            open={showReactions}
+            anchorEl={likeButtonRef.current}
+            placement="top"
+            transition
+            disablePortal
+          >
+            {({ TransitionProps }) => (
+              <Fade {...TransitionProps} timeout={350}>
+                <Box
+                  sx={{
+                    position: 'relative',
+                    mb: 1,
+                    mt: 0.5,
+                    '&:after': {
+                      content: '""',
+                      position: 'absolute',
+                      bottom: -8,
+                      left: 20,
+                      borderWidth: 8,
+                      borderStyle: 'solid',
+                      borderColor: `${
+                        isDarkMode ? 'rgba(40, 40, 40, 0.9)' : 'rgba(245, 245, 245, 0.9)'
+                      } transparent transparent transparent`,
+                    },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      p: 1,
+                      borderRadius: 2,
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      bgcolor: isDarkMode ? 'rgba(40, 40, 40, 0.9)' : 'rgba(245, 245, 245, 0.9)',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                      minWidth: 50,
+                      minHeight: 40,
+                    }}
+                    onMouseEnter={() => setShowReactions(true)}
+                    onMouseLeave={() => setShowReactions(false)}
+                  >
+                    <AnimatedEmoji emoji="😂" size={32} onClick={handleReaction} />
+                  </Box>
+                </Box>
+              </Fade>
+            )}
+          </Popper>
+        </Box>
+
         <Button
           startIcon={<ChatBubbleOutline />}
           size="small"

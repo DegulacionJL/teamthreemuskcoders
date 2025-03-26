@@ -43,10 +43,15 @@ Route::prefix('posts')
         Route::put('/{post}', [PostController::class, 'updatePost'])->middleware('auth:api');
         Route::delete('/{post}', [PostController::class, 'deletePost']);
         Route::post('/{post}/image', [PostController::class, 'updatePostImage'])->middleware('auth:api');
-
-    
-        
     });
+
+Route::prefix('likes')
+->group(function(){
+    Route::post('/{post}', [ PostController::class, 'likePost'])->middleware('auth:api');
+    Route::post('/{post}/unlike', [PostController::class, 'unlikePost'])->middleware('auth:api');
+    Route::get('/{post}/likes', [PostController::class, 'getLikes'])->middleware('auth:api');
+});
+    
     
 // user logout
 Route::delete('oauth/token', [TokenController::class, 'delete'])->middleware('auth:api');
