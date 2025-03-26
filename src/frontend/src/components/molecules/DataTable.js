@@ -54,6 +54,7 @@ function DataTable(props) {
               rows={data}
               handleDelete={handleDelete}
               handleEdit={handleEdit}
+              handleAdd={handleAdd}
               actions={actions}
             />
           </Table>
@@ -83,6 +84,7 @@ DataTable.propTypes = {
   toolbar: PropTypes.bool,
   actions: PropTypes.bool,
   alignSearchRight: PropTypes.bool,
+  handleFollow: PropTypes.func,
 };
 
 DataTable.defaultProps = {

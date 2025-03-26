@@ -71,7 +71,13 @@ class PostService
 
     // Ensure $imageFile is a valid uploaded file
     if (!$imageFile || !$imageFile->isValid()) {
-        return response()->json(['error' => 'Invalid image file'], 400);
+        return response()->json([
+            'id' => $post->id,
+            'caption' => $post->caption,
+            'image' => [
+                'image_path' => $imageFile->image_path . '?t=' . time(),
+            ],
+        ]);
     }
 
     // Check if post already has an associated image

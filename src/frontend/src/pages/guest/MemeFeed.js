@@ -1,5 +1,3 @@
-'use client';
-
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import {
@@ -109,10 +107,15 @@ function MemeFeed() {
       if (newImage) {
         const formData = new FormData();
         formData.append('image', newImage);
-        await updateImage(postId, formData);
+        const response = await updateImage(postId, formData);
+
+        const updatedImageUrl = response.data.image.image_path + `?t=${new Date().getTime()}`;
+        setPosts((prevPosts) =>
+          prevPosts.map((post) => (post.id === postId ? { ...post, image: updatedImageUrl } : post))
+        );
       }
 
-      await fetchPosts(); // Same approach as handlePost
+      await fetchPosts();
     } catch (error) {
       console.error('Error updating post:', error);
     }
@@ -122,6 +125,7 @@ function MemeFeed() {
   const fetchPosts = async () => {
     try {
       const response = await getMemePosts();
+      console.log(response);
       if (!response || !Array.isArray(response.posts))
         throw new Error('Fetched posts is not an array!');
 
@@ -164,6 +168,8 @@ function MemeFeed() {
     { id: 2, name: 'FunnyGuy', points: 8230, rank: 2 },
     { id: 3, name: 'MemeLord', points: 6780, rank: 3 },
   ];
+
+  console.log(posts);
 
   return (
     <Box
