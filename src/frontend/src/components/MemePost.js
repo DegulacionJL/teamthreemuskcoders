@@ -1,7 +1,9 @@
+'use client';
+
 import PropTypes from 'prop-types';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { addComment, deleteComment, getComments, updateComment } from 'services/comment.service';
-import { ChatBubbleOutline, FavoriteBorder, Send, Share } from '@mui/icons-material';
+import { ChatBubbleOutline, FavoriteBorder, Share } from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   Avatar,
@@ -17,9 +19,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   IconButton,
-  InputAdornment,
   Menu,
   MenuItem,
   TextField,
@@ -29,7 +29,6 @@ import {
 import { useTheme as useCustomTheme } from '../theme/ThemeContext';
 import ImagePreview from './atoms/ImagePreview';
 import ImageUploadButton from './molecules/ImageUploadButton';
-import PostHeader from './molecules/PostHeader';
 import CommentSection from './organisms/CommentSection';
 import DeleteConfirmationModal from './organisms/DeleteConfirmationModal';
 import EditPostModal from './organisms/EditPostModal';
@@ -426,19 +425,21 @@ function MemePost({
         </Button>
       </CardActions>
 
-      <CommentSection
-        comments={postComments}
-        onAddComment={handleAddComment}
-        replyToComment={replyToComment}
-        onReplyClick={setReplyToComment}
-        onCancelReply={() => setReplyToComment(null)}
-        onAddReply={handleAddReply}
-        onEditClick={handleEditCommentClick}
-        onDeleteClick={confirmDeleteComment}
-        editingCommentId={editingCommentId}
-        editingCommentText={editingCommentText}
-        onEditingTextChange={setEditingCommentText}
-      />
+      {showComments && (
+        <CommentSection
+          comments={postComments}
+          onAddComment={handleAddComment}
+          replyToComment={replyToComment}
+          onReplyClick={setReplyToComment}
+          onCancelReply={() => setReplyToComment(null)}
+          onAddReply={handleAddReply}
+          onEditClick={handleEditCommentClick}
+          onDeleteClick={confirmDeleteComment}
+          editingCommentId={editingCommentId}
+          editingCommentText={editingCommentText}
+          onEditingTextChange={setEditingCommentText}
+        />
+      )}
 
       {/* Edit Post Modal - Using component state instead of props for open/close */}
       <EditPostModal
@@ -492,7 +493,7 @@ function MemePost({
           {updateCommentImagePreview && (
             <Box sx={{ mb: 2 }}>
               <ImagePreview
-                src={updateCommentImagePreview}
+                src={updateCommentImagePreview || '/placeholder.svg'}
                 onRemove={() => setUpdateCommentImagePreview(null)}
                 maxHeight="150px"
               />

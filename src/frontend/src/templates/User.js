@@ -6,7 +6,6 @@ import { logout } from 'services/auth';
 import { setProfile } from 'store/slices/profileSlice';
 import { Box } from '@mui/material';
 import Navbar from 'components/organisms/User/Navbar';
-import SidebarPost from 'components/organisms/User/SidebarUser';
 import api from 'utils/api';
 
 export default function User() {
@@ -46,11 +45,6 @@ export default function User() {
         <Navbar open={open} onToggle={toggleDrawer} onLogout={handleLogout} user={user} />
 
         <Box sx={{ display: 'flex', flexGrow: 1 }}>
-          {/* Sidebar (Expands on Hover, Doesn't Shrink Content) */}
-          <Box sx={{ width: 48, position: 'relative' }}>
-            <SidebarPost open={open} onToggle={toggleDrawer} />
-          </Box>
-
           {/* Main content (Outlet will load here) */}
           <Box
             component="main"

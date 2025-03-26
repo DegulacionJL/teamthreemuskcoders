@@ -36,6 +36,7 @@ function Navbar() {
 
   if (user) {
     menus.push({ label: t('menu.memefeed'), url: '/memefeed' });
+    menus.push({ label: t('menu.userlist'), url: '/userList' });
   }
 
   const links = [
