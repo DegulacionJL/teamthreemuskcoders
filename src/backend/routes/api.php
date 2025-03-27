@@ -41,7 +41,7 @@ Route::prefix('posts')
         Route::get('/', [PostController::class, 'index']);
         Route::post('/', [PostController::class, 'createMemePost'])->middleware('auth:api');
         Route::put('/{post}', [PostController::class, 'updatePost'])->middleware('auth:api');
-        Route::delete('/{post}', [PostController::class, 'deletePost']);
+        Route::delete('/{post}', [PostController::class, 'deletePost'])->middleware('auth:api');
         Route::post('/{post}/image', [PostController::class, 'updatePostImage'])->middleware('auth:api');
     });
 

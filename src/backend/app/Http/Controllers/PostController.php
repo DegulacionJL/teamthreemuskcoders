@@ -48,46 +48,56 @@ public function createMemePost(PostRequest $request): JsonResponse
     }
 }
 public function updatePost(UpdatePostRequest $request, Post $post): JsonResponse
-    {
-        if (!auth()->check()) {
-            return response()->json(['error' => 'User not authenticated'], 401);
-        }
-
-        $this->response = ['code' => 200];
-
-        try {
-            $validatedData = $request->validated();
-            $updatedPost = $this->postService->updatePost($post, $validatedData['caption']);
-
-            $this->response['data'] = new UpdatePostResource($updatedPost->load('image'));
-        } catch (Exception $e) {
-            $this->response['error'] = $e->getMessage(); 
-            $this->response['code'] = 500;
-        }
-        $post->save();
-        return response()->json($this->response, $this->response['code']);
+{
+    if (!auth()->check()) {
+        return response()->json(['error' => 'User not authenticated'], 401);
     }
 
-    public function updatePostImage(UpdateImagePostRequest $request, Post $post): JsonResponse
-    {
-        if (!auth()->check()) {
-            return response()->json(['error' => 'User not authenticated'], 401);
-        }
-
-        $this->response = ['code' => 200];
-
-        try {
-            $imageFile = $request->file('image');
-            $updatedPost = $this->postService->updatePostImage($post, $imageFile);
-
-            $this->response['data'] = new UpdatePostResource($updatedPost->load('image'));
-        } catch (Exception $e) {
-            $this->response['error'] = $e->getMessage();
-            $this->response['code'] = 500;
-        }
-
-        return response()->json($this->response, $this->response['code']);
+    // Add explicit authorization check
+    if ($post->user_id !== auth()->id()) {
+        return response()->json(['error' => 'Unauthorized. You can only edit your own posts.'], 403);
     }
+
+    $this->response = ['code' => 200];
+
+    try {
+        $validatedData = $request->validated();
+        $updatedPost = $this->postService->updatePost($post, $validatedData['caption']);
+
+        $this->response['data'] = new UpdatePostResource($updatedPost->load('image'));
+    } catch (Exception $e) {
+        $this->response['error'] = $e->getMessage(); 
+        $this->response['code'] = 500;
+    }
+   
+    return response()->json($this->response, $this->response['code']);
+}
+
+public function updatePostImage(UpdateImagePostRequest $request, Post $post): JsonResponse
+{
+    if (!auth()->check()) {
+        return response()->json(['error' => 'User not authenticated'], 401);
+    }
+
+    // Add explicit authorization check
+    if ($post->user_id !== auth()->id()) {
+        return response()->json(['error' => 'Unauthorized. You can only edit your own posts.'], 403);
+    }
+
+    $this->response = ['code' => 200];
+
+    try {
+        $imageFile = $request->file('image');
+        $updatedPost = $this->postService->updatePostImage($post, $imageFile);
+
+        $this->response['data'] = new UpdatePostResource($updatedPost->load('image'));
+    } catch (Exception $e) {
+        $this->response['error'] = $e->getMessage();
+        $this->response['code'] = 500;
+    }
+
+    return response()->json($this->response, $this->response['code']);
+}
 
 
     public function index() {

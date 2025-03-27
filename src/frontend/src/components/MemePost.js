@@ -178,7 +178,6 @@ function MemePost({
     fetchComments();
   }, [fetchComments]);
 
-  // Add this useEffect to sync the currentImage state with the image prop
   useEffect(() => {
     setCurrentImage(image);
   }, [image]);

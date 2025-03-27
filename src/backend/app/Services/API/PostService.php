@@ -7,6 +7,7 @@ use App\Models\Like;
 use App\Models\Comment;
 use App\Models\Image;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 use Exception;
 
 class PostService
@@ -61,6 +62,9 @@ class PostService
 
     public function updatePost(Post $post, $caption)
     {
+        if ($post->user_id !== Auth::id()){
+            throw new Exception ("Unauthorized. You can only edit your own posts.");
+        }
         $post->update(['caption' => $caption]);
         return $post->load('image');
     }
@@ -68,6 +72,9 @@ class PostService
     public function updatePostImage(Post $post, $imageFile)
 {
     $userId = auth()->id();
+    if ($post->user_id !== $userId) {
+        throw new Exception("Unauthorized. You can only edit your own posts.");
+    }
 
     // Ensure $imageFile is a valid uploaded file
     if (!$imageFile || !$imageFile->isValid()) {
