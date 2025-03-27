@@ -7,6 +7,8 @@ use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Events\NotificationCreated;
+use App\Models\Notification;
 
 class CommentService
 {
@@ -54,7 +56,27 @@ class CommentService
     }
 
         $comment = Comment::create($data);
+
+        // If this is a reply (has parent_id), create a notification
+    if (!empty($data['parent_id'])) {
+        $parentComment = Comment::with('user')->find($data['parent_id']);
         
+        if ($parentComment && $parentComment->user_id !== Auth::id()) {
+            // Create notification for the parent comment's owner
+            $notification = Notification::create([
+                'recipient_id' => $parentComment->user_id,
+                'sender_id' => Auth::id(),
+                'type' => 'comment_reply',
+                'content' => 'replied to your comment',
+                'notifiable_id' => $comment->id,
+                'notifiable_type' => Comment::class,
+            ]);
+
+            // Dispatch notification event
+            NotificationCreated::dispatch($notification);
+        }
+    }
+
         // Load the relationships
         return Comment::with(['user', 'replies.user'])->find($comment->id);
     }

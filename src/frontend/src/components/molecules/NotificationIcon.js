@@ -30,6 +30,7 @@ const NotificationIcon = (props) => {
   const handleClickNotification = async (notification) => {
     const { id, type, content, read_at } = notification;
 
+    toast.info(content);
     // mark the notification as seen if not yet seen
     if (read_at === null) {
       await markNotificationSeen(id);
@@ -42,10 +43,18 @@ const NotificationIcon = (props) => {
       setUnread((prev) => prev - 1);
     }
 
-    // FOR DEMO PURPOSES
-    alert(JSON.stringify({ type, content }));
-
-    // ADD YOUR LOGIC HERE ON HOW YOU WILL HANDLE CLICKING A NOTIFICATION ITEM e.g redirect
+    // Handle different notification types
+    switch (type) {
+      case 'comment_reply':
+        // Here you would typically navigate to the comment thread
+        // For demo purposes, we'll just show an alert
+        alert(`Notification: ${notification.content}. Comment ID: ${notification.notifiable_id}`);
+        break;
+      // Add other cases as needed
+      default:
+        alert(JSON.stringify(notification));
+        break;
+    }
   };
 
   const fetchNotifications = async () => {
