@@ -48,6 +48,11 @@ class CommentService
             $data['image'] = $imagePath;
         }
 
+        // Ensure at least text or image is present
+    if (empty($data['text']) && !isset($data['image'])) {
+        throw new Exception("Comment must have either text or an image.");
+    }
+
         $comment = Comment::create($data);
         
         // Load the relationships

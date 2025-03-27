@@ -24,7 +24,7 @@ class CommentRequest extends FormRequest
     public function rules()
     {
         return [
-            'text' => 'required|string|max:500',
+            'text' => 'nullable|string|max:500',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
             'remove_image' => 'nullable|string',
             'parent_id' => 'nullable|exists:comments,id',
@@ -36,7 +36,7 @@ class CommentRequest extends FormRequest
      *
      * @return string
      */
-    public function getText(): string
+    public function getText(): ?string
     {
         return $this->input('text');
     }

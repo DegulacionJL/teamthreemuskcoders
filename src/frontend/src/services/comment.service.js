@@ -10,10 +10,15 @@ const addComment = async function (postId, commentText, commentImage, parentId =
   let requestData;
   let config = {};
 
+  // Check if either text or image is present
+  if (!commentText && !commentImage) {
+    throw new Error('Comment must have either text or an image');
+  }
+
   if (commentImage) {
     requestData = new FormData();
     requestData.append('post_id', postId);
-    requestData.append('text', commentText);
+    requestData.append('text', commentText || '');
     requestData.append('image', commentImage);
     if (parentId) {
       requestData.append('parent_id', parentId);
