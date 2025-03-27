@@ -337,7 +337,7 @@ function MemePost({
     <Card
       sx={{
         mb: 3,
-        borderRadius: 3,
+        borderRadius: 1,
         overflow: 'hidden',
         backgroundColor: theme.palette.background.paper,
         transition: 'background-color 0.3s, color 0.3s',
@@ -403,7 +403,7 @@ function MemePost({
       </Menu>
 
       <CardContent sx={{ pt: 0, pb: 1 }}>
-        <Typography variant="body1" sx={{ mb: 2 }}>
+        <Typography variant="body1" sx={{ mb: 2, mt: 2 }}>
           {currentCaption}
         </Typography>
       </CardContent>
@@ -565,6 +565,7 @@ function MemePost({
             rows={3}
             value={tempEditingText} // Use tempEditingText instead of editingCommentText
             onChange={(e) => setTempEditingText(e.target.value)}
+            placeholder="Edit your comment here...."
             sx={{ mb: 2 }}
             disabled={isLoading}
           />
