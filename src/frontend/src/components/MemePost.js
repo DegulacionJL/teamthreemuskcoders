@@ -84,6 +84,13 @@ function MemePost({
     console.log('User reacted with 😂 to post:', id);
   }, [id]);
 
+  // Helper function to count all comments, including nested replies
+  const countAllComments = (comments) => {
+    return comments.reduce((total, comment) => {
+      return total + 1 + countAllComments(comment.replies || []);
+    }, 0);
+  };
+
   // Memoize handlers to prevent unnecessary re-renders
   const handleSave = useCallback(
     async (newCaption, newImage, removeImage = false) => {
@@ -498,7 +505,7 @@ function MemePost({
           onClick={() => setShowComments(!showComments)}
           sx={{ color: theme.palette.text.secondary }}
         >
-          {postComments.length} Comments
+          {countAllComments(postComments)} Comments
         </Button>
         <Button startIcon={<Share />} size="small" sx={{ color: theme.palette.text.secondary }}>
           Share
