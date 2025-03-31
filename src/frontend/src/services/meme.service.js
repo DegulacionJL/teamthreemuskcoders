@@ -31,8 +31,8 @@ const deletePost = async function (post) {
   return await req;
 };
 
-const likePost = async function (post) {
-  const req = api.post(`/likes/${post}`).then;
-};
+// const likePost = async function (post) {
+//   const req = api.post(`/likes/${post}`).then;
+// };
 
 export { createMemePost, getMemePosts, updatePost, deletePost, updateImage };

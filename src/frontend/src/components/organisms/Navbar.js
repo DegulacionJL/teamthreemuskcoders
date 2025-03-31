@@ -1,12 +1,8 @@
-'use client';
-
 import PropTypes from 'prop-types';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import LightModeIcon from '@mui/icons-material/LightMode';
 import MenuIcon from '@mui/icons-material/Menu';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
@@ -16,48 +12,103 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { purple } from '@mui/material/colors';
 import Button from 'components/atoms/Button';
 import LanguageSelect from 'components/atoms/LanguageSelect';
 import MenuLinks from 'components/atoms/MenuLinks';
 import AvatarNavDropdown from 'components/molecules/AvatarNavDropdown';
 import NotificationIcon from 'components/molecules/NotificationIcon';
-import { useTheme } from '../../../theme/ThemeContext';
 
 function Navbar(props) {
   const { user = null } = props;
+
   const { t } = useTranslation();
+
   const navigate = useNavigate();
+
   const [anchorMobileNav, setAnchorMobileNav] = useState(null);
-  const { darkMode, toggleDarkMode } = useTheme();
 
-  const menus = [{ label: t('menu.dashboard'), url: '/dashboard' }];
+  const [isTransparent, setIsTransparent] = useState(true);
 
-  menus.push({ label: t('menu.memefeed'), url: '/memefeed' });
-  menus.push({ label: t('menu.userlist'), url: '/user/userList' });
+  const menus = [{ label: t('menu.styleguide'), url: '/styleguide' }];
 
-  const appName = process.env.REACT_APP_SITE_TITLE || 'MemeMa 😂';
+  if (user) {
+    switch (user.role) {
+      case 'System Admin':
+        menus.push({ label: t('menu.about'), url: '/admin/about' });
+
+        menus.push({ label: t('menu.inquiry'), url: '/admin/inquiry' });
+
+        menus.push({ label: t('menu.faq'), url: '/admin/styleguide' });
+
+        break;
+
+      case 'User':
+        menus.push({ label: t('menu.memefeed'), url: './memefeed' });
+
+        menus.push({ label: t('menu.userlist'), url: 'user/userList' });
+
+        break;
+
+      default:
+        menus.push({ label: t('menu.dashboard'), url: '/dashboard' });
+        break;
+    }
+  } else {
+    menus.push({ label: t('menu.about'), url: '/about' });
+
+    menus.push({ label: t('menu.inquiry'), url: '/inquiry' });
+
+    menus.push({ label: t('menu.faq'), url: '/faq' });
+  }
+
+  const appName = process.env.REACT_APP_SITE_TITLE;
 
   const handleOpenNavMenu = (event) => setAnchorMobileNav(event.currentTarget);
+
   const handleCloseNavMenu = (url) => {
     setAnchorMobileNav(null);
+
     navigate(url, { replace: true });
   };
 
   const links = [
     { label: t('menu.profile'), url: '/profile' },
-    { label: t('menu.settings'), url: '/settings' },
+
     { label: t('menu.logout'), url: '/logout' },
   ];
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        setIsTransparent(false);
+      } else {
+        setIsTransparent(true);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   return (
     <AppBar
       position="static"
       elevation={0}
+      xs={12}
+      sm={6}
+      md={4}
       sx={{
-        borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
-        boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
-        backgroundColor: darkMode ? '#121824' : purple[700],
+        background: isTransparent
+          ? 'linear-gradient(to bottom, rgba(217,100,30,1) 10%, rgb(216, 164, 124) 66%, rgb(236, 218, 193) 100%)'
+          : 'transparent',
+
+        backdropFilter: isTransparent ? 'none' : 'blur(10px)',
+
+        color: 'black',
+
         transition: 'background-color 0.3s ease',
       }}
     >
@@ -65,28 +116,16 @@ function Navbar(props) {
         <Toolbar sx={{ flexWrap: 'wrap' }} disableGutters>
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
             <Link to="/">
-              <Typography
-                variant="h5"
-                noWrap
-                sx={{
-                  fontWeight: 700,
-                  color: '#ffb300',
-                  textDecoration: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  height: 48,
-                }}
-              >
-                {appName}
-              </Typography>
+              <img src="/static/images/sprobe-icon.png" alt={appName} height={48} />
             </Link>
           </Box>
 
-          <Box component="nav" sx={{ display: { xs: 'none', md: 'flex' } }}>
+          <Box component="nav" sx={{ display: { xs: 'none', md: 'flex', bgcolor: '#fff' } }}>
             <MenuLinks items={menus} />
           </Box>
 
           {/** Mobile Menu */}
+
           <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
             <IconButton
               size="large"
@@ -103,23 +142,13 @@ function Navbar(props) {
               onClick={() => navigate('/')}
               sx={{
                 display: { xs: 'flex', md: 'none' },
+
                 flexGrow: 1,
+
                 justifyContent: 'center',
               }}
             >
-              <Typography
-                variant="h5"
-                noWrap
-                sx={{
-                  fontWeight: 700,
-                  color: '#ffb300',
-                  textDecoration: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
-              >
-                {appName}
-              </Typography>
+              <img src="/static/images/sprobe-icon.png" alt={appName} height={48} />
             </Box>
 
             <Menu
@@ -127,11 +156,13 @@ function Navbar(props) {
               anchorEl={anchorMobileNav}
               anchorOrigin={{
                 vertical: 'bottom',
+
                 horizontal: 'left',
               }}
               keepMounted
               transformOrigin={{
                 vertical: 'top',
+
                 horizontal: 'left',
               }}
               open={Boolean(anchorMobileNav)}
@@ -165,15 +196,12 @@ function Navbar(props) {
             </Menu>
           </Box>
 
-          <IconButton color="inherit" onClick={toggleDarkMode} sx={{ mr: 1 }}>
-            {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
-          </IconButton>
-
           <LanguageSelect sx={{ ml: 1 }} />
 
           {user ? (
             <Fragment>
               <NotificationIcon user={user} />
+
               <AvatarNavDropdown user={user} links={links} />
             </Fragment>
           ) : (
@@ -182,7 +210,7 @@ function Navbar(props) {
                 {t('labels.signup')}
               </Button>
 
-              <Button component={Link} to="/login">
+              <Button component={Link} to="/login" sx={{ backgroundColor: 'none !important' }}>
                 {t('labels.login')}
               </Button>
             </Box>
@@ -195,7 +223,10 @@ function Navbar(props) {
 
 Navbar.propTypes = {
   onLogout: PropTypes.func,
+
   user: PropTypes.object,
 };
 
 export default Navbar;
+
+// default Navbar organisms
