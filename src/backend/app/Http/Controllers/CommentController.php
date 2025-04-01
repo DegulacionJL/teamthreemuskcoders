@@ -39,8 +39,22 @@ class CommentController extends Controller
     public function index($postId)
     {
         try {
-            $comments = $this->commentService->getComments($postId);
+            $perPage = request()->query('per_page', 5);
+            $page = request()->query('page', 1);
+            
+            $result = $this->commentService->getComments($postId, $perPage, $page);
+            $comments = $result['comments'];
+            $totalWithReplies = $result['total_with_replies'];
+
             $this->response['data'] = CommentResource::collection($comments);
+            $this->response['pagination'] = [
+                'total' => $comments->total(),
+                'total_with_replies' => $totalWithReplies,
+                'per_page' => $comments->perPage(),
+                'current_page' => $comments->currentPage(),
+                'last_page' => $comments->lastPage(),
+                'has_more' => $comments->hasMorePages(),
+            ];
         } catch (Exception $e) {
             $this->response = [
                 'error' => $e->getMessage(),
