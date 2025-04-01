@@ -1,6 +1,6 @@
 import { Container } from '@mui/material';
-import ProfileContent from 'components/organisms/ProfileContent';
-import Admin from 'components/pages/Admin';
+import Admin from '../../../templates/Admin';
+import ProfileContent from '../Profile';
 
 export default function AdminProfile() {
   return (

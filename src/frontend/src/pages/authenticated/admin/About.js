@@ -12,7 +12,7 @@ export default function AdminAbout() {
           administrators to manage users, content, and system settings.
         </Typography>
         <Typography variant="body1" paragraph>
-          Only authorized administrators with the "System Admin" role can access this panel.
+          Only authorized administrators with the {'System Admin'} role can access this panel.
         </Typography>
       </Box>
     </Paper>
