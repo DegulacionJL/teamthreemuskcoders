@@ -7,6 +7,8 @@ use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Events\NotificationCreated;
+use App\Models\Notification;
 
 class CommentService
 {
@@ -16,16 +18,22 @@ class CommentService
      * @param int $postId
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function getComments($postId)
+    public function getComments($postId, $perPage = 5, $page = 1)
     {
-        // Get only top-level comments (no parent)
-        return Comment::where('post_id', $postId)
+        $comments = Comment::where('post_id', $postId)
             ->whereNull('parent_id')
-            ->with(['user', 'replies.user', 'replies.replies.user', 'replies.replies.replies.user', 'replies.replies.replies.replies.user'])
+            ->with(['user', 'replies.user', 'replies.replies.user'])
             ->latest()
-            ->get();
-    }
+            ->paginate($perPage, ['*'], 'page', $page);
 
+        // Calculate total comments including all nested replies
+        $totalWithReplies = Comment::where('post_id', $postId)->count();
+
+        return [
+            'comments' => $comments,
+            'total_with_replies' => $totalWithReplies
+        ];
+    }
     /**
      * Add a new comment.
      *
@@ -49,7 +57,27 @@ class CommentService
         }
 
         $comment = Comment::create($data);
+
+        // If this is a reply (has parent_id), create a notification
+    if (!empty($data['parent_id'])) {
+        $parentComment = Comment::with('user')->find($data['parent_id']);
         
+        if ($parentComment && $parentComment->user_id !== Auth::id()) {
+            // Create notification for the parent comment's owner
+            $notification = Notification::create([
+                'recipient_id' => $parentComment->user_id,
+                'sender_id' => Auth::id(),
+                'type' => 'comment_reply',
+                'content' => 'replied to your comment',
+                'notifiable_id' => $comment->id,
+                'notifiable_type' => Comment::class,
+            ]);
+
+            // Dispatch notification event
+            NotificationCreated::dispatch($notification);
+        }
+    }
+
         // Load the relationships
         return Comment::with(['user', 'replies.user'])->find($comment->id);
     }

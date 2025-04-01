@@ -18,9 +18,8 @@ const CommentItem = ({
   editingCommentId,
   editingCommentText,
   onEditingTextChange,
-  maxDepth = Infinity, // Changed to Infinity to allow unlimited nesting
+  maxDepth = Infinity,
 }) => {
-  // No need for maxDepth check if we're allowing unlimited nesting
   const isMaxDepthReached = false;
 
   return (
@@ -32,10 +31,10 @@ const CommentItem = ({
         mt: 2,
         pb: 2,
         borderBottom: '1px solid #eee',
-        ml: Math.min(depth * 2, 12), // Keep indentation modest
-        width: `calc(100% - ${Math.min(depth * 2, 12)}px)`, // Adjust width accordingly
+        ml: Math.min(depth * 2, 12),
+        width: `calc(100% - ${Math.min(depth * 2, 12)}px)`,
       }}
-      data-depth={depth} // Keep for debugging
+      data-depth={depth}
     >
       <AvatarWithInitials user={comment.user} sx={{ mr: 1, width: 32, height: 32 }} />
       <Box sx={{ flexGrow: 1 }}>
@@ -76,7 +75,6 @@ const CommentItem = ({
           </>
         )}
 
-        {/* Reply button - always show it now */}
         <Box sx={{ mt: 1 }}>
           {replyToComment !== comment.id && !isMaxDepthReached && (
             <Button
@@ -89,20 +87,12 @@ const CommentItem = ({
           )}
         </Box>
 
-        {/* Reply form */}
         {replyToComment === comment.id && !isMaxDepthReached && (
           <ReplyForm commentId={comment.id} onSubmit={onAddReply} onCancel={onCancelReply} />
         )}
 
-        {/* Render replies - ensure proper alignment */}
         {comment.replies && comment.replies.length > 0 && (
-          <Box
-            sx={{
-              mt: 2,
-              pl: 4, // Ensures consistent left padding for all nested replies
-              borderLeft: '2px solid #ddd', // Optional: visual separator for nesting
-            }}
-          >
+          <Box sx={{ mt: 2, pl: 4, borderLeft: '2px solid #ddd' }}>
             {comment.replies.map((reply) => (
               <CommentItem
                 key={reply.id}

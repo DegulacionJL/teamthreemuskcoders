@@ -1,13 +1,12 @@
-// CommentSection.js
 import PropTypes from 'prop-types';
-import React from 'react';
-import { Box, Typography } from '@mui/material';
-// Remove TextField from import
-import CommentInputForm from '../molecules/CommentInputForm';
+import React, { useState } from 'react';
+import { Avatar, Box, Button, TextField, Typography } from '@mui/material';
+import ImagePreview from '../atoms/ImagePreview';
+import ImageUploadButton from '../molecules/ImageUploadButton';
 import CommentsList from './CommentsList';
 
-const CommentSection = ({
-  comments, // Remove postId since it's not being used
+function CommentSection({
+  comments,
   onAddComment,
   replyToComment,
   onReplyClick,
@@ -18,11 +17,64 @@ const CommentSection = ({
   editingCommentId,
   editingCommentText,
   onEditingTextChange,
-}) => {
+}) {
+  const [newCommentText, setNewCommentText] = useState('');
+  const [newCommentImage, setNewCommentImage] = useState(null);
+  const [newCommentImagePreview, setNewCommentImagePreview] = useState(null);
+
+  const handleAddComment = () => {
+    if (!newCommentText.trim() && !newCommentImage) return;
+    onAddComment(newCommentText, newCommentImage);
+    setNewCommentText('');
+    setNewCommentImage(null);
+    setNewCommentImagePreview(null);
+  };
+
+  const handleImageUpload = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setNewCommentImage(file);
+      setNewCommentImagePreview(URL.createObjectURL(file));
+    }
+  };
+
   return (
-    <Box sx={{ mt: 3 }}>
-      <Typography variant="subtitle1">Comments</Typography>
-      <CommentInputForm onSubmit={(text, image) => onAddComment(text, image)} />
+    <Box sx={{ mt: 2, px: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Avatar sx={{ mr: 1 }}>U</Avatar>
+        <Box sx={{ flexGrow: 1 }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Add a comment..."
+            value={newCommentText}
+            onChange={(e) => setNewCommentText(e.target.value)}
+            sx={{ mb: 1 }}
+          />
+          {newCommentImagePreview && (
+            <ImagePreview
+              src={newCommentImagePreview}
+              onRemove={() => {
+                setNewCommentImage(null);
+                setNewCommentImagePreview(null);
+              }}
+              maxHeight="100px"
+            />
+          )}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+            <ImageUploadButton
+              onChange={handleImageUpload}
+              id="new-comment-image"
+              buttonVariant="text"
+              buttonText="Add Image"
+            />
+            <Button variant="contained" onClick={handleAddComment}>
+              Post
+            </Button>
+          </Box>
+        </Box>
+      </Box>
+
       <CommentsList
         comments={comments}
         replyToComment={replyToComment}
@@ -37,10 +89,10 @@ const CommentSection = ({
       />
     </Box>
   );
-};
+}
 
 CommentSection.propTypes = {
-  comments: PropTypes.array.isRequired, // Remove postId from PropTypes
+  comments: PropTypes.array.isRequired,
   onAddComment: PropTypes.func.isRequired,
   replyToComment: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onReplyClick: PropTypes.func.isRequired,
