@@ -16,9 +16,9 @@ const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
 
   const { refs, floatingStyles } = useFloating({
     open: showEmojiPicker,
-    placement: 'bottom-end', // Matches CommentSection
-    middleware: [offset(4), flip(), shift()], // Matches CommentSection
-    whileElementsMounted: autoUpdate, // Ensures proper positioning during scroll/resize
+    placement: 'bottom-end',
+    middleware: [offset(4), flip(), shift()],
+    whileElementsMounted: autoUpdate,
     elements: {
       reference: emojiButtonRef.current,
     },
@@ -34,7 +34,6 @@ const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
 
   const handleEmojiClick = (emojiObject) => {
     setText((prevText) => prevText + emojiObject.emoji);
-    // Keeping the picker open, consistent with CommentSection behavior
   };
 
   const handleSubmit = () => {
@@ -43,11 +42,13 @@ const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
     setText('');
     setImage(null);
     setImagePreview(null);
-    setShowEmojiPicker(false); // Close picker after submission, optional
+    setShowEmojiPicker(false);
   };
 
   return (
-    <Box sx={{ mt: 2, ml: 2 }}>
+    <Box sx={{ mt: 2, ml: 2, position: 'relative' }}>
+      {' '}
+      {/* Added position: 'relative' for stability */}
       <TextField
         fullWidth
         size="small"
@@ -59,7 +60,7 @@ const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
           endAdornment: (
             <InputAdornment position="end">
               <IconButton
-                ref={emojiButtonRef}
+                ref={emojiButtonRef} // Ensure this ref is correctly set
                 onClick={() => setShowEmojiPicker((prev) => !prev)}
                 edge="end"
               >
@@ -74,7 +75,8 @@ const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
           ref={refs.setFloating}
           style={{
             ...floatingStyles,
-            zIndex: 10, // Matches CommentSection
+            zIndex: 1000, // Increased zIndex for better stacking
+            position: 'absolute', // Ensure absolute positioning
           }}
         >
           <EmojiPicker onEmojiClick={handleEmojiClick} />
@@ -90,7 +92,7 @@ const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
           maxHeight="80px"
         />
       )}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
         <input
           accept="image/*"
           style={{ display: 'none' }}
