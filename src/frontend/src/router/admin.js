@@ -17,6 +17,13 @@ const admin = [
     auth: true,
     layout: 'admin',
   },
+
+  {
+    path: '/admin/reports',
+    component: 'pages/authenticated/admin/ReportManagement',
+    auth: true,
+    layout: 'admin',
+  },
   {
     path: '/admin/integrations',
     component: 'pages/authenticated/admin/Integrations',

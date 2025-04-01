@@ -15,7 +15,7 @@ use App\Http\Controllers\calculateController;
 use App\Http\Controllers\CommentController;
 use Laravel\Passport\Http\Controllers\AccessTokenController;
 use App\Http\Controllers\PostController;
-use App\Http\Controllers\UserListController;
+use App\Http\Controllers\AdminDashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,17 +41,12 @@ Route::prefix('posts')
         Route::get('/', [PostController::class, 'index']);
         Route::post('/', [PostController::class, 'createMemePost'])->middleware('auth:api');
         Route::put('/{post}', [PostController::class, 'updatePost'])->middleware('auth:api');
-        Route::delete('/{post}', [PostController::class, 'deletePost'])->middleware('auth:api');
+        Route::delete('/{post}', [PostController::class, 'deletePost']);
         Route::post('/{post}/image', [PostController::class, 'updatePostImage'])->middleware('auth:api');
-    });
 
-Route::prefix('likes')
-->group(function(){
-    Route::post('/{post}', [ PostController::class, 'likePost'])->middleware('auth:api');
-    Route::post('/{post}/unlike', [PostController::class, 'unlikePost'])->middleware('auth:api');
-    Route::get('/{post}/likes', [PostController::class, 'getLikes'])->middleware('auth:api');
-});
     
+        
+    });
     
 // user logout
 Route::delete('oauth/token', [TokenController::class, 'delete'])->middleware('auth:api');
@@ -69,16 +64,6 @@ Route::post('password/reset', [PasswordController::class, 'reset']);
 Route::prefix('users')
     ->group(function () {
         Route::get('/', [UserController::class, 'index']);
-        Route::post('/', [UserController::class, 'create']);
-        Route::get('{id}', [UserController::class, 'read']);
-        Route::put('{id}', [UserController::class, 'update']);
-        Route::delete('bulk-delete', [UserController::class, 'bulkDelete']);
-        Route::delete('{id}', [UserController::class, 'delete']);
-        Route::post('{id}/follow', [UserController::class, 'follow']);
-    });
-    Route::prefix('userlist')
-    ->group(function () {
-        Route::get('/', [UserListController::class, 'index'])->middleware('auth:api');
         Route::post('/', [UserController::class, 'create']);
         Route::get('{id}', [UserController::class, 'read']);
         Route::put('{id}', [UserController::class, 'update']);
@@ -116,5 +101,10 @@ Route::get('permissions', [PermissionController::class, 'index']);
 
 Route::get('notifications', [NotificationController::class, 'index']);
 Route::put('notifications/{id}/seen', [NotificationController::class, 'seen']);
+
+// Admin Dashboard Route
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::get('/admin/dashboard-stats', [AdminDashboardController::class, 'getStats']);
+});
 // DEMO PURPOSES ONLY. REMOVE ON ACTUAL PROJECT
 Route::post('notifications/test', [NotificationController::class, 'create']);

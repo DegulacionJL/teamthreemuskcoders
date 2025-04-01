@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import { deleteUser, retrieveUser, searchUsers } from 'services/user.service';
+import { Email, Person, VerifiedUser, Work } from '@mui/icons-material';
+import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
 import DataTable from 'components/molecules/DataTable';
 import AddEditModal from 'components/molecules/users/AddEditModal';
 import { criteria, meta as defaultMeta } from 'config/search';
@@ -27,111 +31,143 @@ function Users() {
 
   const headers = [
     {
-      id: 'id',
-      numeric: false,
-      disablePadding: false,
-      label: 'ID',
+      id: 'avatar',
+      label: '',
+      render: (row) => (
+        <Avatar
+          src={row?.avatar ? row.avatar.replace(/\\/g, '') : 'https://via.placeholder.com/40'}
+          alt="Profile"
+          sx={{ width: 40, height: 40 }}
+          onError={(e) => {
+            e.target.src = 'https://via.placeholder.com/40';
+          }}
+        />
+      ),
     },
     {
       id: 'first_name',
-      numeric: false,
-      disablePadding: false,
-      label: t('pages.users.first_name'),
+      label: (
+        <>
+          <Person sx={{ verticalAlign: 'middle', color: '#1976D2' }} /> {t('First Name')}
+        </>
+      ),
     },
     {
       id: 'last_name',
-      numeric: false,
-      disablePadding: false,
-      label: t('pages.users.last_name'),
+      label: (
+        <>
+          <Person sx={{ verticalAlign: 'middle', color: '#D32F2F' }} /> {t('Last Name')}
+        </>
+      ),
     },
     {
       id: 'email',
-      numeric: false,
-      disablePadding: false,
-      label: t('pages.users.email_address'),
+      label: (
+        <>
+          <Email sx={{ verticalAlign: 'middle', color: '#388E3C' }} /> {t('Email Address')}
+        </>
+      ),
     },
     {
       id: 'role',
-      numeric: false,
-      disablePadding: false,
-      label: t('pages.users.role'),
+      label: (
+        <>
+          <Work sx={{ verticalAlign: 'middle', color: '#FBC02D' }} /> {t('Role')}
+        </>
+      ),
     },
     {
       id: 'status.name',
-      numeric: false,
-      disablePadding: false,
-      label: t('pages.users.status'),
+      label: (
+        <>
+          <VerifiedUser sx={{ verticalAlign: 'middle', color: '#512DA8' }} /> {t('Status')}
+        </>
+      ),
     },
   ];
 
-  const handleChangePage = (event, value) => {
-    setQuery({ ...query, ...{ page: value } });
-  };
-
-  const handleSort = (event, { order, sort }) => {
-    setQuery({ ...query, ...{ order, sort } });
-  };
-
-  const handleSearch = (keyword) => {
-    setQuery({ ...query, ...{ keyword, page: 1 } });
-  };
-
-  const handleEdit = async (id) => {
-    const user = await retrieveUser(id);
-    setOpen(true);
-    setUser(user);
-  };
-
-  const handleDelete = async (id) => {
-    if (confirm(t('pages.users.delete_confirmation'))) {
-      await deleteUser(id);
-      fetchUsers();
-      toast(t('pages.users.user_deleted'), { type: 'success' });
-    }
-  };
-
-  const handleAdd = () => {
-    setUser(null);
-    setOpen(true);
-  };
-
-  const handleSaveEvent = (response) => {
-    if (!user) {
-      fetchUsers();
-      setOpen(false);
-      toast(t('pages.users.user_created'), { type: 'success' });
-      return;
-    }
-
-    let updatedList = [...data];
-    const index = updatedList.findIndex((row) => parseInt(row.id) === parseInt(response.id));
-    updatedList[index] = response;
-    setData(updatedList);
-    setOpen(false);
-    toast(t('pages.users.user_updated'), { type: 'success' });
-  };
-
   return (
-    <Box>
-      <DataTable
-        header={headers}
-        data={data}
-        page={query.page}
-        total={meta.lastPage}
-        order={query.order}
-        sort={query.sort}
-        handleChangePage={handleChangePage}
-        handleSort={handleSort}
-        handleSearch={handleSearch}
-        handleEdit={handleEdit}
-        handleDelete={handleDelete}
-        handleAdd={handleAdd}
-      />
+    <Box
+      sx={{
+        p: 3,
+        backgroundColor: '#e3f2fd',
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+      }}
+    >
+      <Paper
+        elevation={4}
+        sx={{
+          width: '100%',
+          maxWidth: 1200,
+          p: 3,
+          borderRadius: 3,
+          backgroundColor: 'white',
+          boxShadow: 3,
+        }}
+      >
+        <Typography
+          variant="h5"
+          sx={{ mb: 3, fontWeight: 'bold', color: '#1c54b2', fontFamily: 'Poppins, sans-serif' }}
+        >
+          {t('Manage Users')}
+        </Typography>
+
+        <DataTable
+          header={headers}
+          data={data}
+          page={query.page}
+          total={meta.lastPage}
+          order={query.order}
+          sort={query.sort}
+          handleChangePage={(event, value) => setQuery({ ...query, page: value })}
+          handleSort={(event, { order, sort }) => setQuery({ ...query, order, sort })}
+          handleSearch={(keyword) => setQuery({ ...query, keyword, page: 1 })}
+          handleEdit={async (id) => {
+            const user = await retrieveUser(id);
+            setOpen(true);
+            setUser(user);
+          }}
+          handleDelete={async (id) => {
+            if (confirm(t('Are you sure you want to delete this user?'))) {
+              await deleteUser(id);
+              fetchUsers();
+              toast(t('User deleted successfully'), { type: 'success' });
+            }
+          }}
+          handleAdd={() => {
+            setUser(null);
+            setOpen(true);
+          }}
+          sx={{
+            boxShadow: 2,
+            borderRadius: 2,
+            '& .MuiTableHead-root': {
+              backgroundColor: '#1e293b',
+              color: 'white',
+            },
+            '& .MuiTableRow-root:hover': {
+              backgroundColor: '#bbdefb',
+            },
+            '& .MuiTableCell-root': {
+              color: '#333',
+              fontFamily: 'Poppins, sans-serif',
+            },
+          }}
+        />
+      </Paper>
 
       <AddEditModal
         open={open}
         user={user}
-        handleSaveEvent={handleSaveEvent}
+        handleSaveEvent={(response) => {
+          fetchUsers();
+          setOpen(false);
+          toast(user ? t('User updated successfully') : t('User created successfully'), {
+            type: 'success',
+          });
+        }}
         handleClose={() => setOpen(false)}
       />
     </Box>
