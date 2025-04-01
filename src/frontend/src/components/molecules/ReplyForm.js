@@ -1,3 +1,4 @@
+import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
 import EmojiPicker from 'emoji-picker-react';
 import PropTypes from 'prop-types';
 import React, { useRef, useState } from 'react';
@@ -13,6 +14,16 @@ const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiButtonRef = useRef(null);
 
+  const { refs, floatingStyles } = useFloating({
+    open: showEmojiPicker,
+    placement: 'bottom-end', // Matches CommentSection
+    middleware: [offset(4), flip(), shift()], // Matches CommentSection
+    whileElementsMounted: autoUpdate, // Ensures proper positioning during scroll/resize
+    elements: {
+      reference: emojiButtonRef.current,
+    },
+  });
+
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -23,7 +34,7 @@ const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
 
   const handleEmojiClick = (emojiObject) => {
     setText((prevText) => prevText + emojiObject.emoji);
-    // Removed setShowEmojiPicker(false) to keep the emoji picker open
+    // Keeping the picker open, consistent with CommentSection behavior
   };
 
   const handleSubmit = () => {
@@ -32,6 +43,7 @@ const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
     setText('');
     setImage(null);
     setImagePreview(null);
+    setShowEmojiPicker(false); // Close picker after submission, optional
   };
 
   return (
@@ -59,14 +71,24 @@ const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
       />
       {showEmojiPicker && (
         <Box
-          sx={{
-            position: 'absolute',
-            zIndex: 10,
-            mt: 1,
+          ref={refs.setFloating}
+          style={{
+            ...floatingStyles,
+            zIndex: 10, // Matches CommentSection
           }}
         >
           <EmojiPicker onEmojiClick={handleEmojiClick} />
         </Box>
+      )}
+      {imagePreview && (
+        <ImagePreview
+          src={imagePreview}
+          onRemove={() => {
+            setImage(null);
+            setImagePreview(null);
+          }}
+          maxHeight="80px"
+        />
       )}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <input
@@ -88,9 +110,6 @@ const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
           Cancel
         </Button>
       </Box>
-      {imagePreview && (
-        <ImagePreview src={imagePreview} onRemove={() => setImagePreview(null)} maxHeight="80px" />
-      )}
     </Box>
   );
 };
