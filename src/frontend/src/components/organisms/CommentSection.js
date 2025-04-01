@@ -1,3 +1,4 @@
+// CommentSection.js
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
 import EmojiPicker from 'emoji-picker-react';
 import PropTypes from 'prop-types';
@@ -62,13 +63,22 @@ function CommentSection({
 
   return (
     <Box sx={{ mt: 2, px: 2 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          gap: 2, // Adds space between avatar and text field
+          mb: 2,
+        }}
+      >
         <Avatar
           src={user?.avatar || ''}
           alt={`${user?.first_name} ${user?.last_name}`}
           sx={{
             bgcolor: user?.avatar ? 'transparent' : '#4a3b6b',
-            mt: 0.5,
+            width: 40, // Consistent size with TextField
+            height: 40,
           }}
         >
           {user ? `${user.first_name?.charAt(0) || ''}${user.last_name?.charAt(0) || ''}` : 'U'}
