@@ -1,3 +1,5 @@
+'use client';
+
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import {
@@ -30,6 +32,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
+import MemeCreator from '../../../components/organisms/Image editor/meme-creator';
 import { useTheme as useCustomTheme } from '../../../theme/ThemeContext';
 import MemePost from './MemePost';
 
@@ -42,6 +45,7 @@ function MemeFeed() {
   const [posts, setPosts] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [tabValue, setTabValue] = useState(0);
+  const [showMemeCreator, setShowMemeCreator] = useState(false);
 
   // State for menu handling
   const [anchorEl, setAnchorEl] = useState(null);
@@ -69,6 +73,21 @@ function MemeFeed() {
     } catch (error) {
       console.error('Error deleting post:', error);
     }
+  };
+
+  // Helper function to convert data URL to File
+  const dataURLtoFile = (dataurl, filename) => {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+
+    return new File([u8arr], filename, { type: mime });
   };
 
   // Handle new post creation
@@ -147,6 +166,16 @@ function MemeFeed() {
     setTabValue(newValue);
   };
 
+  // Handle meme creator save
+  const handleMemeCreatorSave = (editedImage, memeCaption) => {
+    // Convert the data URL to a file
+    const file = dataURLtoFile(editedImage, 'meme.png');
+    setImage(file);
+    setCaption(memeCaption);
+    setImagePreview(editedImage);
+    setShowMemeCreator(false);
+  };
+
   // Sample data for UI enhancements
   const categories = [
     { id: 1, name: 'Popular Memes', icon: <LocalFireDepartment color="primary" />, active: true },
@@ -190,7 +219,7 @@ function MemeFeed() {
         pt: 2,
       }}
     >
-      {/* Left Sidebar */}
+      {/* Left container */}
       <Box
         sx={{
           width: '100%',
@@ -311,92 +340,116 @@ function MemeFeed() {
         {/* Create Post Section */}
         <Card sx={{ width: '100%', mb: 3, maxWidth: '80%' }}>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Avatar
-                src={currentUser?.avatar || ''}
-                sx={{ mr: 2 }}
-                alt={`${currentUser?.first_name} ${currentUser?.last_name}`}
-              >
-                {currentUser
-                  ? `${currentUser.first_name?.charAt(0) || ''}${
-                      currentUser.last_name?.charAt(0) || ''
-                    }`
-                  : 'JD'}
-              </Avatar>
-              <Typography variant="h6">
-                {currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : 'john degz'}
-              </Typography>
-            </Box>
+            {showMemeCreator ? (
+              <MemeCreator
+                onSave={handleMemeCreatorSave}
+                onCancel={() => setShowMemeCreator(false)}
+              />
+            ) : (
+              <>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Avatar
+                    src={currentUser?.avatar || ''}
+                    sx={{ mr: 2 }}
+                    alt={`${currentUser?.first_name} ${currentUser?.last_name}`}
+                  >
+                    {currentUser
+                      ? `${currentUser.first_name?.charAt(0) || ''}${
+                          currentUser.last_name?.charAt(0) || ''
+                        }`
+                      : 'JD'}
+                  </Avatar>
+                  <Typography variant="h6">
+                    {currentUser
+                      ? `${currentUser.first_name} ${currentUser.last_name}`
+                      : 'john degz'}
+                  </Typography>
+                </Box>
 
-            <TextField
-              placeholder="Write something funny..."
-              variant="outlined"
-              multiline
-              rows={3}
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              sx={{
-                width: '100%',
-                mb: 2,
-                '& .MuiOutlinedInput-root': {
-                  bgcolor:
-                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-                  borderRadius: 1,
-                },
-              }}
-            />
-
-            {imagePreview && (
-              <Box sx={{ mt: 2, mb: 2, textAlign: 'center' }}>
-                <img
-                  src={imagePreview || '/placeholder.svg'}
-                  alt="Preview"
-                  style={{
-                    maxWidth: '100%',
-                    borderRadius: '8px',
-                    display: 'block',
-                    margin: 'auto',
+                <TextField
+                  placeholder="Write something funny..."
+                  variant="outlined"
+                  multiline
+                  rows={3}
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  sx={{
+                    width: '100%',
+                    mb: 2,
+                    '& .MuiOutlinedInput-root': {
+                      bgcolor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255,255,255,0.05)'
+                          : 'rgba(0,0,0,0.02)',
+                      borderRadius: 1,
+                    },
                   }}
                 />
-              </Box>
+
+                {imagePreview && (
+                  <Box sx={{ mt: 2, mb: 2, textAlign: 'center' }}>
+                    <img
+                      src={imagePreview || '/placeholder.svg'}
+                      alt="Preview"
+                      style={{
+                        maxWidth: '100%',
+                        borderRadius: '8px',
+                        display: 'block',
+                        margin: 'auto',
+                      }}
+                    />
+                  </Box>
+                )}
+
+                <Box
+                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<PhotoCamera />}
+                      component="label"
+                      sx={{ borderRadius: 4 }}
+                    >
+                      Upload
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setImage(e.target.files[0]);
+                            setImagePreview(URL.createObjectURL(e.target.files[0]));
+                          }
+                        }}
+                      />
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      onClick={() => setShowMemeCreator(true)}
+                      sx={{ borderRadius: 4 }}
+                    >
+                      Create Meme
+                    </Button>
+                  </Box>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handlePost}
+                    disabled={!caption && !image}
+                    sx={{
+                      borderRadius: 4,
+                      bgcolor: '#8a4fff',
+                      '&:hover': {
+                        bgcolor: '#7a3fef',
+                      },
+                    }}
+                  >
+                    POST
+                  </Button>
+                </Box>
+              </>
             )}
-
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Button
-                variant="outlined"
-                startIcon={<PhotoCamera />}
-                component="label"
-                sx={{ borderRadius: 4 }}
-              >
-                Upload
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      setImage(e.target.files[0]);
-                      setImagePreview(URL.createObjectURL(e.target.files[0]));
-                    }
-                  }}
-                />
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handlePost}
-                disabled={!caption && !image}
-                sx={{
-                  borderRadius: 4,
-                  bgcolor: '#8a4fff',
-                  '&:hover': {
-                    bgcolor: '#7a3fef',
-                  },
-                }}
-              >
-                POST
-              </Button>
-            </Box>
           </CardContent>
         </Card>
 
@@ -423,7 +476,7 @@ function MemeFeed() {
         </Box>
       </Box>
 
-      {/* Right Sidebar */}
+      {/* Right container */}
       <Box
         sx={{
           width: '100%',
