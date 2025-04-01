@@ -68,7 +68,6 @@ function MemePost({
   const [showComments, setShowComments] = useState(false);
   const [replyToComment, setReplyToComment] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalComments, setTotalComments] = useState(0);
   const [totalCommentsCount, setTotalCommentsCount] = useState(0);
   const [hasMore, setHasMore] = useState(false);
 
@@ -129,7 +128,6 @@ function MemePost({
           setPostComments(processedComments);
         }
 
-        setTotalComments(response.pagination.total);
         setTotalCommentsCount(response.pagination.total_with_replies);
         setHasMore(response.pagination.has_more);
         setCurrentPage(page);
