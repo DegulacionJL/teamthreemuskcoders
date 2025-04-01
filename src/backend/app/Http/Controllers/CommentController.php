@@ -37,19 +37,29 @@ class CommentController extends Controller
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
     public function index($postId)
-    {
-        try {
-            $comments = $this->commentService->getComments($postId);
-            $this->response['data'] = CommentResource::collection($comments);
-        } catch (Exception $e) {
-            $this->response = [
-                'error' => $e->getMessage(),
-                'code' => 500,
-            ];
-        }
-
-        return response()->json($this->response, $this->response['code']);
+{
+    try {
+        $perPage = request()->query('per_page', 5); // Default to 5 comments per page
+        $page = request()->query('page', 1); // Default to page 1
+        
+        $comments = $this->commentService->getComments($postId, $perPage, $page);
+        $this->response['data'] = CommentResource::collection($comments);
+        $this->response['pagination'] = [
+            'total' => $comments->total(),
+            'per_page' => $comments->perPage(),
+            'current_page' => $comments->currentPage(),
+            'last_page' => $comments->lastPage(),
+            'has_more' => $comments->hasMorePages(),
+        ];
+    } catch (Exception $e) {
+        $this->response = [
+            'error' => $e->getMessage(),
+            'code' => 500,
+        ];
     }
+
+    return response()->json($this->response, $this->response['code']);
+}
 
     /**
      * Create Comment

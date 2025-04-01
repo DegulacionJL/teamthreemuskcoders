@@ -18,15 +18,14 @@ class CommentService
      * @param int $postId
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function getComments($postId)
-    {
-        // Get only top-level comments (no parent)
-        return Comment::where('post_id', $postId)
-            ->whereNull('parent_id')
-            ->with(['user', 'replies.user', 'replies.replies.user', 'replies.replies.replies.user', 'replies.replies.replies.replies.user'])
-            ->latest()
-            ->get();
-    }
+    public function getComments($postId, $perPage = 5, $page = 1)
+{
+    return Comment::where('post_id', $postId)
+        ->whereNull('parent_id')
+        ->with(['user', 'replies.user', 'replies.replies.user'])
+        ->latest()
+        ->paginate($perPage, ['*'], 'page', $page);
+}
 
     /**
      * Add a new comment.
