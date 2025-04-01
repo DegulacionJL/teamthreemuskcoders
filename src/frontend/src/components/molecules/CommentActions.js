@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
-import { Box, IconButton, Menu, MenuItem } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { Box, IconButton, Menu, MenuItem } from '@mui/material';
 
 const CommentActions = ({ onEdit, onDelete }) => {
   const [anchorEl, setAnchorEl] = useState(null);
