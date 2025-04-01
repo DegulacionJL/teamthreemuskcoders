@@ -34,7 +34,7 @@ function CommentSection({
   const { refs, floatingStyles } = useFloating({
     open: showEmojiPicker,
     placement: 'bottom-end',
-    middleware: [offset(4), flip(), shift()],
+    middleware: [offset(12), flip(), shift({ padding: 12 })], // Increased offset and padding
     whileElementsMounted: autoUpdate,
     elements: {
       reference: emojiButtonRef.current,
@@ -62,13 +62,13 @@ function CommentSection({
   };
 
   return (
-    <Box sx={{ mt: 2, px: 2 }}>
+    <Box sx={{ mt: 2, px: 2, position: 'relative', zIndex: 1 }}>
       <Box
         sx={{
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'flex-start',
-          gap: 2, // Adds space between avatar and text field
+          gap: 2,
           mb: 2,
         }}
       >
@@ -77,7 +77,7 @@ function CommentSection({
           alt={`${user?.first_name} ${user?.last_name}`}
           sx={{
             bgcolor: user?.avatar ? 'transparent' : '#4a3b6b',
-            width: 40, // Consistent size with TextField
+            width: 40,
             height: 40,
           }}
         >
@@ -110,7 +110,15 @@ function CommentSection({
               ref={refs.setFloating}
               style={{
                 ...floatingStyles,
-                zIndex: 10,
+                zIndex: 1500, // Higher z-index to ensure it stays above all other elements
+                position: 'absolute',
+              }}
+              sx={{
+                '& .emoji-picker-react': {
+                  boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
+                  borderRadius: 8,
+                  overflow: 'visible', // Prevent clipping
+                },
               }}
             >
               <EmojiPicker onEmojiClick={handleEmojiClick} />
