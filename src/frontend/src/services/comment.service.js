@@ -2,7 +2,10 @@
 import api from 'utils/api';
 
 const getComments = async function (postId, params = {}) {
-  const req = api.get(`/posts/${postId}/comments`, { params }).then(({ data }) => data);
+  const req = api.get(`/posts/${postId}/comments`, { params }).then(({ data }) => ({
+    data: data.data,
+    pagination: data.pagination,
+  }));
   return await req;
 };
 

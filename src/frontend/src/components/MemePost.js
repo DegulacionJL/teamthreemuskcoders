@@ -1,4 +1,3 @@
-// MemePost.js
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { addComment, deleteComment, getComments, updateComment } from 'services/comment.service';
@@ -70,6 +69,7 @@ function MemePost({
   const [replyToComment, setReplyToComment] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalComments, setTotalComments] = useState(0);
+  const [totalCommentsCount, setTotalCommentsCount] = useState(0);
   const [hasMore, setHasMore] = useState(false);
 
   const [showReactions, setShowReactions] = useState(false);
@@ -83,12 +83,6 @@ function MemePost({
     setShowReactions(false);
     console.log('User reacted with 😂 to post:', id);
   }, [id]);
-
-  const countAllComments = (comments) => {
-    return comments.reduce((total, comment) => {
-      return total + 1 + countAllComments(comment.replies || []);
-    }, 0);
-  };
 
   const handleSave = useCallback(
     async (newCaption, newImage, removeImage = false) => {
@@ -136,11 +130,15 @@ function MemePost({
         }
 
         setTotalComments(response.pagination.total);
+        setTotalCommentsCount(response.pagination.total_with_replies);
         setHasMore(response.pagination.has_more);
         setCurrentPage(page);
       } catch (error) {
         console.error('Error fetching comments:', error);
-        if (!append) setPostComments([]);
+        if (!append) {
+          setPostComments([]);
+          setTotalCommentsCount(0);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -183,6 +181,19 @@ function MemePost({
   };
 
   useEffect(() => {
+    const fetchInitialCommentCount = async () => {
+      try {
+        const response = await getComments(id, { page: 1, per_page: 1 });
+        setTotalCommentsCount(response.pagination.total_with_replies);
+      } catch (error) {
+        console.error('Error fetching initial comment count:', error);
+      }
+    };
+
+    fetchInitialCommentCount();
+  }, [id]);
+
+  useEffect(() => {
     if (showComments) {
       fetchComments(1);
     }
@@ -203,7 +214,7 @@ function MemePost({
         const finalParentId = parentComment ? parentComment.id : parentId;
 
         await addComment(id, text, image, finalParentId);
-        await fetchComments(1); // Reset to page 1 after adding
+        await fetchComments(1);
         setReplyToComment(null);
       } catch (error) {
         console.error('Error adding reply:', error);
@@ -221,7 +232,7 @@ function MemePost({
       setIsLoading(true);
       try {
         await addComment(id, text, image);
-        await fetchComments(1); // Reset to page 1 after adding
+        await fetchComments(1);
       } catch (error) {
         console.error('Error adding comment:', error);
       } finally {
@@ -241,7 +252,7 @@ function MemePost({
       setIsLoading(true);
       try {
         await deleteComment(id, commentToDelete);
-        await fetchComments(1); // Reset to page 1 after deleting
+        await fetchComments(1);
       } catch (error) {
         console.error('Error deleting comment:', error);
       } finally {
@@ -284,7 +295,7 @@ function MemePost({
       formData.append('_method', 'PUT');
 
       await updateComment(id, editingCommentId, formData);
-      await fetchComments(1); // Reset to page 1 after updating
+      await fetchComments(1);
 
       setEditingCommentId(null);
       setEditingCommentText('');
@@ -315,7 +326,7 @@ function MemePost({
   }, []);
 
   const handleLoadMore = useCallback(() => {
-    fetchComments(currentPage + 1, true); // Append new comments
+    fetchComments(currentPage + 1, true);
   }, [fetchComments, currentPage]);
 
   function getRelativeTime(timestamp) {
@@ -500,7 +511,7 @@ function MemePost({
           onClick={() => setShowComments(!showComments)}
           sx={{ color: theme.palette.text.secondary }}
         >
-          {totalComments} Comments
+          {totalCommentsCount} Comments
         </Button>
         <Button startIcon={<Share />} size="small" sx={{ color: theme.palette.text.secondary }}>
           Share

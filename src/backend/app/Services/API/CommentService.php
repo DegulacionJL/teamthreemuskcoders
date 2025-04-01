@@ -19,14 +19,21 @@ class CommentService
      * @return \Illuminate\Database\Eloquent\Collection
      */
     public function getComments($postId, $perPage = 5, $page = 1)
-{
-    return Comment::where('post_id', $postId)
-        ->whereNull('parent_id')
-        ->with(['user', 'replies.user', 'replies.replies.user'])
-        ->latest()
-        ->paginate($perPage, ['*'], 'page', $page);
-}
+    {
+        $comments = Comment::where('post_id', $postId)
+            ->whereNull('parent_id')
+            ->with(['user', 'replies.user', 'replies.replies.user'])
+            ->latest()
+            ->paginate($perPage, ['*'], 'page', $page);
 
+        // Calculate total comments including all nested replies
+        $totalWithReplies = Comment::where('post_id', $postId)->count();
+
+        return [
+            'comments' => $comments,
+            'total_with_replies' => $totalWithReplies
+        ];
+    }
     /**
      * Add a new comment.
      *
