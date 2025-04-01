@@ -31,10 +31,12 @@ function Navbar(props) {
   const [anchorMobileNav, setAnchorMobileNav] = useState(null);
   const { darkMode, toggleDarkMode } = useTheme();
 
-  const menus = [{ label: t('menu.dashboard'), url: '/dashboard' }];
+  const menus = [];
 
-  menus.push({ label: t('menu.memefeed'), url: '/memefeed' });
-  menus.push({ label: t('menu.userlist'), url: '/user/userList' });
+  if (user) {
+    menus.push({ label: t('menu.memefeed'), url: '/memefeed' });
+    menus.push({ label: t('menu.userlist'), url: '/userList' });
+  }
 
   const appName = process.env.REACT_APP_SITE_TITLE || 'MemeMa 😂';
 
@@ -46,7 +48,6 @@ function Navbar(props) {
 
   const links = [
     { label: t('menu.profile'), url: '/profile' },
-    { label: t('menu.settings'), url: '/settings' },
     { label: t('menu.logout'), url: '/logout' },
   ];
 

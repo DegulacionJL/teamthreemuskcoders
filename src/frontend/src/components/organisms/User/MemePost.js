@@ -26,13 +26,13 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import AnimatedEmoji from '../components/atoms/animation/AnimatedEmoji';
-import { useTheme as useCustomTheme } from '../theme/ThemeContext';
-import ImagePreview from './atoms/ImagePreview';
-import ImageUploadButton from './molecules/ImageUploadButton';
-import CommentSection from './organisms/CommentSection';
-import DeleteConfirmationModal from './organisms/DeleteConfirmationModal';
-import EditPostModal from './organisms/EditPostModal';
+import { useTheme as useCustomTheme } from '../../../theme/ThemeContext';
+import ImagePreview from '../../atoms/ImagePreview';
+import AnimatedEmoji from '../../atoms/animation/AnimatedEmoji';
+import ImageUploadButton from '../../molecules/ImageUploadButton';
+import CommentSection from '../CommentSection';
+import DeleteConfirmationModal from '../DeleteConfirmationModal';
+import EditPostModal from '../EditPostModal';
 
 function MemePost({
   id,

@@ -30,8 +30,8 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import MemePost from '../../components/MemePost';
-import { useTheme as useCustomTheme } from '../../theme/ThemeContext';
+import { useTheme as useCustomTheme } from '../../../theme/ThemeContext';
+import MemePost from './MemePost';
 
 function MemeFeed() {
   const theme = useTheme(); // MUI theme

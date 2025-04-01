@@ -3,7 +3,12 @@ const user = [
   {
     path: '/userlist',
     component: 'pages/guest/UserList',
-    auth: false,
+    auth: true,
+  },
+  {
+    path: '/memefeed',
+    component: 'components/organisms/User/MemeFeed',
+    auth: true,
   },
 ];
 

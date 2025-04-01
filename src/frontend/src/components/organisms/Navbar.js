@@ -48,14 +48,8 @@ function Navbar(props) {
         menus.push({ label: t('menu.userlist'), url: 'user/userList' });
 
         break;
-
-      default:
-        menus.push({ label: t('menu.dashboard'), url: '/dashboard' });
-        break;
     }
   } else {
-    menus.push({ label: t('menu.about'), url: '/about' });
-
     menus.push({ label: t('menu.inquiry'), url: '/inquiry' });
 
     menus.push({ label: t('menu.faq'), url: '/faq' });

@@ -73,11 +73,7 @@ const routes = [
     component: 'pages/guest/Calculate',
     auth: false,
   },
-  {
-    path: '/memefeed',
-    component: 'pages/guest/MemeFeed',
-    auth: true,
-  },
+
   {
     path: '/logout',
     component: 'pages/guest/Logout', // ✅ Add this line
