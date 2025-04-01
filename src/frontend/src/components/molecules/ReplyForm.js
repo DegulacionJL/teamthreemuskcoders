@@ -1,13 +1,17 @@
+import EmojiPicker from 'emoji-picker-react';
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
-import { Box, Button, IconButton, TextField } from '@mui/material';
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
+import { Box, Button, IconButton, InputAdornment, TextField } from '@mui/material';
 import ImagePreview from '../atoms/ImagePreview';
 
 const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
   const [text, setText] = useState('');
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiButtonRef = useRef(null);
 
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -15,6 +19,11 @@ const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
       setImage(file);
       setImagePreview(URL.createObjectURL(file));
     }
+  };
+
+  const handleEmojiClick = (emojiObject) => {
+    setText((prevText) => prevText + emojiObject.emoji);
+    // Removed setShowEmojiPicker(false) to keep the emoji picker open
   };
 
   const handleSubmit = () => {
@@ -34,7 +43,31 @@ const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
         value={text}
         onChange={(e) => setText(e.target.value)}
         sx={{ mb: 1 }}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                ref={emojiButtonRef}
+                onClick={() => setShowEmojiPicker((prev) => !prev)}
+                edge="end"
+              >
+                <EmojiEmotionsIcon />
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
       />
+      {showEmojiPicker && (
+        <Box
+          sx={{
+            position: 'absolute',
+            zIndex: 10,
+            mt: 1,
+          }}
+        >
+          <EmojiPicker onEmojiClick={handleEmojiClick} />
+        </Box>
+      )}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <input
           accept="image/*"
