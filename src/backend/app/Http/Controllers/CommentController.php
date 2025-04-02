@@ -41,8 +41,14 @@ class CommentController extends Controller
         try {
             $perPage = request()->query('per_page', 5);
             $page = request()->query('page', 1);
-            
-            $result = $this->commentService->getComments($postId, $perPage, $page);
+            $parentId = request()->query('parent_id');
+
+            if ($parentId) {
+                $result = $this->commentService->getReplies($postId, $parentId, $perPage, $page);
+            } else {
+                $result = $this->commentService->getComments($postId, $perPage, $page);
+            }
+
             $comments = $result['comments'];
             $totalWithReplies = $result['total_with_replies'];
 

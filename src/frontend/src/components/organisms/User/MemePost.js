@@ -68,8 +68,10 @@ function MemePost({
   const [showComments, setShowComments] = useState(false);
   const [replyToComment, setReplyToComment] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [replyPage, setReplyPage] = useState({});
   const [totalCommentsCount, setTotalCommentsCount] = useState(0);
   const [hasMore, setHasMore] = useState(false);
+  const [replyHasMore, setReplyHasMore] = useState({});
 
   const [showReactions, setShowReactions] = useState(false);
   const [hasReacted, setHasReacted] = useState(false);
@@ -119,13 +121,20 @@ function MemePost({
     async (page = 1, append = false) => {
       setIsLoading(true);
       try {
-        const response = await getComments(id, { page, per_page: 5 });
-        const processedComments = processCommentsHierarchy(response.data || []);
+        const response = await getComments(id, { page, per_page: 5, sort: 'asc' });
+        const processedComments = response.data.map((comment) => ({
+          ...comment,
+          replies: [], // Initialize replies as empty, fetch separately
+        }));
 
         if (append) {
           setPostComments((prevComments) => [...prevComments, ...processedComments]);
         } else {
           setPostComments(processedComments);
+          // Fetch initial replies for each comment
+          for (const comment of processedComments) {
+            await fetchReplies(comment.id, 1);
+          }
         }
 
         setTotalCommentsCount(response.pagination.total_with_replies);
@@ -136,6 +145,7 @@ function MemePost({
         if (!append) {
           setPostComments([]);
           setTotalCommentsCount(0);
+          setHasMore(false);
         }
       } finally {
         setIsLoading(false);
@@ -144,52 +154,56 @@ function MemePost({
     [id]
   );
 
-  const processCommentsHierarchy = (commentsArray) => {
-    const commentsMap = {};
-    const rootComments = [];
-
-    commentsArray.forEach((comment) => {
-      comment.replies = comment.replies || [];
-      commentsMap[comment.id] = comment;
-    });
-
-    commentsArray.forEach((comment) => {
-      if (comment.parent_id) {
-        const parent = commentsMap[comment.parent_id];
-        if (parent) {
-          if (!parent.parent_id) {
-            parent.replies.push(comment);
-          } else {
-            const grandparent = commentsMap[parent.parent_id];
-            if (grandparent) {
-              grandparent.replies.push(comment);
-            } else {
-              rootComments.push(comment);
+  const fetchReplies = useCallback(
+    async (commentId, page = 1, append = false) => {
+      setIsLoading(true);
+      try {
+        const response = await getComments(id, {
+          parent_id: commentId,
+          page,
+          per_page: 5,
+          sort: 'asc',
+        });
+        const newReplies = response.data || [];
+        setPostComments((prevComments) =>
+          prevComments.map((comment) => {
+            if (comment.id === commentId) {
+              return {
+                ...comment,
+                replies: append ? [...comment.replies, ...newReplies] : newReplies,
+              };
             }
-          }
-        } else {
-          rootComments.push(comment);
-        }
-      } else {
-        rootComments.push(comment);
+            return comment;
+          })
+        );
+        setReplyHasMore((prev) => ({
+          ...prev,
+          [commentId]: response.pagination.has_more,
+        }));
+        setReplyPage((prev) => ({
+          ...prev,
+          [commentId]: page,
+        }));
+      } catch (error) {
+        console.error('Error fetching replies:', error);
+      } finally {
+        setIsLoading(false);
       }
-    });
-
-    return rootComments;
-  };
+    },
+    [id]
+  );
 
   useEffect(() => {
-    const fetchInitialCommentCount = async () => {
+    const fetchInitialData = async () => {
       try {
-        const response = await getComments(id, { page: 1, per_page: 1 });
-        setTotalCommentsCount(response.pagination.total_with_replies);
+        await fetchComments(1);
       } catch (error) {
-        console.error('Error fetching initial comment count:', error);
+        console.error('Error fetching initial data:', error);
       }
     };
 
-    fetchInitialCommentCount();
-  }, [id]);
+    fetchInitialData();
+  }, [id, fetchComments]);
 
   useEffect(() => {
     if (showComments) {
@@ -214,6 +228,8 @@ function MemePost({
         await addComment(id, text, image, finalParentId);
         await fetchComments(1);
         setReplyToComment(null);
+        setReplyPage((prev) => ({ ...prev, [finalParentId]: 1 }));
+        await fetchReplies(finalParentId, 1);
       } catch (error) {
         console.error('Error adding reply:', error);
         await fetchComments(1);
@@ -221,7 +237,7 @@ function MemePost({
         setIsLoading(false);
       }
     },
-    [id, fetchComments, postComments]
+    [id, fetchComments, postComments, fetchReplies]
   );
 
   const handleAddComment = useCallback(
@@ -327,6 +343,24 @@ function MemePost({
     fetchComments(currentPage + 1, true);
   }, [fetchComments, currentPage]);
 
+  const handleLoadMoreReplies = useCallback(
+    (commentId) => {
+      const currentPage = replyPage[commentId] || 1;
+      fetchReplies(commentId, currentPage + 1, true);
+    },
+    [fetchReplies, replyPage]
+  );
+
+  const handleBackReplies = useCallback(
+    (commentId) => {
+      const currentPage = replyPage[commentId] || 1;
+      if (currentPage > 1) {
+        fetchReplies(commentId, currentPage - 1);
+      }
+    },
+    [fetchReplies, replyPage]
+  );
+
   function getRelativeTime(timestamp) {
     const now = new Date();
     const postedTime = new Date(timestamp);
@@ -350,14 +384,14 @@ function MemePost({
       sx={{
         mb: 3,
         borderRadius: 1,
-        overflow: 'visible', // Changed from 'hidden' to 'visible' to allow emoji picker to overflow
+        overflow: 'visible',
         backgroundColor: theme.palette.background.paper,
         transition: 'background-color 0.3s, color 0.3s',
         maxWidth: '800px',
         width: '100%',
         mx: 'auto',
         position: 'relative',
-        zIndex: 1, // Ensure the card doesn't create a new stacking context that clips the picker
+        zIndex: 1,
       }}
     >
       {isLoading && (
@@ -372,7 +406,7 @@ function MemePost({
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: 'rgba(255, 255, 255, 0.7)',
-            zIndex: 100, // Keep loading spinner above card content but below emoji picker
+            zIndex: 100,
           }}
         >
           <CircularProgress />
@@ -531,6 +565,10 @@ function MemePost({
             editingCommentId={editingCommentId}
             editingCommentText={editingCommentText}
             onEditingTextChange={setEditingCommentText}
+            onLoadMoreReplies={handleLoadMoreReplies}
+            onBackReplies={handleBackReplies}
+            replyHasMore={replyHasMore}
+            replyPage={replyPage}
           />
           {hasMore && (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>

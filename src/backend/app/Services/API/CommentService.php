@@ -22,16 +22,40 @@ class CommentService
     {
         $comments = Comment::where('post_id', $postId)
             ->whereNull('parent_id')
-            ->with(['user', 'replies.user', 'replies.replies.user'])
-            ->latest()
+            ->with(['user']) // Load only user, not replies here
+            ->orderBy('created_at', 'asc')
             ->paginate($perPage, ['*'], 'page', $page);
 
-        // Calculate total comments including all nested replies
         $totalWithReplies = Comment::where('post_id', $postId)->count();
 
         return [
             'comments' => $comments,
-            'total_with_replies' => $totalWithReplies
+            'total_with_replies' => $totalWithReplies,
+            'has_more' => $comments->hasMorePages(),
+        ];
+    }
+
+    /**
+     * Get replies for a specific comment.
+     *
+     * @param int $postId
+     * @param int $parentId
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+   public function getReplies($postId, $parentId, $perPage = 5, $page = 1)
+    {
+        $replies = Comment::where('post_id', $postId)
+            ->where('parent_id', $parentId)
+            ->with(['user'])
+            ->orderBy('created_at', 'asc')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        $totalWithReplies = Comment::where('post_id', $postId)->where('parent_id', $parentId)->count();
+
+        return [
+            'comments' => $replies,
+            'total_with_replies' => $totalWithReplies,
+            'has_more' => $replies->hasMorePages(),
         ];
     }
     /**
