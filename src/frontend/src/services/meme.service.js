@@ -7,9 +7,32 @@ const createMemePost = async function (formData) {
   return await req;
 };
 
-const getMemePosts = async function () {
-  const req = api.get('/posts').then(({ data }) => data);
-  return await req;
+const getMemePosts = async (page = 1) => {
+  try {
+    // Add a timestamp to prevent caching
+    const timestamp = new Date().getTime();
+
+    // Make the API request
+    console.log(`Making request to: /api/v1/posts?page=${page}&_=${timestamp}`);
+
+    const response = await api.get(`/posts?page=${page}&_=${timestamp}`, {
+      headers: {
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache',
+        Accept: 'application/json',
+      },
+    });
+
+    console.log(`API Response status:`, response);
+
+    const data = response.data;
+    console.log('API Response data:', data);
+
+    return data;
+  } catch (error) {
+    console.error('Error fetching memeposts: ', error);
+    throw error;
+  }
 };
 
 const updatePost = async function (post, updatedData) {

@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
-import { Avatar, Box, Button, TextField, Typography } from '@mui/material';
+import { Avatar, Box, Button, TextField } from '@mui/material';
 import ImagePreview from '../atoms/ImagePreview';
 import ImageUploadButton from '../molecules/ImageUploadButton';
 import CommentsList from './CommentsList';

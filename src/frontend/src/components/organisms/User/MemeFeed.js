@@ -2,6 +2,7 @@
 
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
+import InfiniteScroll from 'react-infinite-scroll-component';
 import {
   createMemePost,
   deletePost,
@@ -19,6 +20,7 @@ import {
   CardContent,
   CardHeader,
   Chip,
+  CircularProgress,
   List,
   ListItem,
   ListItemAvatar,
@@ -43,9 +45,13 @@ function MemeFeed() {
   const [image, setImage] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
   const [posts, setPosts] = useState([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
   const [currentUser, setCurrentUser] = useState(null);
   const [tabValue, setTabValue] = useState(0);
   const [showMemeCreator, setShowMemeCreator] = useState(false);
+  const [error, setError] = useState(null);
 
   // State for menu handling
   const [anchorEl, setAnchorEl] = useState(null);
@@ -72,6 +78,7 @@ function MemeFeed() {
       handleMenuClose();
     } catch (error) {
       console.error('Error deleting post:', error);
+      setError('Failed to delete post. Please try again.');
     }
   };
 
@@ -104,14 +111,17 @@ function MemeFeed() {
         throw new Error('Failed to create post');
       }
 
-      // Fetch updated posts from backend after posting
-      await fetchPosts();
+      // Reset page to 1 and fetch fresh posts
+      setPage(1);
+      setPosts([]);
+      await fetchPosts(1);
 
       setCaption('');
       setImage(null);
       setImagePreview(null);
     } catch (error) {
       console.error('Error posting:', error);
+      setError('Failed to create post. Please try again.');
     }
   };
 
@@ -134,33 +144,128 @@ function MemeFeed() {
         );
       }
 
-      await fetchPosts();
+      // Reset page to 1 and fetch fresh posts
+      setPage(1);
+      setPosts([]);
+      await fetchPosts(1);
     } catch (error) {
       console.error('Error updating post:', error);
+      setError('Failed to update post. Please try again.');
     }
   };
 
   // Fetch posts from API
-  const fetchPosts = async () => {
+  const fetchPosts = async (pageNumber) => {
+    setLoading(true);
+    setError(null);
     try {
-      const response = await getMemePosts();
-      console.log(response);
-      if (!response || !Array.isArray(response.posts))
-        throw new Error('Fetched posts is not an array!');
+      console.log(`Fetching posts for page ${pageNumber}...`);
+      const response = await getMemePosts(pageNumber);
 
-      setPosts(response.posts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+      // Log the entire response to see its structure
+      console.log('Full response:', response);
 
+      // Check if the response has the expected structure
+      if (!response) {
+        console.error('Empty API response');
+        throw new Error('Empty API response');
+      }
+
+      // Try to handle different response structures
+      let postsArray = [];
+
+      // Check for different possible response structures
+      if (Array.isArray(response)) {
+        // If the response itself is an array
+        postsArray = response;
+      } else if (response.posts && Array.isArray(response.posts)) {
+        // If response has a posts property that is an array
+        postsArray = response.posts;
+      } else if (response.data && Array.isArray(response.data)) {
+        // If response has a data property that is an array
+        postsArray = response.data;
+      } else if (response.data && response.data.posts && Array.isArray(response.data.posts)) {
+        // If response has a data.posts property that is an array
+        postsArray = response.data.posts;
+      } else {
+        // Log the response structure to help debug
+        console.error('Could not find posts array in response:', response);
+        throw new Error('Posts data is not in expected format');
+      }
+
+      console.log(`Found ${postsArray.length} posts in the response`);
+
+      // If it's the first page, replace posts, otherwise append
+      if (pageNumber === 1) {
+        console.log(`Setting ${postsArray.length} posts for page 1`);
+        setPosts(postsArray);
+      } else {
+        console.log(`Adding ${postsArray.length} posts for page ${pageNumber}`);
+        setPosts((prevPosts) => {
+          // Filter out any duplicates by ID
+          const existingIds = new Set(prevPosts.map((post) => post.id));
+          const newPosts = postsArray.filter((post) => !existingIds.has(post.id));
+
+          return [...prevPosts, ...newPosts];
+        });
+      }
+
+      // Set current user if available
       if (response.currentUser) {
         setCurrentUser(response.currentUser);
+      } else if (response.data && response.data.currentUser) {
+        setCurrentUser(response.data.currentUser);
       }
+
+      // Check if we've reached the last page - handle different pagination structures
+      let hasMorePages = true;
+
+      if (response.current_page && response.last_page) {
+        hasMorePages = response.current_page < response.last_page;
+      } else if (response.currentPage && response.lastPage) {
+        hasMorePages = response.currentPage < response.lastPage;
+      } else if (response.data && response.data.current_page && response.data.last_page) {
+        hasMorePages = response.data.current_page < response.data.last_page;
+      } else if (response.meta && response.meta.current_page && response.meta.last_page) {
+        hasMorePages = response.meta.current_page < response.meta.last_page;
+      } else if (postsArray.length === 0) {
+        // If we got an empty array, assume there are no more pages
+        hasMorePages = false;
+      }
+
+      setHasMore(hasMorePages);
+
+      // Log pagination info for debugging
+      console.log('Pagination info:', { hasMorePages });
     } catch (error) {
       console.error('Error fetching posts:', error);
+      setError('Failed to load posts. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchPosts();
+    fetchPosts(1);
   }, []);
+
+  const loadMorePosts = () => {
+    if (!loading && hasMore) {
+      const nextPage = page + 1;
+      console.log(`Loading page ${nextPage}...`);
+      setPage(nextPage);
+
+      // Fetch the next page directly instead of relying on the useEffect
+      fetchPosts(nextPage)
+        .then(() => {
+          console.log(`Successfully loaded page ${nextPage}`);
+        })
+        .catch((error) => {
+          console.error(`Failed to load page ${nextPage}:`, error);
+          setError('Failed to load more posts. Please try again.');
+        });
+    }
+  };
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -197,8 +302,6 @@ function MemeFeed() {
     { id: 2, name: 'FunnyGuy', points: 8230, rank: 2 },
     { id: 3, name: 'MemeLord', points: 6780, rank: 3 },
   ];
-
-  console.log(posts);
 
   return (
     <Box
@@ -453,26 +556,63 @@ function MemeFeed() {
           </CardContent>
         </Card>
 
-        {/* Meme Posts */}
+        {/* Error message */}
+        {error && (
+          <Box
+            sx={{
+              width: '100%',
+              maxWidth: '80%',
+              mb: 2,
+              p: 2,
+              bgcolor: 'error.light',
+              color: 'error.dark',
+              borderRadius: 1,
+            }}
+          >
+            <Typography>{error}</Typography>
+          </Box>
+        )}
+
+        {/* Meme Posts with InfiniteScroll */}
         <Box sx={{ width: '100%', maxWidth: '80%' }}>
-          {posts.map((post) => (
-            <MemePost
-              key={post.id}
-              id={post.id}
-              caption={post.caption}
-              image={post.image ? post.image.image_path : null}
-              timestamp={post.created_at}
-              user={post.user}
-              onDelete={handleDelete}
-              onUpdate={handleUpdatePost}
-              onMenuOpen={handleMenuOpen}
-              onMenuClose={handleMenuClose}
-              menuAnchor={anchorEl}
-              selectedPostId={selectedPostId}
-              isMenuOpen={open && selectedPostId === post.id}
-              darkMode={darkMode}
-            />
-          ))}
+          <InfiniteScroll
+            dataLength={posts.length}
+            next={loadMorePosts}
+            hasMore={hasMore}
+            loader={
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                <CircularProgress color="primary" />
+              </Box>
+            }
+            endMessage={
+              <Box sx={{ textAlign: 'center', my: 4 }}>
+                <Typography variant="body2" color="text.secondary">
+                  You've seen all the memes! 🎉
+                </Typography>
+              </Box>
+            }
+            scrollThreshold={0.9}
+            style={{ overflow: 'visible' }} // Prevent scrollbar on the component itself
+          >
+            {posts.map((post) => (
+              <MemePost
+                key={post.id}
+                id={post.id}
+                caption={post.caption}
+                image={post.image ? post.image.image_path : null}
+                timestamp={post.created_at}
+                user={post.user}
+                onDelete={handleDelete}
+                onUpdate={handleUpdatePost}
+                onMenuOpen={handleMenuOpen}
+                onMenuClose={handleMenuClose}
+                menuAnchor={anchorEl}
+                selectedPostId={selectedPostId}
+                isMenuOpen={open && selectedPostId === post.id}
+                darkMode={darkMode}
+              />
+            ))}
+          </InfiniteScroll>
         </Box>
       </Box>
 

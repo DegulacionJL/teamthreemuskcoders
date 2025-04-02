@@ -100,13 +100,13 @@ public function updatePostImage(UpdateImagePostRequest $request, Post $post): Js
 }
 
 
-    public function index() {
-        $posts = Post::with('user', 'image')->latest()->get();
-        
-        return response()->json([
-            'posts' => $posts,
-            'currentUser' => auth()->user(),
-        ]);
+public function index(PostRequest $request)
+    {
+        // Fetch the posts through the service
+        $data = $this->postService->getPosts($request->page());
+
+        // Return the response
+        return response()->json($data);
     }
 
     public function deletePost($id)

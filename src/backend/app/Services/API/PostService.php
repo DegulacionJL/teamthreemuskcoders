@@ -107,4 +107,21 @@ class PostService
 
     return $post->load('image');
 }
+
+public function getPosts($page = 1)
+    {
+        // Fetch posts with pagination, including related user and image data
+        $posts = Post::with('user', 'image')
+            ->latest()
+            ->paginate(10, ['*'], 'page', $page);
+
+        // Return data with pagination information
+        return [
+            'posts' => $posts->items(),
+            'currentPage' => $posts->currentPage(),
+            'lastPage' => $posts->lastPage(),
+            'total' => $posts->total(),
+            'currentUser' => auth()->user(),
+        ];
+    }
 }
