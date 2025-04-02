@@ -39,7 +39,7 @@ function MemePost({
   caption,
   image,
   timestamp,
-  user,
+  user, // This is the logged-in user's data passed as a prop
   onDelete,
   onUpdate,
   onMenuOpen,
@@ -119,6 +119,7 @@ function MemePost({
 
   const fetchComments = useCallback(
     async (page = 1, append = false) => {
+      if (!showComments) return; // Only fetch if comments section is visible
       setIsLoading(true);
       try {
         const response = await getComments(id, { page, per_page: 5, sort: 'asc' });
@@ -151,11 +152,12 @@ function MemePost({
         setIsLoading(false);
       }
     },
-    [id]
+    [id, showComments]
   );
 
   const fetchReplies = useCallback(
     async (commentId, page = 1, append = false) => {
+      if (!showComments) return; // Only fetch replies if comments section is visible
       setIsLoading(true);
       try {
         const response = await getComments(id, {
@@ -190,26 +192,15 @@ function MemePost({
         setIsLoading(false);
       }
     },
-    [id]
+    [id, showComments]
   );
 
+  // Only fetch comments when showComments becomes true for the first time
   useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        await fetchComments(1);
-      } catch (error) {
-        console.error('Error fetching initial data:', error);
-      }
-    };
-
-    fetchInitialData();
-  }, [id, fetchComments]);
-
-  useEffect(() => {
-    if (showComments) {
+    if (showComments && postComments.length === 0) {
       fetchComments(1);
     }
-  }, [showComments, fetchComments]);
+  }, [showComments, postComments.length, fetchComments]);
 
   useEffect(() => {
     setCurrentImage(image);
@@ -225,19 +216,37 @@ function MemePost({
         );
         const finalParentId = parentComment ? parentComment.id : parentId;
 
-        await addComment(id, text, image, finalParentId);
-        await fetchComments(1);
+        const newCommentResponse = await addComment(id, text, image, finalParentId);
+        // Ensure the new reply includes the current user's data
+        const newComment = {
+          ...newCommentResponse,
+          user: user, // Use the logged-in user's data from props
+          replies: [], // Initialize replies as empty
+        };
+
+        // Update local state with new reply
+        setPostComments((prevComments) =>
+          prevComments.map((comment) => {
+            if (comment.id === finalParentId) {
+              return {
+                ...comment,
+                replies: [...(comment.replies || []), newComment],
+              };
+            }
+            return comment;
+          })
+        );
         setReplyToComment(null);
         setReplyPage((prev) => ({ ...prev, [finalParentId]: 1 }));
         await fetchReplies(finalParentId, 1);
       } catch (error) {
         console.error('Error adding reply:', error);
-        await fetchComments(1);
+        await fetchComments(1); // Fallback: refetch all if something goes wrong
       } finally {
         setIsLoading(false);
       }
     },
-    [id, fetchComments, postComments, fetchReplies]
+    [id, fetchComments, postComments, fetchReplies, user] // Added user as a dependency
   );
 
   const handleAddComment = useCallback(
@@ -330,7 +339,6 @@ function MemePost({
     editingCommentId,
     fetchComments,
   ]);
-
   const handleCancelUpdateComment = useCallback(() => {
     setEditingCommentId(null);
     setEditingCommentText('');
