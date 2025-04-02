@@ -122,7 +122,7 @@ function MemePost({
       if (!showComments) return; // Only fetch if comments section is visible
       setIsLoading(true);
       try {
-        const response = await getComments(id, { page, per_page: 5, sort: 'asc' });
+        const response = await getComments(id, { page, per_page: 3, sort: 'asc' });
         const processedComments = response.data.map((comment) => ({
           ...comment,
           replies: [], // Initialize replies as empty, fetch separately
@@ -163,7 +163,7 @@ function MemePost({
         const response = await getComments(id, {
           parent_id: commentId,
           page,
-          per_page: 5,
+          per_page: 3,
           sort: 'asc',
         });
         const newReplies = response.data || [];

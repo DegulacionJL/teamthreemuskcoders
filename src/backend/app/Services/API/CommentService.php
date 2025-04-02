@@ -42,7 +42,7 @@ class CommentService
      * @param int $parentId
      * @return \Illuminate\Database\Eloquent\Collection
      */
-   public function getReplies($postId, $parentId, $perPage = 5, $page = 1)
+   public function getReplies($postId, $parentId, $perPage = 3, $page = 1)
     {
         $replies = Comment::where('post_id', $postId)
             ->where('parent_id', $parentId)
