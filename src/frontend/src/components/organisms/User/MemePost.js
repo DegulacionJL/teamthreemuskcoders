@@ -68,7 +68,6 @@ function MemePost({
   const [showComments, setShowComments] = useState(false);
   const [replyToComment, setReplyToComment] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalComments, setTotalComments] = useState(0);
   const [totalCommentsCount, setTotalCommentsCount] = useState(0);
   const [hasMore, setHasMore] = useState(false);
 
@@ -129,7 +128,6 @@ function MemePost({
           setPostComments(processedComments);
         }
 
-        setTotalComments(response.pagination.total);
         setTotalCommentsCount(response.pagination.total_with_replies);
         setHasMore(response.pagination.has_more);
         setCurrentPage(page);
@@ -352,13 +350,14 @@ function MemePost({
       sx={{
         mb: 3,
         borderRadius: 1,
-        overflow: 'hidden',
+        overflow: 'visible', // Changed from 'hidden' to 'visible' to allow emoji picker to overflow
         backgroundColor: theme.palette.background.paper,
         transition: 'background-color 0.3s, color 0.3s',
         maxWidth: '800px',
         width: '100%',
         mx: 'auto',
         position: 'relative',
+        zIndex: 1, // Ensure the card doesn't create a new stacking context that clips the picker
       }}
     >
       {isLoading && (
@@ -373,7 +372,7 @@ function MemePost({
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: 'rgba(255, 255, 255, 0.7)',
-            zIndex: 10,
+            zIndex: 100, // Keep loading spinner above card content but below emoji picker
           }}
         >
           <CircularProgress />

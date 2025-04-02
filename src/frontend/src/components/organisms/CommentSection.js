@@ -1,6 +1,11 @@
+// CommentSection.js
+import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
+import EmojiPicker from 'emoji-picker-react';
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
-import { Avatar, Box, Button, TextField } from '@mui/material';
+import React, { useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
+import { Avatar, Box, Button, IconButton, InputAdornment, TextField } from '@mui/material';
 import ImagePreview from '../atoms/ImagePreview';
 import ImageUploadButton from '../molecules/ImageUploadButton';
 import CommentsList from './CommentsList';
@@ -21,6 +26,20 @@ function CommentSection({
   const [newCommentText, setNewCommentText] = useState('');
   const [newCommentImage, setNewCommentImage] = useState(null);
   const [newCommentImagePreview, setNewCommentImagePreview] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const emojiButtonRef = useRef(null);
+  const user = useSelector((state) => state.profile.user);
+
+  const { refs, floatingStyles } = useFloating({
+    open: showEmojiPicker,
+    placement: 'bottom-end',
+    middleware: [offset(12), flip(), shift({ padding: 12 })], // Increased offset and padding
+    whileElementsMounted: autoUpdate,
+    elements: {
+      reference: emojiButtonRef.current,
+    },
+  });
 
   const handleAddComment = () => {
     if (!newCommentText.trim() && !newCommentImage) return;
@@ -38,11 +57,33 @@ function CommentSection({
     }
   };
 
+  const handleEmojiClick = (emojiObject) => {
+    setNewCommentText((prevText) => prevText + emojiObject.emoji);
+  };
+
   return (
-    <Box sx={{ mt: 2, px: 2 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <Avatar sx={{ mr: 1 }}>U</Avatar>
-        <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ mt: 2, px: 2, position: 'relative', zIndex: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          gap: 2,
+          mb: 2,
+        }}
+      >
+        <Avatar
+          src={user?.avatar || ''}
+          alt={`${user?.first_name} ${user?.last_name}`}
+          sx={{
+            bgcolor: user?.avatar ? 'transparent' : '#4a3b6b',
+            width: 40,
+            height: 40,
+          }}
+        >
+          {user ? `${user.first_name?.charAt(0) || ''}${user.last_name?.charAt(0) || ''}` : 'U'}
+        </Avatar>
+        <Box sx={{ flexGrow: 1, position: 'relative' }}>
           <TextField
             fullWidth
             variant="outlined"
@@ -50,7 +91,39 @@ function CommentSection({
             value={newCommentText}
             onChange={(e) => setNewCommentText(e.target.value)}
             sx={{ mb: 1 }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    ref={emojiButtonRef}
+                    onClick={() => setShowEmojiPicker((prev) => !prev)}
+                    edge="end"
+                  >
+                    <EmojiEmotionsIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
+          {showEmojiPicker && (
+            <Box
+              ref={refs.setFloating}
+              style={{
+                ...floatingStyles,
+                zIndex: 1500, // Higher z-index to ensure it stays above all other elements
+                position: 'absolute',
+              }}
+              sx={{
+                '& .emoji-picker-react': {
+                  boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
+                  borderRadius: 8,
+                  overflow: 'visible', // Prevent clipping
+                },
+              }}
+            >
+              <EmojiPicker onEmojiClick={handleEmojiClick} />
+            </Box>
+          )}
           {newCommentImagePreview && (
             <ImagePreview
               src={newCommentImagePreview}
@@ -74,7 +147,6 @@ function CommentSection({
           </Box>
         </Box>
       </Box>
-
       <CommentsList
         comments={comments}
         replyToComment={replyToComment}
