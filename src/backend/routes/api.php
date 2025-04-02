@@ -45,12 +45,11 @@ Route::prefix('posts')
         Route::post('/{post}/image', [PostController::class, 'updatePostImage'])->middleware('auth:api');
     });
 
-Route::prefix('likes')
-->group(function(){
-    Route::post('/{post}', [ PostController::class, 'likePost'])->middleware('auth:api');
-    Route::post('/{post}/unlike', [PostController::class, 'unlikePost'])->middleware('auth:api');
-    Route::get('/{post}/likes', [PostController::class, 'getLikes'])->middleware('auth:api');
-});
+    Route::prefix('likes')->group(function() {
+        Route::post('/{post}', [PostController::class, 'likePost'])->middleware('auth:api');
+        Route::post('/{post}/unlike', [PostController::class, 'unlikePost'])->middleware('auth:api');
+        Route::get('/{post}/likes', [PostController::class, 'getLikes'])->middleware('auth:api');
+    });
     
     
 // user logout

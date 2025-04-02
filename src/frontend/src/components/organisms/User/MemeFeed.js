@@ -162,47 +162,36 @@ function MemeFeed() {
       console.log(`Fetching posts for page ${pageNumber}...`);
       const response = await getMemePosts(pageNumber);
 
-      // Log the entire response to see its structure
       console.log('Full response:', response);
 
-      // Check if the response has the expected structure
       if (!response) {
         console.error('Empty API response');
         throw new Error('Empty API response');
       }
 
-      // Try to handle different response structures
       let postsArray = [];
 
-      // Check for different possible response structures
       if (Array.isArray(response)) {
-        // If the response itself is an array
         postsArray = response;
       } else if (response.posts && Array.isArray(response.posts)) {
-        // If response has a posts property that is an array
         postsArray = response.posts;
       } else if (response.data && Array.isArray(response.data)) {
-        // If response has a data property that is an array
         postsArray = response.data;
       } else if (response.data && response.data.posts && Array.isArray(response.data.posts)) {
-        // If response has a data.posts property that is an array
         postsArray = response.data.posts;
       } else {
-        // Log the response structure to help debug
         console.error('Could not find posts array in response:', response);
         throw new Error('Posts data is not in expected format');
       }
 
       console.log(`Found ${postsArray.length} posts in the response`);
 
-      // If it's the first page, replace posts, otherwise append
       if (pageNumber === 1) {
         console.log(`Setting ${postsArray.length} posts for page 1`);
         setPosts(postsArray);
       } else {
         console.log(`Adding ${postsArray.length} posts for page ${pageNumber}`);
         setPosts((prevPosts) => {
-          // Filter out any duplicates by ID
           const existingIds = new Set(prevPosts.map((post) => post.id));
           const newPosts = postsArray.filter((post) => !existingIds.has(post.id));
 
@@ -210,14 +199,12 @@ function MemeFeed() {
         });
       }
 
-      // Set current user if available
       if (response.currentUser) {
         setCurrentUser(response.currentUser);
       } else if (response.data && response.data.currentUser) {
         setCurrentUser(response.data.currentUser);
       }
 
-      // Check if we've reached the last page - handle different pagination structures
       let hasMorePages = true;
 
       if (response.current_page && response.last_page) {
@@ -229,13 +216,11 @@ function MemeFeed() {
       } else if (response.meta && response.meta.current_page && response.meta.last_page) {
         hasMorePages = response.meta.current_page < response.meta.last_page;
       } else if (postsArray.length === 0) {
-        // If we got an empty array, assume there are no more pages
         hasMorePages = false;
       }
 
       setHasMore(hasMorePages);
 
-      // Log pagination info for debugging
       console.log('Pagination info:', { hasMorePages });
     } catch (error) {
       console.error('Error fetching posts:', error);
@@ -255,7 +240,6 @@ function MemeFeed() {
       console.log(`Loading page ${nextPage}...`);
       setPage(nextPage);
 
-      // Fetch the next page directly instead of relying on the useEffect
       fetchPosts(nextPage)
         .then(() => {
           console.log(`Successfully loaded page ${nextPage}`);
@@ -457,15 +441,21 @@ function MemeFeed() {
                     alt={`${currentUser?.first_name} ${currentUser?.last_name}`}
                   >
                     {currentUser
-                      ? `${currentUser.first_name?.charAt(0) || ''}${
-                          currentUser.last_name?.charAt(0) || ''
+                      ? `${currentUser.first_name?.charAt(0).toUpperCase() || ''}${
+                          currentUser.last_name?.charAt(0).toUpperCase() || ''
                         }`
                       : 'JD'}
                   </Avatar>
                   <Typography variant="h6">
                     {currentUser
-                      ? `${currentUser.first_name} ${currentUser.last_name}`
-                      : 'john degz'}
+                      ? `${
+                          currentUser.first_name?.charAt(0).toUpperCase() +
+                          currentUser.first_name?.slice(1)
+                        } ${
+                          currentUser.last_name?.charAt(0).toUpperCase() +
+                          currentUser.last_name?.slice(1)
+                        }`
+                      : 'John Degz'}
                   </Typography>
                 </Box>
 

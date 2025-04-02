@@ -54,8 +54,48 @@ const deletePost = async function (post) {
   return await req;
 };
 
-// const likePost = async function (post) {
-//   const req = api.post(`/likes/${post}`).then;
-// };
+const likePost = async function (postId) {
+  const req = api
+    .post(`/likes/${postId}`)
+    .then(({ data }) => {
+      console.log('Like Response:', data);
+      return data;
+    })
+    .catch((error) => {
+      console.error('Error liking post:', error);
+      throw error;
+    });
 
-export { createMemePost, getMemePosts, updatePost, deletePost, updateImage };
+  return await req;
+};
+
+const unlikePost = async function (postId) {
+  const req = api
+    .post(`/likes/${postId}/unlike`)
+    .then(({ data }) => {
+      console.log('Unlike Response:', data);
+      return data;
+    })
+    .catch((error) => {
+      console.error('Error unliking post:', error);
+      throw error;
+    });
+
+  return await req;
+};
+
+const getLikes = async function (postId) {
+  const response = await api.get(`/likes/${postId}/likes`);
+  return response.data;
+};
+
+export {
+  createMemePost,
+  getMemePosts,
+  updatePost,
+  deletePost,
+  updateImage,
+  likePost,
+  unlikePost,
+  getLikes,
+};

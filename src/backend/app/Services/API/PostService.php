@@ -49,16 +49,6 @@ class PostService
             throw new Exception("Error creating post: " . $e->getMessage());
         }
     }
-    public function likePost(int $post_id, int $user_id)
-    {
-        // Create the like
-        $like = Like::create([
-            'post_id' => $post_id,
-            'user_id' => $user_id,
-        ]);
-
-        return $like;
-    }
 
     public function updatePost(Post $post, $caption)
     {
@@ -124,4 +114,52 @@ public function getPosts($page = 1)
             'currentUser' => auth()->user(),
         ];
     }
+
+    public function likePost($user, $postId)
+    {
+        $post = Post::findOrFail($postId);
+
+        $existingLike = Like::where('user_id', $user->id)->where('post_id', $post->id)->first();
+
+        if($existingLike){
+            return['message'=> 'You already liked this post.'];
+        }
+
+        $like = new Like();
+        $like->user_id = $user->id;
+        $like->post_id = $post->id;
+        $like->save();
+
+        return ['message' => 'post Liked Successfully.'];
+    }
+
+    public function unlikePost($user, $postId)
+    {
+        $post = Post::findOrFail($postId);
+
+        $like = like::where('user_id', $user->id)->where('post_id', $post->id)->first();
+
+        if (!$like) {
+            return ['message' => 'You have not liked this post yet.'];
+        }
+
+        $like->delete();
+
+        return['message' => 'Post unliked successfully.'];
+
+    }
+
+    public function getLikes($postId)
+{
+    $post = Post::findOrFail($postId);
+
+    $likeCount = $post->likes()->count();
+    
+    $likes = $post->likes()->with('user')->get();
+
+    return response()->json([
+        'likes' => $likes,
+        'like_count' => $likeCount
+    ]);
+}
 }

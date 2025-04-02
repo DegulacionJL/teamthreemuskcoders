@@ -15,6 +15,8 @@ use App\Http\Requests\UpdateImagePostRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+
 
 
 
@@ -131,6 +133,28 @@ public function index(PostRequest $request)
         $post->delete();
     
         return response()->json(['message' => 'Post and image deleted successfully']);
+    }
+
+    public function likePost(Request $request, $postId)
+    {
+        $user = Auth::user();
+        $response = $this->postService->likePost($user, $postId);
+
+        return response()->json($response);
+
+    }
+
+    public function unlikePost(Request $request, $postId)
+    {
+        $user = Auth::user();
+        $response = $this->postService->unlikePost($user, $postId);
+
+        return response()->json($response);
+    }
+
+    public function getLikes(Request $request, $postId)
+    {
+        return $this->postService->getLikes($postId);
     }
 
 
