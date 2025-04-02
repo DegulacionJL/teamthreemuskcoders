@@ -19,8 +19,27 @@ const CommentItem = ({
   editingCommentText,
   onEditingTextChange,
   maxDepth = Infinity,
+  onLoadMoreReplies,
+  onBackReplies,
+  replyHasMore = {},
+  replyPage = {},
 }) => {
-  const isMaxDepthReached = false;
+  const isMaxDepthReached = depth >= maxDepth;
+
+  const handleLoadMore = () => {
+    if (onLoadMoreReplies) onLoadMoreReplies(comment.id);
+  };
+
+  const handleBack = () => {
+    if (onBackReplies) {
+      const currentPage = replyPage[comment.id] || 1;
+      if (currentPage > 1) onBackReplies(comment.id);
+    }
+  };
+
+  // Ensure replyHasMore and replyPage have default values for this comment
+  const hasMoreReplies = !!replyHasMore[comment.id]; // Convert to boolean
+  const currentReplyPage = replyPage[comment.id] || 1;
 
   return (
     <Box
@@ -108,8 +127,26 @@ const CommentItem = ({
                 editingCommentText={editingCommentText}
                 onEditingTextChange={onEditingTextChange}
                 maxDepth={maxDepth}
+                onLoadMoreReplies={onLoadMoreReplies}
+                onBackReplies={onBackReplies}
+                replyHasMore={replyHasMore}
+                replyPage={replyPage}
               />
             ))}
+            {(hasMoreReplies || currentReplyPage > 1) && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mt: 1 }}>
+                {currentReplyPage > 1 && onBackReplies && (
+                  <Button onClick={handleBack} disabled={false}>
+                    Back
+                  </Button>
+                )}
+                {hasMoreReplies && onLoadMoreReplies && (
+                  <Button onClick={handleLoadMore} disabled={false}>
+                    Load More
+                  </Button>
+                )}
+              </Box>
+            )}
           </Box>
         )}
       </Box>
@@ -134,6 +171,10 @@ CommentItem.propTypes = {
   editingCommentText: PropTypes.string,
   onEditingTextChange: PropTypes.func.isRequired,
   maxDepth: PropTypes.number,
+  onLoadMoreReplies: PropTypes.func,
+  onBackReplies: PropTypes.func,
+  replyHasMore: PropTypes.object,
+  replyPage: PropTypes.object,
 };
 
 export default CommentItem;

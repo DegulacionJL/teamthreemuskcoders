@@ -1,4 +1,3 @@
-// CommentSection.js
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
 import EmojiPicker from 'emoji-picker-react';
 import PropTypes from 'prop-types';
@@ -22,6 +21,10 @@ function CommentSection({
   editingCommentId,
   editingCommentText,
   onEditingTextChange,
+  onLoadMoreReplies,
+  onBackReplies,
+  replyHasMore,
+  replyPage,
 }) {
   const [newCommentText, setNewCommentText] = useState('');
   const [newCommentImage, setNewCommentImage] = useState(null);
@@ -34,7 +37,7 @@ function CommentSection({
   const { refs, floatingStyles } = useFloating({
     open: showEmojiPicker,
     placement: 'bottom-end',
-    middleware: [offset(12), flip(), shift({ padding: 12 })], // Increased offset and padding
+    middleware: [offset(12), flip(), shift({ padding: 12 })],
     whileElementsMounted: autoUpdate,
     elements: {
       reference: emojiButtonRef.current,
@@ -110,14 +113,14 @@ function CommentSection({
               ref={refs.setFloating}
               style={{
                 ...floatingStyles,
-                zIndex: 1500, // Higher z-index to ensure it stays above all other elements
+                zIndex: 1500,
                 position: 'absolute',
               }}
               sx={{
                 '& .emoji-picker-react': {
                   boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
                   borderRadius: 8,
-                  overflow: 'visible', // Prevent clipping
+                  overflow: 'visible',
                 },
               }}
             >
@@ -138,7 +141,7 @@ function CommentSection({
             <ImageUploadButton
               onChange={handleImageUpload}
               id="new-comment-image"
-              buttonVariant="text"
+              buttonVariant="button" // Changed from "text" to "button"
               buttonText="Add Image"
             />
             <Button variant="contained" onClick={handleAddComment}>
@@ -158,6 +161,10 @@ function CommentSection({
         editingCommentId={editingCommentId}
         editingCommentText={editingCommentText}
         onEditingTextChange={onEditingTextChange}
+        onLoadMoreReplies={onLoadMoreReplies}
+        onBackReplies={onBackReplies}
+        replyHasMore={replyHasMore}
+        replyPage={replyPage}
       />
     </Box>
   );
@@ -175,6 +182,10 @@ CommentSection.propTypes = {
   editingCommentId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   editingCommentText: PropTypes.string,
   onEditingTextChange: PropTypes.func.isRequired,
+  onLoadMoreReplies: PropTypes.func.isRequired,
+  onBackReplies: PropTypes.func.isRequired,
+  replyHasMore: PropTypes.object.isRequired,
+  replyPage: PropTypes.object.isRequired,
 };
 
 export default CommentSection;
