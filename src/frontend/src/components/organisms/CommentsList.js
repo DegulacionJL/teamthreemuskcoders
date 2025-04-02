@@ -14,6 +14,10 @@ const CommentsList = ({
   editingCommentId,
   editingCommentText,
   onEditingTextChange,
+  onLoadMoreReplies,
+  onBackReplies,
+  replyHasMore = {}, // Default empty object
+  replyPage = {}, // Default empty object
 }) => {
   return (
     <Box sx={{ mt: 2, ml: 2 }}>
@@ -31,6 +35,10 @@ const CommentsList = ({
             editingCommentId={editingCommentId}
             editingCommentText={editingCommentText}
             onEditingTextChange={onEditingTextChange}
+            onLoadMoreReplies={onLoadMoreReplies}
+            onBackReplies={onBackReplies}
+            replyHasMore={replyHasMore}
+            replyPage={replyPage}
           />
         ))
       ) : (
@@ -53,6 +61,10 @@ CommentsList.propTypes = {
   editingCommentId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   editingCommentText: PropTypes.string,
   onEditingTextChange: PropTypes.func.isRequired,
+  onLoadMoreReplies: PropTypes.func,
+  onBackReplies: PropTypes.func,
+  replyHasMore: PropTypes.object, // Made optional
+  replyPage: PropTypes.object, // Made optional
 };
 
 export default CommentsList;
