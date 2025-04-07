@@ -60,7 +60,7 @@ function TableHead(props) {
                 letterSpacing: 0.5,
               })}
             >
-              <AdminPanelSettingsIcon sx={{ verticalAlign: 'middle', color: '#b2102f' }} />
+              <AdminPanelSettingsIcon sx={{ verticalAlign: 'middle', color: '#512DA8' }} />
               {t('labels.action')}
             </Typography>
           </TableCell>

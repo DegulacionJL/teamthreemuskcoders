@@ -1,8 +1,9 @@
 import React from 'react';
+import { CheckCircle, Delete, Visibility } from '@mui/icons-material';
 import {
   Box,
-  Button,
   Container,
+  IconButton,
   Paper,
   Tab,
   Table,
@@ -12,12 +13,11 @@ import {
   TableHead,
   TableRow,
   Tabs,
+  Tooltip,
   Typography,
 } from '@mui/material';
 
 const ReportManagement = () => {
-  console.log('ReportManagement rendered'); // Check if component renders
-
   const [activeTab, setActiveTab] = React.useState(0);
 
   const handleTabChange = (event, newValue) => {
@@ -25,10 +25,120 @@ const ReportManagement = () => {
   };
 
   const reports = [
-    { id: 1, reportedBy: 'User123', date: '2025-04-01', status: 'Pending' },
-    { id: 2, reportedBy: 'User456', date: '2025-04-02', status: 'Resolved' },
-    { id: 3, reportedBy: 'User789', date: '2025-04-03', status: 'Pending' },
+    {
+      id: 1,
+      type: 'Meme',
+      reportedBy: 'User123',
+      reason: 'Offensive Content',
+      date: '2025-04-01',
+      status: 'Pending',
+    },
+    {
+      id: 2,
+      type: 'Meme',
+      reportedBy: 'User456',
+      reason: 'Spam',
+      date: '2025-04-02',
+      status: 'Resolved',
+    },
+    {
+      id: 3,
+      type: 'Meme',
+      reportedBy: 'User789',
+      reason: 'Copyright Violation',
+      date: '2025-04-03',
+      status: 'Pending',
+    },
+    {
+      id: 4,
+      type: 'Meme',
+      reportedBy: 'User321',
+      reason: 'Misinformation',
+      date: '2025-04-04',
+      status: 'Pending',
+    },
+    {
+      id: 5,
+      type: 'Meme',
+      reportedBy: 'User654',
+      reason: 'Hate Speech',
+      date: '2025-04-05',
+      status: 'Resolved',
+    },
+    {
+      id: 6,
+      type: 'Comment',
+      reportedBy: 'User111',
+      reason: 'Harassment',
+      date: '2025-04-06',
+      status: 'Pending',
+    },
+    {
+      id: 7,
+      type: 'Comment',
+      reportedBy: 'User222',
+      reason: 'Offensive Language',
+      date: '2025-04-07',
+      status: 'Resolved',
+    },
+    {
+      id: 8,
+      type: 'Comment',
+      reportedBy: 'User333',
+      reason: 'Threats',
+      date: '2025-04-08',
+      status: 'Pending',
+    },
+    {
+      id: 9,
+      type: 'Comment',
+      reportedBy: 'User444',
+      reason: 'Spam',
+      date: '2025-04-09',
+      status: 'Resolved',
+    },
+    {
+      id: 10,
+      type: 'User',
+      reportedBy: 'User555',
+      reason: 'Impersonation',
+      date: '2025-04-10',
+      status: 'Pending',
+    },
+    {
+      id: 11,
+      type: 'User',
+      reportedBy: 'User666',
+      reason: 'Harassment',
+      date: '2025-04-11',
+      status: 'Resolved',
+    },
+    {
+      id: 12,
+      type: 'User',
+      reportedBy: 'User777',
+      reason: 'Fake Account',
+      date: '2025-04-12',
+      status: 'Pending',
+    },
+    {
+      id: 13,
+      type: 'User',
+      reportedBy: 'User888',
+      reason: 'Hate Speech',
+      date: '2025-04-13',
+      status: 'Resolved',
+    },
   ];
+
+  const filteredReports = reports
+    .filter((report) => {
+      if (activeTab === 0) return report.type === 'Meme';
+      if (activeTab === 1) return report.type === 'Comment';
+      if (activeTab === 2) return report.type === 'User';
+      return false;
+    })
+    .map((report, index) => ({ ...report, id: index + 1 }));
 
   return (
     <Container
@@ -42,7 +152,6 @@ const ReportManagement = () => {
         of the reported content.
       </Typography>
 
-      {/* Tabs for switching between Report Types */}
       <Box sx={{ width: '100%', marginBottom: '20px' }}>
         <Tabs value={activeTab} onChange={handleTabChange} centered>
           <Tab label="Reported Memes" />
@@ -51,35 +160,62 @@ const ReportManagement = () => {
         </Tabs>
       </Box>
 
-      {/* Table to display reported items */}
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{ boxShadow: 3, borderRadius: '8px' }}>
         <Table>
-          <TableHead>
+          <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
             <TableRow>
-              <TableCell>Report ID</TableCell>
-              <TableCell>Reported By</TableCell>
-              <TableCell>Date</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Action</TableCell>
+              <TableCell align="center">Report ID</TableCell>
+              <TableCell align="center">Reported By</TableCell>
+              <TableCell align="center">Reason</TableCell>
+              <TableCell align="center">Date</TableCell>
+              <TableCell align="center">Status</TableCell>
+              <TableCell align="center">Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {reports.map((report) => (
-              <TableRow key={report.id}>
-                <TableCell>{report.id}</TableCell>
-                <TableCell>{report.reportedBy}</TableCell>
-                <TableCell>{report.date}</TableCell>
-                <TableCell>{report.status}</TableCell>
-                <TableCell>
-                  <Button variant="outlined" color="primary" sx={{ marginRight: '10px' }}>
-                    Resolve
-                  </Button>
-                  <Button variant="outlined" color="error">
-                    Delete
-                  </Button>
+            {filteredReports.length > 0 ? (
+              filteredReports.map((report) => (
+                <TableRow key={report.id} hover>
+                  <TableCell align="center">{report.id}</TableCell>
+                  <TableCell align="center">{report.reportedBy}</TableCell>
+                  <TableCell align="center">{report.reason}</TableCell>
+                  <TableCell align="center">{report.date}</TableCell>
+                  <TableCell align="center">
+                    <Typography
+                      sx={{
+                        color: report.status === 'Pending' ? 'orange' : 'green',
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {report.status}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Tooltip title="View Report">
+                      <IconButton color="primary">
+                        <Visibility />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Resolve Report">
+                      <IconButton color="success">
+                        <CheckCircle />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete Report">
+                      <IconButton color="error">
+                        <Delete />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell align="center" colSpan={6}>
+                  No reports found.
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </TableContainer>

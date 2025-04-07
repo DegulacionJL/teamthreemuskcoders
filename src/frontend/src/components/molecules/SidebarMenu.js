@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import CampaignIcon from '@mui/icons-material/Campaign';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import HistoryIcon from '@mui/icons-material/History';
 import LayersIcon from '@mui/icons-material/Layers';
 import PeopleIcon from '@mui/icons-material/People';
 import ReportIcon from '@mui/icons-material/Report';
@@ -38,11 +38,11 @@ const SidebarMenu = () => {
         <ListItemText primary="Report Management" />
       </ListItemButton>
 
-      <ListItemButton component={Link} to="/admin/broadcast">
+      <ListItemButton component={Link} to="/admin/activity_feed">
         <ListItemIcon>
-          <CampaignIcon />
+          <HistoryIcon />
         </ListItemIcon>
-        <ListItemText primary="Broadcast" />
+        <ListItemText primary="Activity Feed" />
       </ListItemButton>
 
       <ListItemButton component={Link} to="/admin/integrations">

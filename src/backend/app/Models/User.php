@@ -79,6 +79,7 @@ class User extends Authenticatable
         return $this->hasMany(ActivationToken::class);
     }
 
+
     /**
      * Retrieves the Status of the User
      *

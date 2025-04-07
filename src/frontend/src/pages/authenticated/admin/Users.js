@@ -48,7 +48,7 @@ function Users() {
       id: 'first_name',
       label: (
         <>
-          <Person sx={{ verticalAlign: 'middle', color: '#1976D2' }} /> {t('First Name')}
+          <Person sx={{ verticalAlign: 'middle', color: '#512DA8' }} /> {t('First Name')}
         </>
       ),
     },
@@ -56,7 +56,7 @@ function Users() {
       id: 'last_name',
       label: (
         <>
-          <Person sx={{ verticalAlign: 'middle', color: '#D32F2F' }} /> {t('Last Name')}
+          <Person sx={{ verticalAlign: 'middle', color: '#512DA8' }} /> {t('Last Name')}
         </>
       ),
     },
@@ -64,7 +64,7 @@ function Users() {
       id: 'email',
       label: (
         <>
-          <Email sx={{ verticalAlign: 'middle', color: '#388E3C' }} /> {t('Email Address')}
+          <Email sx={{ verticalAlign: 'middle', color: '#512DA8' }} /> {t('Email Address')}
         </>
       ),
     },
@@ -72,7 +72,7 @@ function Users() {
       id: 'role',
       label: (
         <>
-          <Work sx={{ verticalAlign: 'middle', color: '#FBC02D' }} /> {t('Role')}
+          <Work sx={{ verticalAlign: 'middle', color: '#512DA8' }} /> {t('Role')}
         </>
       ),
     },

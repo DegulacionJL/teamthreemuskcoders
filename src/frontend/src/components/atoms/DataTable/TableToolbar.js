@@ -83,7 +83,7 @@ function TableToolbar(props) {
         onClick={() => handleAdd()}
         startIcon={<AddIcon sx={{ fontSize: 22 }} />}
         sx={{
-          backgroundColor: '#1e88e5', // Blue primary color
+          backgroundColor: '#512DA8', // biyolet
           color: 'white',
           fontSize: '14px',
           fontWeight: 500,
