@@ -8,6 +8,7 @@ use App\Models\Comment;
 use App\Models\Image;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Exception;
 
 class PostService
@@ -100,18 +101,58 @@ class PostService
 
 public function getPosts($page = 1)
     {
+        $currentUser = Auth::user();
+        
         // Fetch posts with pagination, including related user and image data
         $posts = Post::with('user', 'image')
             ->latest()
             ->paginate(10, ['*'], 'page', $page);
-
+        
+        // Get the post IDs for efficient querying
+        $postIds = [];
+        foreach ($posts->items() as $post) {
+            $postIds[] = $post->id;
+        }
+        
+        // If user is logged in, get their likes for these posts in a single query
+        $userLikes = [];
+        if ($currentUser) {
+            $userLikesQuery = Like::where('user_id', $currentUser->id)
+                ->whereIn('post_id', $postIds)
+                ->get();
+                
+            foreach ($userLikesQuery as $like) {
+                $userLikes[] = $like->post_id;
+            }
+        }
+        
+        // Get like counts for all posts in a single query (more efficient)
+        $likeCounts = [];
+        $likeCountsQuery = Like::whereIn('post_id', $postIds)
+            ->selectRaw('post_id, count(*) as count')
+            ->groupBy('post_id')
+            ->get();
+            
+        foreach ($likeCountsQuery as $count) {
+            $likeCounts[$count->post_id] = $count->count;
+        }
+        
+        // Add reaction data to each post
+        $postsWithReactions = $posts->items();
+        foreach ($postsWithReactions as $post) {
+            $post->reaction_data = [
+                'has_liked' => in_array($post->id, $userLikes),
+                'like_count' => isset($likeCounts[$post->id]) ? $likeCounts[$post->id] : 0
+            ];
+        }
+        
         // Return data with pagination information
         return [
-            'posts' => $posts->items(),
+            'posts' => $postsWithReactions,
             'currentPage' => $posts->currentPage(),
             'lastPage' => $posts->lastPage(),
             'total' => $posts->total(),
-            'currentUser' => auth()->user(),
+            'currentUser' => $currentUser,
         ];
     }
 
@@ -121,8 +162,15 @@ public function getPosts($page = 1)
 
         $existingLike = Like::where('user_id', $user->id)->where('post_id', $post->id)->first();
 
-        if($existingLike){
-            return['message'=> 'You already liked this post.'];
+        if ($existingLike) {
+            // Return the current like count even if already liked
+            $likeCount = $post->likes()->count();
+            
+            return [
+                'message' => 'You already liked this post.',
+                'like_count' => $likeCount,
+                'liked' => true
+            ];
         }
 
         $like = new Like();
@@ -130,36 +178,87 @@ public function getPosts($page = 1)
         $like->post_id = $post->id;
         $like->save();
 
-        return ['message' => 'post Liked Successfully.'];
+        $likeCount = $post->likes()->count();
+
+        return [
+            'message' => 'Post liked successfully',
+            'like_count' => $likeCount,
+            'liked' => true
+        ];
     }
 
     public function unlikePost($user, $postId)
     {
         $post = Post::findOrFail($postId);
 
-        $like = like::where('user_id', $user->id)->where('post_id', $post->id)->first();
+        $like = Like::where('user_id', $user->id)->where('post_id', $post->id)->first();
 
-        if (!$like) {
-            return ['message' => 'You have not liked this post yet.'];
+        if (!$like){
+            $likeCount = $post->likes()->count();
+
+            return[
+                'message' => 'You have not liked this post yet.',
+                'like_count' => $likeCount,
+                'liked' => false
+            ];
         }
 
         $like->delete();
 
-        return['message' => 'Post unliked successfully.'];
+        $likeCount = $post->likes()->count();
+
+        return [
+            'message' => 'Post unliked successfully.',
+            'like_count' => $likeCount,
+            'liked'=>false
+        ];
 
     }
 
     public function getLikes($postId)
-{
-    $post = Post::findOrFail($postId);
+    {
+        try {
+            $post = Post::findOrFail($postId);
+            $currentUser = Auth::user();
 
-    $likeCount = $post->likes()->count();
-    
-    $likes = $post->likes()->with('user')->get();
+            $likes = $post->likes()->with('user')->get();
+            $likeCount = $post->likes()->count();
 
-    return response()->json([
-        'likes' => $likes,
-        'like_count' => $likeCount
-    ]);
-}
+            // Initialize $userReaction as null
+            $userReaction = null;
+            $userHasLiked = false;
+
+            // Check if the user has liked the post
+            if ($currentUser) {
+                $userLike = $likes->where('user_id', $currentUser->id)->first();
+                if ($userLike) {
+                    $userReaction = [
+                        'id' => $userLike->id,
+                        'created_at' => $userLike->created_at,
+                        'user_id' => $currentUser->id
+                    ];
+                    $userHasLiked = true;
+                }
+            }
+
+            return [
+                'likes' => $likes,
+                'like_count' => $likeCount,
+                'user_has_liked' => $userHasLiked,
+                'user_reaction' => $userReaction
+            ];
+        } catch (\Exception $e) {
+            // Log the error
+            Log::error('Error in getLikes: ' . $e->getMessage());
+            
+            // Return a basic response to prevent frontend errors
+            return [
+                'likes' => [],
+                'like_count' => 0,
+                'user_has_liked' => false,
+                'user_reaction' => null,
+                'error' => 'Failed to fetch likes'
+            ];
+        }
+    }
 }

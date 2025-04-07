@@ -42,8 +42,8 @@ MenuLinks.propTypes = {
   items: PropTypes.array.isRequired,
 };
 
-MenuLinks.defaultProps = {
-  items: [],
-};
+// MenuLinks.defaultProps = {
+//   items: [],
+// };
 
 export default MenuLinks;

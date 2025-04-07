@@ -1,5 +1,3 @@
-'use client';
-
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { addComment, deleteComment, getComments, updateComment } from 'services/comment.service';
@@ -32,6 +30,7 @@ import ImageUploadButton from '../../molecules/ImageUploadButton';
 import CommentSection from '../CommentSection';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import EditPostModal from '../EditPostModal';
+import ReportPostConfirmationModal from '../ReportPostModal';
 import PostReactions from './PostReaction';
 
 function MemePost({
@@ -41,6 +40,7 @@ function MemePost({
   timestamp,
   user, // This is the logged-in user's data passed as a prop
   onDelete,
+  onReportPost,
   onUpdate,
   onMenuOpen,
   onMenuClose,
@@ -58,6 +58,7 @@ function MemePost({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState(null);
   const [isPostDeleteModalOpen, setIsPostDeleteModalOpen] = useState(false);
+  const [isReportPostModalOpen, setIsReportPostModalOpen] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentText, setEditingCommentText] = useState('');
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
@@ -72,10 +73,28 @@ function MemePost({
   const [totalCommentsCount, setTotalCommentsCount] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [replyHasMore, setReplyHasMore] = useState({});
-  const [likeCount, setLikeCount] = useState(0);
+  // eslint-disable-next-line no-unused-vars
   const [reactionType, setReactionType] = useState(null);
+  const [likeCount, setLikeCount] = useState(0);
 
   const isDarkMode = darkMode !== undefined ? darkMode : contextDarkMode;
+
+  // Load saved reaction state from localStorage on component mount
+  useEffect(() => {
+    const savedReaction = localStorage.getItem(`post_reaction_${id}`);
+    const savedLikeCount = localStorage.getItem(`post_like_count_${id}`);
+
+    if (savedReaction) {
+      setReactionType(savedReaction);
+    }
+
+    if (savedLikeCount) {
+      setLikeCount(Number.parseInt(savedLikeCount, 10));
+    } else {
+      // If no saved count, use default or fetch from API
+      setLikeCount(5); // Default value or you could fetch from API
+    }
+  }, [id]);
 
   const handleSave = useCallback(
     async (newCaption, newImage, removeImage = false) => {
@@ -108,6 +127,18 @@ function MemePost({
       setIsPostDeleteModalOpen(false);
     }
   }, [id, onDelete]);
+
+  const handleConfirmReportPost = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await onReportPost(id);
+    } catch (error) {
+      console.error('Error reporting this post: ', error);
+    } finally {
+      setIsLoading(false);
+      setIsReportPostModalOpen(false);
+    }
+  }, [id, onReportPost]);
 
   const fetchComments = useCallback(
     async (page = 1, append = false) => {
@@ -361,15 +392,26 @@ function MemePost({
     [fetchReplies, replyPage]
   );
 
-  const handleReactionChange = useCallback((postId, hasReacted, reactionType, count) => {
+  const handleReactionChange = useCallback((postId, hasReacted, newReactionType, count) => {
     console.log(
       `Post ${postId} reaction changed: ${hasReacted ? 'added' : 'removed'} ${
-        reactionType || ''
+        newReactionType || ''
       }, count: ${count}`
     );
+
     // Update the like count in the parent component
     setLikeCount(count);
-    setReactionType(reactionType);
+    setReactionType(newReactionType);
+
+    // Save reaction state to localStorage to persist across page refreshes
+    if (hasReacted && newReactionType) {
+      localStorage.setItem(`post_reaction_${postId}`, newReactionType);
+    } else {
+      localStorage.removeItem(`post_reaction_${postId}`);
+    }
+
+    // Save like count to localStorage
+    localStorage.setItem(`post_like_count_${postId}`, count.toString());
   }, []);
 
   function getRelativeTime(timestamp) {
@@ -389,14 +431,6 @@ function MemePost({
     const days = Math.floor(diff / 86400);
     return `${days} day${days === 1 ? '' : 's'} ago`;
   }
-
-  // For debugging - set a default like count if needed
-  useEffect(() => {
-    // This is just for testing - remove in production
-    if (likeCount === 0) {
-      setLikeCount(5); // Set a default like count for testing
-    }
-  }, []);
 
   return (
     <Card
@@ -467,6 +501,7 @@ function MemePost({
 
       <Menu anchorEl={menuAnchor} open={isMenuOpen} onClose={onMenuClose}>
         <MenuItem onClick={() => setIsEditModalOpen(true)}>Edit</MenuItem>
+        <MenuItem onClick={() => setIsReportPostModalOpen(true)}>Report</MenuItem>
         <MenuItem onClick={() => setIsPostDeleteModalOpen(true)} sx={{ color: 'red' }}>
           Delete
         </MenuItem>
@@ -497,6 +532,7 @@ function MemePost({
           postId={id}
           isDarkMode={isDarkMode}
           onReactionChange={handleReactionChange}
+          initialReactionType={reactionType} // Pass the saved reaction type
         />
 
         <Button
@@ -523,7 +559,6 @@ function MemePost({
           // border: '1px solid #eee',
           borderRadius: '4px',
           mx: 1,
-          mt: 0,
         }}
       >
         {likeCount > 0 && (
@@ -535,8 +570,10 @@ function MemePost({
               role="img"
               aria-label="laughing emoji"
               style={{ marginRight: '4px', fontSize: '16px' }}
-            ></span>
-            {likeCount} {likeCount === 1 ? '😂' : '😂'}
+            >
+              😂
+            </span>
+            {likeCount}
           </Typography>
         )}
       </Box>
@@ -576,6 +613,14 @@ function MemePost({
         caption={currentCaption}
         image={currentImage}
         onSave={handleSave}
+      />
+
+      <ReportPostConfirmationModal
+        open={isReportPostModalOpen}
+        onClose={() => setIsReportPostModalOpen(false)}
+        onConfirm={handleConfirmReportPost}
+        title="Report Post"
+        content="Are you sure you want to report this Post? This action cannot be undone."
       />
 
       <DeleteConfirmationModal
@@ -664,6 +709,7 @@ MemePost.propTypes = {
   timestamp: PropTypes.string.isRequired,
   user: PropTypes.object.isRequired,
   onDelete: PropTypes.func.isRequired,
+  onReportPost: PropTypes.func.isRequired,
   onUpdate: PropTypes.func.isRequired,
   onMenuOpen: PropTypes.func.isRequired,
   onMenuClose: PropTypes.func.isRequired,

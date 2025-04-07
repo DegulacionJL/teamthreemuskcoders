@@ -1,5 +1,6 @@
 'use client';
 
+import PropTypes from 'prop-types';
 import { useEffect, useRef, useState } from 'react';
 import { Image as KonvaImage, Layer, Line, Stage, Text } from 'react-konva';
 import { Brush, Check, Delete, PanTool, TextFields, Undo } from '@mui/icons-material';
@@ -381,5 +382,11 @@ function ImageEditor({ imageUrl, onSave, onCancel }) {
     </Box>
   );
 }
+
+ImageEditor.propTypes = {
+  imageUrl: PropTypes.string.isRequired,
+  onSave: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+};
 
 export default ImageEditor;

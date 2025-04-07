@@ -137,8 +137,18 @@ public function index(PostRequest $request)
 
     public function likePost(Request $request, $postId)
     {
-        $user = Auth::user();
-        $response = $this->postService->likePost($user, $postId);
+        try{
+
+            $user = Auth::user();
+            $result = $this->postService->likePost($user,$postId);
+            return response()->json($result);
+        }catch (Exception $e){
+            return response()->json([
+                'error' => 'Failed to like post',
+                'message' => $e->getMessage()
+
+            ], 500);
+        }
 
         return response()->json($response);
 
@@ -146,15 +156,29 @@ public function index(PostRequest $request)
 
     public function unlikePost(Request $request, $postId)
     {
-        $user = Auth::user();
-        $response = $this->postService->unlikePost($user, $postId);
-
-        return response()->json($response);
+        try{
+            $user = Auth::user();
+            $result = $this->postService->unlikePost($user,$postId);
+            return response()->json($result);
+        }catch (Exception $e){
+            return response ()->json([
+                'error' =>'Failed to unlike post',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function getLikes(Request $request, $postId)
     {
-        return $this->postService->getLikes($postId);
+       try{
+        $result = $this->postService->getLikes($postId);
+        return response()->json($result);
+       }catch (Exception $e){
+        return response()->json([
+            'error' => 'Failed to fetch likes',
+            'message' => $e->getMessage()
+        ],500);
+       }
     }
 
 

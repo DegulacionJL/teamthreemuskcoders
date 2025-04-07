@@ -1,5 +1,3 @@
-'use client';
-
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
@@ -7,6 +5,7 @@ import {
   createMemePost,
   deletePost,
   getMemePosts,
+  reportPost,
   updateImage,
   updatePost,
 } from 'services/meme.service';
@@ -79,6 +78,17 @@ function MemeFeed() {
     } catch (error) {
       console.error('Error deleting post:', error);
       setError('Failed to delete post. Please try again.');
+    }
+  };
+
+  const handleReportPost = async (postId) => {
+    try {
+      await reportPost(postId);
+      setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
+      handleMenuClose();
+    } catch (error) {
+      console.error('Failed to report Post: ', error);
+      setError('Failed to report Post. Please try again.');
     }
   };
 
@@ -577,7 +587,7 @@ function MemeFeed() {
             endMessage={
               <Box sx={{ textAlign: 'center', my: 4 }}>
                 <Typography variant="body2" color="text.secondary">
-                  You've seen all the memes! 🎉
+                  {"You've seen all the memes! 🎉"}
                 </Typography>
               </Box>
             }
@@ -593,6 +603,7 @@ function MemeFeed() {
                 timestamp={post.created_at}
                 user={post.user}
                 onDelete={handleDelete}
+                onReportPost={handleReportPost}
                 onUpdate={handleUpdatePost}
                 onMenuOpen={handleMenuOpen}
                 onMenuClose={handleMenuClose}

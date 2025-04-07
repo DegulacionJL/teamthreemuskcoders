@@ -4,55 +4,107 @@ import PropTypes from 'prop-types';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getLikes, likePost, unlikePost } from 'services/meme.service';
 import { FavoriteBorder } from '@mui/icons-material';
-import { Box, Button, Fade, Popper, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Fade, Popper, Typography } from '@mui/material';
 import AnimatedEmoji from '../../atoms/animation/AnimatedEmoji';
 
-const PostReactions = ({ postId, isDarkMode, onReactionChange }) => {
+const PostReactions = ({ postId, isDarkMode, onReactionChange, initialReactionType }) => {
   const [showReactions, setShowReactions] = useState(false);
   const [hasReacted, setHasReacted] = useState(false);
-  const [likeCount, setLikeCount] = useState(5); // Default to 5 for testing
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const likeButtonRef = useRef(null);
-  // Add a way to get the current user ID from your auth system
-  const currentUserId = 'user123'; // Replace with your actual user ID retrieval logic
 
-  // Separate the data fetching from the parent notification to avoid infinite loops
+  // Fetch initial like data
   useEffect(() => {
     const fetchLikes = async () => {
+      setIsInitializing(true);
       try {
-        const response = await getLikes(postId);
-        setLikeCount(response.like_count || 0);
+        // Try to get data from localStorage first for immediate display
+        const storedReaction = localStorage.getItem(`post_reaction_${postId}`);
+        const storedLikeCount = localStorage.getItem(`post_like_count_${postId}`);
 
-        if (response.likes && Array.isArray(response.likes)) {
-          setHasReacted(response.likes.some((like) => like.user_id === currentUserId));
+        if (storedReaction) {
+          setHasReacted(true);
+        }
+
+        if (storedLikeCount) {
+          setLikeCount(Number.parseInt(storedLikeCount, 10));
+        }
+
+        // Then fetch from server to ensure data is up-to-date
+        const response = await getLikes(postId);
+
+        // Ensure we have valid data
+        if (response) {
+          setLikeCount(response.like_count || 0);
+          setHasReacted(response.user_has_liked || false);
+
+          // Update localStorage with fresh data
+          if (response.user_has_liked) {
+            localStorage.setItem(`post_reaction_${postId}`, initialReactionType || '😂');
+          } else {
+            localStorage.removeItem(`post_reaction_${postId}`);
+          }
+
+          localStorage.setItem(`post_like_count_${postId}`, response.like_count.toString());
         }
       } catch (error) {
         console.error('Error fetching likes:', error);
+        // Keep using localStorage data if API fails
+      } finally {
+        setIsInitializing(false);
       }
     };
 
     fetchLikes();
-  }, [postId, currentUserId]); // Remove hasReacted from dependencies
+  }, [postId, initialReactionType]);
 
   // Notify parent component when like count changes
   useEffect(() => {
-    if (onReactionChange) {
-      onReactionChange(postId, hasReacted, '😂', likeCount);
+    if (onReactionChange && !isInitializing) {
+      onReactionChange(postId, hasReacted, hasReacted ? '😂' : null, likeCount);
     }
-  }, [postId, hasReacted, likeCount, onReactionChange]);
+  }, [postId, hasReacted, likeCount, onReactionChange, isInitializing]);
 
   const handleReaction = useCallback(async () => {
+    if (isLoading || hasReacted) return;
+
+    setIsLoading(true);
     setHasReacted(true);
     setShowReactions(false);
 
+    // Optimistically update UI
+    setLikeCount((prev) => prev + 1);
+
     try {
-      await likePost(postId);
-      setLikeCount((prev) => prev + 1);
+      const response = await likePost(postId);
+
+      // Update with actual data from server
+      if (response && response.like_count !== undefined) {
+        setLikeCount(response.like_count);
+      }
+
+      // Update localStorage
+      localStorage.setItem(`post_reaction_${postId}`, '😂');
+      localStorage.setItem(
+        `post_like_count_${postId}`,
+        response?.like_count?.toString() || (likeCount + 1).toString()
+      );
     } catch (error) {
+      // Revert UI state if API call fails
+      setHasReacted(false);
+      setLikeCount((prev) => Math.max(0, prev - 1));
       console.error('Error while reacting to the post:', error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [postId]);
+  }, [postId, hasReacted, isLoading, likeCount]);
 
   const handleToggleReaction = useCallback(async () => {
+    if (isLoading) return;
+
+    setIsLoading(true);
     const newReactionState = !hasReacted;
 
     // Optimistically update UI
@@ -60,18 +112,29 @@ const PostReactions = ({ postId, isDarkMode, onReactionChange }) => {
     setLikeCount((prev) => (newReactionState ? prev + 1 : Math.max(0, prev - 1)));
 
     try {
+      let response;
       if (newReactionState) {
-        await likePost(postId);
+        response = await likePost(postId);
+        localStorage.setItem(`post_reaction_${postId}`, '😂');
       } else {
-        await unlikePost(postId);
+        response = await unlikePost(postId);
+        localStorage.removeItem(`post_reaction_${postId}`);
+      }
+
+      // Update with actual data from server
+      if (response && response.like_count !== undefined) {
+        setLikeCount(response.like_count);
+        localStorage.setItem(`post_like_count_${postId}`, response.like_count.toString());
       }
     } catch (error) {
       // Revert UI state if API call fails
       setHasReacted(!newReactionState);
       setLikeCount((prev) => (!newReactionState ? prev + 1 : Math.max(0, prev - 1)));
       console.error('Error while toggling reaction:', error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [hasReacted, postId]);
+  }, [hasReacted, postId, isLoading]);
 
   return (
     <Box sx={{ position: 'relative' }}>
@@ -79,19 +142,29 @@ const PostReactions = ({ postId, isDarkMode, onReactionChange }) => {
       <Button
         ref={likeButtonRef}
         startIcon={
-          hasReacted ? <Typography sx={{ fontSize: '16px' }}>😂</Typography> : <FavoriteBorder />
+          isLoading ? (
+            <CircularProgress size={16} color="inherit" />
+          ) : hasReacted ? (
+            <Typography sx={{ fontSize: '16px' }}>😂</Typography>
+          ) : (
+            <FavoriteBorder />
+          )
         }
         size="small"
-        sx={{ color: 'text.secondary' }}
-        onMouseEnter={() => !hasReacted && setShowReactions(true)}
+        sx={{
+          color: hasReacted ? 'primary.main' : 'text.secondary',
+          fontWeight: hasReacted ? 'bold' : 'normal',
+        }}
+        onMouseEnter={() => !hasReacted && !isLoading && setShowReactions(true)}
         onMouseLeave={() => setTimeout(() => setShowReactions(false), 300)}
         onClick={handleToggleReaction}
+        disabled={isLoading || isInitializing}
       >
-        {hasReacted ? 'Haha' : 'Like'}
+        {hasReacted ? 'Haha' : 'Like'} {likeCount > 0 && `(${likeCount})`}
       </Button>
 
       <Popper
-        open={showReactions}
+        open={showReactions && !isLoading}
         anchorEl={likeButtonRef.current}
         placement="top"
         transition
@@ -146,6 +219,7 @@ PostReactions.propTypes = {
   postId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   isDarkMode: PropTypes.bool.isRequired,
   onReactionChange: PropTypes.func,
+  initialReactionType: PropTypes.string,
 };
 
 export default PostReactions;

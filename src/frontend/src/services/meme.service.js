@@ -54,6 +54,11 @@ const deletePost = async function (post) {
   return await req;
 };
 
+const reportPost = async function (post) {
+  const req = api.post(`/posts/${post}/report`).then(({ data }) => data);
+  return await req;
+};
+
 const likePost = async function (postId) {
   const req = api
     .post(`/likes/${postId}`)
@@ -84,9 +89,30 @@ const unlikePost = async function (postId) {
   return await req;
 };
 
-const getLikes = async function (postId) {
-  const response = await api.get(`/likes/${postId}/likes`);
-  return response.data;
+const getLikes = async (postId) => {
+  try {
+    const response = await api.get(`/likes/${postId}/likes`);
+
+    // Add a check to ensure the response has the expected structure
+    if (response.data) {
+      // If the backend doesn't provide user_has_liked, check if the user_reaction exists
+      if (response.data.user_has_liked === undefined && response.data.user_reaction) {
+        response.data.user_has_liked = true;
+      }
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error('Error in getLikes service:', error);
+
+    // Return a default response structure to prevent UI errors
+    return {
+      likes: [],
+      like_count: 0,
+      user_has_liked: false,
+      user_reaction: null,
+    };
+  }
 };
 
 export {
@@ -98,4 +124,5 @@ export {
   likePost,
   unlikePost,
   getLikes,
+  reportPost,
 };
