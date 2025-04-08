@@ -1,10 +1,13 @@
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Box, Button, TextField, Typography } from '@mui/material';
 import AvatarWithInitials from 'components/atoms/AvatarWithInitial';
 import ImagePreview from '../atoms/ImagePreview';
 import CommentActions from '../molecules/CommentActions';
 import ReplyForm from '../molecules/ReplyForm';
+import CommentReactions from '../organisms/User/CommentReactions';
+
+// Ensure this is correctly imported
 
 const CommentItem = ({
   comment,
@@ -23,6 +26,8 @@ const CommentItem = ({
   onBackReplies,
   replyHasMore = {},
   replyPage = {},
+  onReactionChange, // This is the prop we’ll use
+  initialReactionType = null,
 }) => {
   const isMaxDepthReached = depth >= maxDepth;
 
@@ -38,7 +43,7 @@ const CommentItem = ({
   };
 
   // Ensure replyHasMore and replyPage have default values for this comment
-  const hasMoreReplies = !!replyHasMore[comment.id]; // Convert to boolean
+  const hasMoreReplies = !!replyHasMore[comment.id];
   const currentReplyPage = replyPage[comment.id] || 1;
 
   return (
@@ -94,11 +99,17 @@ const CommentItem = ({
           </>
         )}
 
-        <Box sx={{ mt: 1 }}>
+        <Box sx={{ mt: 1, display: 'flex', gap: 1, alignItems: 'center' }}>
+          <CommentReactions
+            commentId={comment.id}
+            isDarkMode={false} // Adjust based on your theme
+            onReactionChange={onReactionChange} // Use the prop directly
+            initialReactionType={initialReactionType}
+          />
           {replyToComment !== comment.id && !isMaxDepthReached && (
             <Button
               size="small"
-              sx={{ mt: 1, textTransform: 'none' }}
+              sx={{ textTransform: 'none' }}
               onClick={() => onReplyClick(comment.id)}
             >
               Reply
@@ -131,6 +142,8 @@ const CommentItem = ({
                 onBackReplies={onBackReplies}
                 replyHasMore={replyHasMore}
                 replyPage={replyPage}
+                onReactionChange={onReactionChange} // Pass it down to replies
+                initialReactionType={initialReactionType} // Pass down initial reaction
               />
             ))}
             {(hasMoreReplies || currentReplyPage > 1) && (
@@ -175,6 +188,8 @@ CommentItem.propTypes = {
   onBackReplies: PropTypes.func,
   replyHasMore: PropTypes.object,
   replyPage: PropTypes.object,
+  onReactionChange: PropTypes.func.isRequired, // Ensure this is required
+  initialReactionType: PropTypes.string,
 };
 
 export default CommentItem;

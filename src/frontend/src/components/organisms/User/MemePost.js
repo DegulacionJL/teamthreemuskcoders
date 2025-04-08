@@ -272,6 +272,40 @@ function MemePost({
     [id, fetchComments, postComments, fetchReplies, user] // Added user as a dependency
   );
 
+  // Reaction
+  const handleCommentReactionChange = useCallback(
+    (commentId, hasReacted, newReactionType, count) => {
+      console.log(
+        `Comment ${commentId} reaction changed: ${hasReacted ? 'added' : 'removed'} ${
+          newReactionType || ''
+        }, count: ${count}`
+      );
+
+      // Update the comment's reaction count and type in state
+      setPostComments((prevComments) =>
+        prevComments.map((comment) => {
+          if (comment.id === commentId) {
+            return {
+              ...comment,
+              reactionType: hasReacted ? newReactionType : null,
+              likeCount: count,
+            };
+          }
+          return comment;
+        })
+      );
+
+      // Save to localStorage (or backend if needed)
+      if (hasReacted && newReactionType) {
+        localStorage.setItem(`comment_reaction_${commentId}`, newReactionType);
+      } else {
+        localStorage.removeItem(`comment_reaction_${commentId}`);
+      }
+      localStorage.setItem(`comment_like_count_${commentId}`, count.toString());
+    },
+    [setPostComments]
+  );
+
   const handleAddComment = useCallback(
     async (text, image) => {
       if (!text.trim() && !image) return;
@@ -596,6 +630,7 @@ function MemePost({
             onBackReplies={handleBackReplies}
             replyHasMore={replyHasMore}
             replyPage={replyPage}
+            onReactionChange={handleCommentReactionChange}
           />
           {hasMore && (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>

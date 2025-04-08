@@ -25,6 +25,7 @@ function CommentSection({
   onBackReplies,
   replyHasMore,
   replyPage,
+  onReactionChange, // Add this prop
 }) {
   const [newCommentText, setNewCommentText] = useState('');
   const [newCommentImage, setNewCommentImage] = useState(null);
@@ -165,6 +166,7 @@ function CommentSection({
         onBackReplies={onBackReplies}
         replyHasMore={replyHasMore}
         replyPage={replyPage}
+        onReactionChange={onReactionChange} // Pass it down
       />
     </Box>
   );
@@ -186,6 +188,7 @@ CommentSection.propTypes = {
   onBackReplies: PropTypes.func.isRequired,
   replyHasMore: PropTypes.object.isRequired,
   replyPage: PropTypes.object.isRequired,
+  onReactionChange: PropTypes.func.isRequired,
 };
 
 export default CommentSection;

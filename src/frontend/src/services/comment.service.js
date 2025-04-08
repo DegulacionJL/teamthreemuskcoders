@@ -62,4 +62,65 @@ const updateComment = async function (postId, commentId, data) {
   }
 };
 
-export { getComments, addComment, deleteComment, updateComment };
+const likeComment = async function (commentId) {
+  const req = api
+    .post(`/likes/comments/${commentId}`) // Adjust endpoint as per your backend
+    .then(({ data }) => {
+      console.log('Like Comment Response:', data);
+      return data;
+    })
+    .catch((error) => {
+      console.error('Error liking comment:', error);
+      throw error;
+    });
+
+  return await req;
+};
+
+const unlikeComment = async function (commentId) {
+  const req = api
+    .post(`/likes/comments/${commentId}/unlike`) // Adjust endpoint
+    .then(({ data }) => {
+      console.log('Unlike Comment Response:', data);
+      return data;
+    })
+    .catch((error) => {
+      console.error('Error unliking comment:', error);
+      throw error;
+    });
+
+  return await req;
+};
+
+const getCommentLikes = async (commentId) => {
+  try {
+    const response = await api.get(`/likes/comments/${commentId}/likes`); // Adjust endpoint
+
+    // Ensure response has expected structure
+    if (response.data) {
+      if (response.data.user_has_liked === undefined && response.data.user_reaction) {
+        response.data.user_has_liked = true;
+      }
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error('Error in getCommentLikes service:', error);
+    return {
+      likes: [],
+      like_count: 0,
+      user_has_liked: false,
+      user_reaction: null,
+    };
+  }
+};
+
+export {
+  likeComment,
+  unlikeComment,
+  getCommentLikes,
+  getComments,
+  addComment,
+  deleteComment,
+  updateComment,
+};
