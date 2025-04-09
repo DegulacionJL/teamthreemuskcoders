@@ -81,9 +81,9 @@ const CommentFeature = ({ postId, user }) => {
         </Box>
       )}
 
-      <Button onClick={() => setShowComments(!showComments)} sx={{ mb: 2 }}>
-        {showComments ? 'Hide' : 'Show'} Comments ({totalCommentsCount})
-      </Button>
+<Button onClick={() => setShowComments(!showComments)} sx={{ mb: 2 }}>
+  {showComments ? 'Hide' : 'Show'} Comments ({totalCommentsCount})
+</Button>
 
       {showComments && (
         <>

@@ -22,27 +22,31 @@ export const useComments = (postId) => {
 
   const fetchComments = useCallback(
     async (page = 1, append = false) => {
-      if (!showComments) return;
       setIsLoading(true);
       try {
-        const response = await getComments(postId, { page, per_page: 3, sort: 'asc' });
-        const processedComments = response.data.map((comment) => ({
-          ...comment,
-          replies: [],
-        }));
-
-        if (append) {
-          setComments((prev) => [...prev, ...processedComments]);
-        } else {
-          setComments(processedComments);
-          for (const comment of processedComments) {
-            await fetchReplies(comment.id, 1);
+        const response = await getComments(postId, { page, per_page: showComments ? 3 : 0, sort: 'asc' });
+        
+        if (showComments) {
+          const processedComments = response.data.map((comment) => ({
+            ...comment,
+            replies: [],
+          }));
+  
+          if (append) {
+            setComments((prev) => [...prev, ...processedComments]);
+          } else {
+            setComments(processedComments);
+            for (const comment of processedComments) {
+              await fetchReplies(comment.id, 1);
+            }
           }
+  
+          setHasMore(response.pagination.has_more);
+          setCurrentPage(page);
         }
-
+  
+        // Always update the total comments count
         setTotalCommentsCount(response.pagination.total_with_replies);
-        setHasMore(response.pagination.has_more);
-        setCurrentPage(page);
       } catch (error) {
         console.error('Error fetching comments:', error);
         if (!append) {
@@ -56,6 +60,19 @@ export const useComments = (postId) => {
     },
     [postId, showComments]
   );
+
+  useEffect(() => {
+    const fetchTotalCommentsCount = async () => {
+      try {
+        const response = await getComments(postId, { page: 1, per_page: 0 }); // Fetch only metadata
+        setTotalCommentsCount(response.pagination.total_with_replies);
+      } catch (error) {
+        console.error('Error fetching total comments count:', error);
+      }
+    };
+  
+    fetchTotalCommentsCount();
+  }, [postId]);
 
   const fetchReplies = useCallback(
     async (commentId, page = 1, append = false) => {
