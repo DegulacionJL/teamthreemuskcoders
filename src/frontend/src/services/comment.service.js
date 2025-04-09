@@ -1,7 +1,6 @@
-// comment.service.js
 import api from 'utils/api';
 
-const getComments = async function (postId, params = {}) {
+const getComments = async (postId, params = {}) => {
   const req = api.get(`/posts/${postId}/comments`, { params }).then(({ data }) => ({
     data: data.data,
     pagination: data.pagination,
@@ -9,62 +8,44 @@ const getComments = async function (postId, params = {}) {
   return await req;
 };
 
-const addComment = async function (postId, commentText, commentImage, parentId = null) {
-  let requestData;
-  let config = {};
+const addComment = async (postId, commentText, commentImage, parentId = null) => {
+  const isMultipart = !!commentImage;
+  const requestData = isMultipart
+    ? (() => {
+        const formData = new FormData();
+        formData.append('post_id', postId);
+        formData.append('text', commentText || '');
+        formData.append('image', commentImage);
+        if (parentId) formData.append('parent_id', parentId);
+        return formData;
+      })()
+    : { post_id: postId, text: commentText, parent_id: parentId || null };
 
-  if (!commentText && !commentImage) {
-    throw new Error('Comment must have either text or an image');
-  }
-
-  if (commentImage) {
-    requestData = new FormData();
-    requestData.append('post_id', postId);
-    requestData.append('text', commentText || '');
-    requestData.append('image', commentImage);
-    if (parentId) {
-      requestData.append('parent_id', parentId);
-    }
-    config = api.createRequestConfig(requestData);
-  } else {
-    requestData = {
-      post_id: postId,
-      text: commentText,
-      parent_id: parentId || null,
-    };
-  }
+  const config = isMultipart ? api.createRequestConfig(requestData) : {};
+  if (!commentText && !commentImage) throw new Error('Comment must have either text or an image');
 
   const req = api.post(`/posts/${postId}/comments`, requestData, config).then(({ data }) => data);
   return await req;
 };
 
-const deleteComment = async function (postId, commentId) {
+const deleteComment = async (postId, commentId) => {
   const req = api.delete(`/posts/${postId}/comments/${commentId}`).then(({ data }) => data);
   return await req;
 };
 
-const updateComment = async function (postId, commentId, data) {
-  console.log('Update Service Data: ', Object.fromEntries(data.entries()));
-
-  try {
-    data.append('_method', 'PUT');
-
-    const response = await api.post(`/posts/${postId}/comments/${commentId}`, data, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-
-    return response.data;
-  } catch (error) {
-    console.error('Error in updateComment service:', error);
-    throw error;
-  }
+const updateComment = async (postId, commentId, data) => {
+  data.append('_method', 'PUT');
+  const req = api
+    .post(`/posts/${postId}/comments/${commentId}`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    .then(({ data }) => data);
+  return await req;
 };
 
-const likeComment = async function (commentId) {
+const likeComment = async (commentId) => {
   const req = api
-    .post(`/likes/comments/${commentId}`) // Adjust endpoint as per your backend
+    .post(`/likes/comments/${commentId}`)
     .then(({ data }) => {
       console.log('Like Comment Response:', data);
       return data;
@@ -73,13 +54,12 @@ const likeComment = async function (commentId) {
       console.error('Error liking comment:', error);
       throw error;
     });
-
   return await req;
 };
 
-const unlikeComment = async function (commentId) {
+const unlikeComment = async (commentId) => {
   const req = api
-    .post(`/likes/comments/${commentId}/unlike`) // Adjust endpoint
+    .post(`/likes/comments/${commentId}/unlike`)
     .then(({ data }) => {
       console.log('Unlike Comment Response:', data);
       return data;
@@ -88,39 +68,36 @@ const unlikeComment = async function (commentId) {
       console.error('Error unliking comment:', error);
       throw error;
     });
-
   return await req;
 };
 
 const getCommentLikes = async (commentId) => {
-  try {
-    const response = await api.get(`/likes/comments/${commentId}/likes`); // Adjust endpoint
-
-    // Ensure response has expected structure
-    if (response.data) {
-      if (response.data.user_has_liked === undefined && response.data.user_reaction) {
-        response.data.user_has_liked = true;
+  const req = api
+    .get(`/likes/comments/${commentId}/likes`)
+    .then(({ data }) => {
+      if (data.user_has_liked === undefined && data.user_reaction) {
+        data.user_has_liked = true;
       }
-    }
-
-    return response.data;
-  } catch (error) {
-    console.error('Error in getCommentLikes service:', error);
-    return {
-      likes: [],
-      like_count: 0,
-      user_has_liked: false,
-      user_reaction: null,
-    };
-  }
+      return data;
+    })
+    .catch((error) => {
+      console.error('Error in getCommentLikes service:', error);
+      return {
+        likes: [],
+        like_count: 0,
+        user_has_liked: false,
+        user_reaction: null,
+      };
+    });
+  return await req;
 };
 
 export {
-  likeComment,
-  unlikeComment,
-  getCommentLikes,
   getComments,
   addComment,
   deleteComment,
   updateComment,
+  likeComment,
+  unlikeComment,
+  getCommentLikes,
 };
