@@ -3,12 +3,11 @@
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getCommentLikes, likeComment, unlikeComment } from 'services/comment.service';
-// Use new services
 import { FavoriteBorder } from '@mui/icons-material';
 import { Box, Button, CircularProgress, Fade, Popper, Typography } from '@mui/material';
 import AnimatedEmoji from '../../atoms/animation/AnimatedEmoji';
 
-const CommentReactions = ({ commentId, isDarkMode, onReactionChange, initialReactionType }) => {
+const CommentReactions = ({ commentId, isDarkMode, onReactionChange }) => {
   const [showReactions, setShowReactions] = useState(false);
   const [hasReacted, setHasReacted] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -16,51 +15,27 @@ const CommentReactions = ({ commentId, isDarkMode, onReactionChange, initialReac
   const [isInitializing, setIsInitializing] = useState(true);
   const likeButtonRef = useRef(null);
 
-  // Fetch initial like data for comments
+  const fetchLikes = useCallback(async () => {
+    try {
+      const response = await getCommentLikes(commentId);
+      setLikeCount(response.like_count || 0);
+      setHasReacted(response.user_has_liked || false);
+      localStorage.setItem(`comment_reaction_${commentId}`, response.user_has_liked ? '😂' : '');
+      localStorage.setItem(`comment_like_count_${commentId}`, response.like_count.toString());
+    } catch (error) {
+      console.error('Error fetching comment likes:', error);
+    }
+  }, [commentId]);
+
   useEffect(() => {
-    const fetchLikes = async () => {
+    const initializeLikes = async () => {
       setIsInitializing(true);
-      try {
-        // Try to get data from localStorage first for immediate display
-        const storedReaction = localStorage.getItem(`comment_reaction_${commentId}`);
-        const storedLikeCount = localStorage.getItem(`comment_like_count_${commentId}`);
-
-        if (storedReaction) {
-          setHasReacted(true);
-        }
-
-        if (storedLikeCount) {
-          setLikeCount(Number.parseInt(storedLikeCount, 10));
-        }
-
-        // Then fetch from server
-        const response = await getCommentLikes(commentId);
-
-        if (response) {
-          setLikeCount(response.like_count || 0);
-          setHasReacted(response.user_has_liked || false);
-
-          // Update localStorage with fresh data
-          if (response.user_has_liked) {
-            localStorage.setItem(`comment_reaction_${commentId}`, initialReactionType || '😂');
-          } else {
-            localStorage.removeItem(`comment_reaction_${commentId}`);
-          }
-
-          localStorage.setItem(`comment_like_count_${commentId}`, response.like_count.toString());
-        }
-      } catch (error) {
-        console.error('Error fetching comment likes:', error);
-        // Keep using localStorage data if API fails
-      } finally {
-        setIsInitializing(false);
-      }
+      await fetchLikes();
+      setIsInitializing(false);
     };
+    initializeLikes();
+  }, [fetchLikes]);
 
-    fetchLikes();
-  }, [commentId, initialReactionType]);
-
-  // Notify parent component when like count changes
   useEffect(() => {
     if (onReactionChange && !isInitializing) {
       onReactionChange(commentId, hasReacted, hasReacted ? '😂' : null, likeCount);
@@ -71,66 +46,56 @@ const CommentReactions = ({ commentId, isDarkMode, onReactionChange, initialReac
     if (isLoading || hasReacted) return;
 
     setIsLoading(true);
-    setHasReacted(true);
-    setShowReactions(false);
-
-    // Optimistically update UI
-    setLikeCount((prev) => prev + 1);
-
     try {
       const response = await likeComment(commentId);
-
-      if (response && response.like_count !== undefined) {
-        setLikeCount(response.like_count);
-      }
-
-      // Update localStorage
+      // Optimistically update state based on the response
+      setHasReacted(response.user_has_liked || true);
+      setLikeCount(response.like_count || likeCount + 1);
       localStorage.setItem(`comment_reaction_${commentId}`, '😂');
-      localStorage.setItem(
-        `comment_like_count_${commentId}`,
-        response?.like_count?.toString() || (likeCount + 1).toString()
-      );
+      localStorage.setItem(`comment_like_count_${commentId}`, response.like_count.toString());
+      // Fetch latest state to confirm
+      await fetchLikes();
     } catch (error) {
-      setHasReacted(false);
-      setLikeCount((prev) => Math.max(0, prev - 1));
       console.error('Error while reacting to the comment:', error);
+      setHasReacted(false); // Rollback on error
+      setLikeCount((prev) => Math.max(0, prev - 1));
     } finally {
       setIsLoading(false);
+      setShowReactions(false);
     }
-  }, [commentId, hasReacted, isLoading, likeCount]);
+  }, [commentId, hasReacted, isLoading, likeCount, fetchLikes]);
 
   const handleToggleReaction = useCallback(async () => {
     if (isLoading) return;
 
     setIsLoading(true);
-    const newReactionState = !hasReacted;
-
-    // Optimistically update UI
-    setHasReacted(newReactionState);
-    setLikeCount((prev) => (newReactionState ? prev + 1 : Math.max(0, prev - 1)));
+    const prevHasReacted = hasReacted;
+    const prevLikeCount = likeCount;
 
     try {
-      let response;
-      if (newReactionState) {
-        response = await likeComment(commentId);
-        localStorage.setItem(`comment_reaction_${commentId}`, '😂');
+      if (hasReacted) {
+        const response = await unlikeComment(commentId);
+        setHasReacted(response.user_has_liked || false);
+        setLikeCount(response.like_count || Math.max(0, prevLikeCount - 1));
+        localStorage.setItem(`comment_reaction_${commentId}`, '');
+        localStorage.setItem(`comment_like_count_${commentId}`, response.like_count.toString());
       } else {
-        response = await unlikeComment(commentId);
-        localStorage.removeItem(`comment_reaction_${commentId}`);
-      }
-
-      if (response && response.like_count !== undefined) {
-        setLikeCount(response.like_count);
+        const response = await likeComment(commentId);
+        setHasReacted(response.user_has_liked || true);
+        setLikeCount(response.like_count || prevLikeCount + 1);
+        localStorage.setItem(`comment_reaction_${commentId}`, '😂');
         localStorage.setItem(`comment_like_count_${commentId}`, response.like_count.toString());
       }
+      // Fetch latest state to confirm
+      await fetchLikes();
     } catch (error) {
-      setHasReacted(!newReactionState);
-      setLikeCount((prev) => (!newReactionState ? prev + 1 : Math.max(0, prev - 1)));
       console.error('Error while toggling comment reaction:', error);
+      setHasReacted(prevHasReacted); // Rollback on error
+      setLikeCount(prevLikeCount);
     } finally {
       setIsLoading(false);
     }
-  }, [hasReacted, commentId, isLoading]);
+  }, [hasReacted, commentId, isLoading, likeCount, fetchLikes]);
 
   return (
     <Box sx={{ position: 'relative' }}>
@@ -214,7 +179,6 @@ CommentReactions.propTypes = {
   commentId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   isDarkMode: PropTypes.bool.isRequired,
   onReactionChange: PropTypes.func,
-  initialReactionType: PropTypes.string,
 };
 
 export default CommentReactions;

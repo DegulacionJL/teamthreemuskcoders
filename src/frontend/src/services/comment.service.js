@@ -48,10 +48,10 @@ const likeComment = async (commentId) => {
     .post(`/likes/comments/${commentId}`)
     .then(({ data }) => {
       console.log('Like Comment Response:', data);
-      return data;
+      return data.data; // Access the nested 'data' field
     })
     .catch((error) => {
-      console.error('Error liking comment:', error);
+      console.error('Error liking comment:', error.response?.data || error.message);
       throw error;
     });
   return await req;
@@ -59,13 +59,13 @@ const likeComment = async (commentId) => {
 
 const unlikeComment = async (commentId) => {
   const req = api
-    .post(`/likes/comments/${commentId}/unlike`)
+    .delete(`/likes/comments/${commentId}/unlike`)
     .then(({ data }) => {
       console.log('Unlike Comment Response:', data);
-      return data;
+      return data.data; // Access the nested 'data' field
     })
     .catch((error) => {
-      console.error('Error unliking comment:', error);
+      console.error('Error unliking comment:', error.response?.data || error.message);
       throw error;
     });
   return await req;
@@ -75,18 +75,20 @@ const getCommentLikes = async (commentId) => {
   const req = api
     .get(`/likes/comments/${commentId}/likes`)
     .then(({ data }) => {
-      if (data.user_has_liked === undefined && data.user_reaction) {
-        data.user_has_liked = true;
-      }
-      return data;
+      console.log('Get Comment Likes Response:', data);
+      const responseData = data.data; // Access the nested 'data' field
+      return {
+        likes: responseData.likes || [],
+        like_count: responseData.like_count || 0,
+        user_has_liked: responseData.user_has_liked || false,
+      };
     })
     .catch((error) => {
-      console.error('Error in getCommentLikes service:', error);
+      console.error('Error in getCommentLikes service:', error.response?.data || error.message);
       return {
         likes: [],
         like_count: 0,
         user_has_liked: false,
-        user_reaction: null,
       };
     });
   return await req;

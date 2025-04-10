@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { addComment, deleteComment, getComments, updateComment } from 'services/comment.service';
+import {
+  addComment,
+  deleteComment,
+  getCommentLikes,
+  getComments,
+  likeComment,
+  unlikeComment,
+  updateComment,
+} from 'services/comment.service';
 
 export const useComments = (postId) => {
   const [comments, setComments] = useState([]);
@@ -24,14 +32,18 @@ export const useComments = (postId) => {
     async (page = 1, append = false) => {
       setIsLoading(true);
       try {
-        const response = await getComments(postId, { page, per_page: showComments ? 3 : 0, sort: 'asc' });
-        
+        const response = await getComments(postId, {
+          page,
+          per_page: showComments ? 3 : 0,
+          sort: 'asc',
+        });
+
         if (showComments) {
           const processedComments = response.data.map((comment) => ({
             ...comment,
             replies: [],
           }));
-  
+
           if (append) {
             setComments((prev) => [...prev, ...processedComments]);
           } else {
@@ -40,12 +52,11 @@ export const useComments = (postId) => {
               await fetchReplies(comment.id, 1);
             }
           }
-  
+
           setHasMore(response.pagination.has_more);
           setCurrentPage(page);
         }
-  
-        // Always update the total comments count
+
         setTotalCommentsCount(response.pagination.total_with_replies);
       } catch (error) {
         console.error('Error fetching comments:', error);
@@ -64,13 +75,13 @@ export const useComments = (postId) => {
   useEffect(() => {
     const fetchTotalCommentsCount = async () => {
       try {
-        const response = await getComments(postId, { page: 1, per_page: 0 }); // Fetch only metadata
+        const response = await getComments(postId, { page: 1, per_page: 0 });
         setTotalCommentsCount(response.pagination.total_with_replies);
       } catch (error) {
         console.error('Error fetching total comments count:', error);
       }
     };
-  
+
     fetchTotalCommentsCount();
   }, [postId]);
 
@@ -251,6 +262,48 @@ export const useComments = (postId) => {
     [fetchReplies, replyPage]
   );
 
+  const handleLikeComment = useCallback(async (commentId) => {
+    try {
+      await likeComment(commentId);
+      // Fetch the latest like state from the server
+      const likeData = await getCommentLikes(commentId);
+      setComments((prev) =>
+        prev.map((comment) =>
+          comment.id === commentId
+            ? {
+                ...comment,
+                likeCount: likeData.like_count,
+                reactionType: likeData.user_has_liked ? '😂' : null,
+              }
+            : comment
+        )
+      );
+    } catch (error) {
+      console.error('Error liking comment:', error);
+    }
+  }, []);
+
+  const handleUnlikeComment = useCallback(async (commentId) => {
+    try {
+      await unlikeComment(commentId);
+      // Fetch the latest like state from the server
+      const likeData = await getCommentLikes(commentId);
+      setComments((prev) =>
+        prev.map((comment) =>
+          comment.id === commentId
+            ? {
+                ...comment,
+                likeCount: likeData.like_count,
+                reactionType: likeData.user_has_liked ? '😂' : null,
+              }
+            : comment
+        )
+      );
+    } catch (error) {
+      console.error('Error unliking comment:', error);
+    }
+  }, []);
+
   const handleCommentReactionChange = useCallback(
     (commentId, hasReacted, newReactionType, count) => {
       setComments((prev) =>
@@ -301,7 +354,7 @@ export const useComments = (postId) => {
     setUpdateCommentImagePreview,
     setIsUpdateModalOpen,
     setCommentToDelete,
-    setIsDeleteModalOpen, // Added explicitly
+    setIsDeleteModalOpen,
     fetchComments,
     handleAddComment,
     handleAddReply,
@@ -314,6 +367,8 @@ export const useComments = (postId) => {
     handleLoadMore,
     handleLoadMoreReplies,
     handleBackReplies,
+    handleLikeComment,
+    handleUnlikeComment,
     handleCommentReactionChange,
   };
 };
