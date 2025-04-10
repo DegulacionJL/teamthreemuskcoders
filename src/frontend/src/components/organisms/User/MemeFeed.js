@@ -133,6 +133,7 @@ function MemeFeed() {
       setCaption('');
       setImage(null);
       setImagePreview(null);
+      setShowMemeCreator(false);
     } catch (error) {
       console.error('Error posting:', error);
       setError('Failed to create post. Please try again.');
@@ -448,10 +449,63 @@ function MemeFeed() {
         <Card sx={{ width: '100%', mb: 3, maxWidth: '80%' }}>
           <CardContent>
             {showMemeCreator ? (
-              <MemeCreator
-                onSave={handleMemeCreatorSave}
-                onCancel={() => setShowMemeCreator(false)}
-              />
+              <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Avatar
+                    src={currentUser?.avatar || ''}
+                    sx={{ mr: 2 }}
+                    alt={`${currentUser?.first_name} ${currentUser?.last_name}`}
+                  >
+                    {currentUser
+                      ? `${currentUser.first_name?.charAt(0).toUpperCase() || ''}${
+                          currentUser.last_name?.charAt(0).toUpperCase() || ''
+                        }`
+                      : 'JD'}
+                  </Avatar>
+                  <Typography variant="h6">
+                    {currentUser
+                      ? `${
+                          currentUser.first_name?.charAt(0).toUpperCase() +
+                          currentUser.first_name?.slice(1)
+                        } ${
+                          currentUser.last_name?.charAt(0).toUpperCase() +
+                          currentUser.last_name?.slice(1)
+                        }`
+                      : 'John Degz'}
+                  </Typography>
+                </Box>
+
+                <MemeCreator
+                  onSave={handleMemeCreatorSave}
+                  onCancel={() => setShowMemeCreator(false)}
+                  inlineMode={true}
+                />
+
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => setShowMemeCreator(false)}
+                    sx={{ mr: 2, borderRadius: 4 }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handlePost}
+                    disabled={!image}
+                    sx={{
+                      borderRadius: 4,
+                      bgcolor: '#8a4fff',
+                      '&:hover': {
+                        bgcolor: '#7a3fef',
+                      },
+                    }}
+                  >
+                    POST
+                  </Button>
+                </Box>
+              </Box>
             ) : (
               <>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
