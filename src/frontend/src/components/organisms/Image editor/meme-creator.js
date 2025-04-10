@@ -1,5 +1,6 @@
 'use client';
 
+import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { Image as ImageIcon, PhotoCamera } from '@mui/icons-material';
 import { Box, Button, Card, CardContent, Paper, Typography } from '@mui/material';
@@ -142,5 +143,9 @@ function MemeCreator({ onSave, onCancel }) {
     </Card>
   );
 }
+MemeCreator.propTypes = {
+  onSave: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+};
 
 export default MemeCreator;

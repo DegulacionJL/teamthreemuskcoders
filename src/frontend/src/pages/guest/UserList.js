@@ -1,7 +1,6 @@
-'use client';
-
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { followUser, isFollowing, unfollowUser } from 'services/follow.service';
 import { searchUsers } from 'services/user.list.service';
@@ -10,15 +9,18 @@ import DataTable from 'components/molecules/DataTable';
 import AddEditModal from 'components/molecules/users/AddEditModal';
 import { criteria, meta as defaultMeta } from 'config/search';
 
+// Import for navigation
+
 function Users() {
   const { t } = useTranslation();
+  const navigate = useNavigate(); // Initialize the navigation hook
   const [data, setData] = useState([]);
   // Replace this with your actual user data from auth context or similar
-  const [user, setUser] = useState({ role: 'user', id: 1 }); // Example user
+  const [user] = useState({ role: 'user', id: 1 }); // Removed setUser since it's not used
   const [query, setQuery] = useState(criteria);
   const [meta, setMeta] = useState(defaultMeta);
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false); // Added underscore to indicate intentionally unused
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -38,6 +40,13 @@ function Users() {
     fetchUsers();
   }, [query]);
 
+  // Function to handle redirection to user timeline with explicit prevention of default behavior
+  const handleUserNameClick = (event, userId) => {
+    event.preventDefault();
+    event.stopPropagation();
+    navigate(`/users/${userId}`);
+  };
+
   const headers = [
     {
       id: 'id',
@@ -50,12 +59,44 @@ function Users() {
       numeric: false,
       disablePadding: false,
       label: t('pages.users.first_name'),
+      // Add a custom render function for this column specifically
+      customRender: (row) => (
+        <Box
+          component="span"
+          onClick={(e) => handleUserNameClick(e, row.id)}
+          sx={{
+            cursor: 'pointer',
+            '&:hover': {
+              textDecoration: 'underline',
+              color: 'primary.main',
+            },
+          }}
+        >
+          {row.first_name}
+        </Box>
+      ),
     },
     {
       id: 'last_name',
       numeric: false,
       disablePadding: false,
       label: t('pages.users.last_name'),
+      // Add a custom render function for this column specifically
+      customRender: (row) => (
+        <Box
+          component="span"
+          onClick={(e) => handleUserNameClick(e, row.id)}
+          sx={{
+            cursor: 'pointer',
+            '&:hover': {
+              textDecoration: 'underline',
+              color: 'primary.main',
+            },
+          }}
+        >
+          {row.last_name}
+        </Box>
+      ),
     },
     {
       id: 'status.name',

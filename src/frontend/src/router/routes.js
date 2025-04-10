@@ -76,8 +76,19 @@ const routes = [
 
   {
     path: '/logout',
-    component: 'pages/guest/Logout', // ✅ Add this line
+    component: 'pages/guest/Logout',
     auth: true, // Logout should only be accessible to authenticated users
+  },
+  {
+    path: '/users',
+    component: 'pages/authenticated/Users',
+    auth: true,
+  },
+
+  {
+    path: '/users/:userId',
+    component: 'pages/UserTimeline',
+    auth: true,
   },
 
   ...admin,

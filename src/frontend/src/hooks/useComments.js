@@ -24,14 +24,18 @@ export const useComments = (postId) => {
     async (page = 1, append = false) => {
       setIsLoading(true);
       try {
-        const response = await getComments(postId, { page, per_page: showComments ? 3 : 0, sort: 'asc' });
-        
+        const response = await getComments(postId, {
+          page,
+          per_page: showComments ? 3 : 0,
+          sort: 'asc',
+        });
+
         if (showComments) {
           const processedComments = response.data.map((comment) => ({
             ...comment,
             replies: [],
           }));
-  
+
           if (append) {
             setComments((prev) => [...prev, ...processedComments]);
           } else {
@@ -40,11 +44,11 @@ export const useComments = (postId) => {
               await fetchReplies(comment.id, 1);
             }
           }
-  
+
           setHasMore(response.pagination.has_more);
           setCurrentPage(page);
         }
-  
+
         // Always update the total comments count
         setTotalCommentsCount(response.pagination.total_with_replies);
       } catch (error) {
@@ -70,7 +74,7 @@ export const useComments = (postId) => {
         console.error('Error fetching total comments count:', error);
       }
     };
-  
+
     fetchTotalCommentsCount();
   }, [postId]);
 

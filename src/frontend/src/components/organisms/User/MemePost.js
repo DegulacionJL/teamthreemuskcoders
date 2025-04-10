@@ -1,3 +1,5 @@
+'use client';
+
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { ChatBubbleOutline, Share } from '@mui/icons-material';
@@ -42,6 +44,7 @@ function MemePost({
   menuAnchor,
   isMenuOpen,
   darkMode,
+  onUserNameClick,
 }) {
   const theme = useTheme();
   const { darkMode: contextDarkMode } = useCustomTheme();
@@ -204,7 +207,21 @@ function MemePost({
           </IconButton>
         }
         title={
-          <Typography variant="subtitle1" fontWeight="medium">
+          <Typography
+            variant="subtitle1"
+            fontWeight="medium"
+            onClick={(e) => (user?.id && onUserNameClick ? onUserNameClick(e, user.id) : null)}
+            sx={{
+              cursor: user?.id && onUserNameClick ? 'pointer' : 'default',
+              '&:hover':
+                user?.id && onUserNameClick
+                  ? {
+                      textDecoration: 'underline',
+                      color: theme.palette.primary.main,
+                    }
+                  : {},
+            }}
+          >
             {user
               ? `${user.first_name?.charAt(0).toUpperCase() + user.first_name?.slice(1)} ${
                   user.last_name?.charAt(0).toUpperCase() + user.last_name?.slice(1)
@@ -336,6 +353,7 @@ MemePost.propTypes = {
   menuAnchor: PropTypes.object,
   isMenuOpen: PropTypes.bool.isRequired,
   darkMode: PropTypes.bool,
+  onUserNameClick: PropTypes.func,
 };
 
 export default MemePost;
