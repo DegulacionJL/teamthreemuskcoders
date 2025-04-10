@@ -2,6 +2,7 @@
 
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
+import React from 'react';
 import { ChatBubbleOutline, Share } from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
@@ -155,6 +156,32 @@ function MemePost({
     return `${days} day${days === 1 ? '' : 's'} ago`;
   }
 
+  // Replace the formatCaption function with this simpler approach
+  const formatCaption = (text) => {
+    if (!text) return '';
+
+    // Replace newlines with <br /> tags
+    const formattedText = text.split('\n').map((line, i, arr) => (
+      <React.Fragment key={i}>
+        {line}
+        {i < arr.length - 1 && <br />}
+      </React.Fragment>
+    ));
+
+    return (
+      <Typography
+        variant="body1"
+        component="div"
+        sx={{
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
+        }}
+      >
+        {formattedText}
+      </Typography>
+    );
+  };
+
   return (
     <Card
       sx={{
@@ -244,10 +271,9 @@ function MemePost({
         </MenuItem>
       </Menu>
 
+      {/* Update the CardContent section */}
       <CardContent sx={{ pt: 0, pb: 1 }}>
-        <Typography variant="body1" sx={{ mb: 2, mt: 2 }}>
-          {currentCaption}
-        </Typography>
+        <Box sx={{ mb: 2, mt: 2 }}>{formatCaption(currentCaption)}</Box>
       </CardContent>
 
       {currentImage && (
