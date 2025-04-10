@@ -167,7 +167,7 @@ function MemePost({
         width: '100%',
         mx: 'auto',
         position: 'relative',
-        zIndex: 1,
+        // Change from 1 to 0, or remove entirely
       }}
     >
       {isLoading && (
