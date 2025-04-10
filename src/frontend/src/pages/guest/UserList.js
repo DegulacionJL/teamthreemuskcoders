@@ -1,8 +1,10 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
+import { followUser, isFollowing, unfollowUser } from 'services/follow.service';
 import { searchUsers } from 'services/user.list.service';
-import { followUser } from 'services/user.service';
 import Box from '@mui/material/Box';
 import DataTable from 'components/molecules/DataTable';
 import AddEditModal from 'components/molecules/users/AddEditModal';
@@ -11,15 +13,25 @@ import { criteria, meta as defaultMeta } from 'config/search';
 function Users() {
   const { t } = useTranslation();
   const [data, setData] = useState([]);
-  const [user] = useState(null);
+  // Replace this with your actual user data from auth context or similar
+  const [user, setUser] = useState({ role: 'user', id: 1 }); // Example user
   const [query, setQuery] = useState(criteria);
   const [meta, setMeta] = useState(defaultMeta);
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const fetchUsers = async () => {
-    const { meta, data } = await searchUsers(query);
-    setMeta({ ...meta, meta });
-    setData(data);
+    setLoading(true);
+    try {
+      const response = await searchUsers(query);
+      setMeta({ ...response.meta });
+      setData(response.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast(t('pages.users.fetch_failed'), { type: 'error' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -66,13 +78,25 @@ function Users() {
   };
 
   const handleFollow = async (id) => {
-    console.log('Follow button clicked for ID:', id); // Debugging line
+    console.log('Follow button clicked for ID:', id);
     try {
-      await followUser(id);
-      toast(t('pages.users.user_followed'), { type: 'success' });
-      fetchUsers(); // Refresh user list
+      // Check if already following
+      const isAlreadyFollowing = await isFollowing(id);
+
+      if (isAlreadyFollowing) {
+        // If already following, unfollow
+        await unfollowUser(id);
+        toast(t('pages.users.user_unfollowed'), { type: 'success' });
+      } else {
+        // If not following, follow
+        await followUser(id);
+        toast(t('pages.users.user_followed'), { type: 'success' });
+      }
+
+      // Refresh user list to update UI
+      fetchUsers();
     } catch (error) {
-      console.error('Follow request failed:', error);
+      console.error('Follow/unfollow request failed:', error);
       toast(t('pages.users.follow_failed'), { type: 'error' });
     }
   };
@@ -85,8 +109,10 @@ function Users() {
       return;
     }
 
-    let updatedList = [...data];
-    const index = updatedList.findIndex((row) => parseInt(row.id) === parseInt(response.id));
+    const updatedList = [...data];
+    const index = updatedList.findIndex(
+      (row) => Number.parseInt(row.id) === Number.parseInt(response.id)
+    );
     updatedList[index] = response;
     setData(updatedList);
     setOpen(false);
@@ -113,6 +139,7 @@ function Users() {
           handleAdd={user?.role === 'user' ? () => setOpen(true) : false}
           toolbar={true}
           alignSearchRight={true}
+          user={user}
         />
       </Box>
       <AddEditModal

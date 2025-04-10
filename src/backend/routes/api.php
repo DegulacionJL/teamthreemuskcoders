@@ -16,6 +16,7 @@ use App\Http\Controllers\CommentController;
 use Laravel\Passport\Http\Controllers\AccessTokenController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\UserListController;
+use App\Http\Controllers\FollowController;
 
 /*
 |--------------------------------------------------------------------------
@@ -73,7 +74,6 @@ Route::prefix('users')
         Route::put('{id}', [UserController::class, 'update']);
         Route::delete('bulk-delete', [UserController::class, 'bulkDelete']);
         Route::delete('{id}', [UserController::class, 'delete']);
-        Route::post('{id}/follow', [UserController::class, 'follow']);
     });
     Route::prefix('userlist')
     ->group(function () {
@@ -84,6 +84,13 @@ Route::prefix('users')
         Route::delete('bulk-delete', [UserController::class, 'bulkDelete']);
         Route::delete('{id}', [UserController::class, 'delete']);
     });
+
+    // Follow routes - update to use auth:api middleware to match your frontend
+Route::middleware('auth:api')->group(function () {
+    Route::post('/follow/{id}', [FollowController::class, 'follow']);
+    Route::post('/follow/{id}/unfollow', [FollowController::class, 'unfollow']);
+    Route::get('/is-following/{id}', [FollowController::class, 'isFollowing']);
+});
 
 Route::post('/inquiries', [InquiryController::class, 'create']);
 

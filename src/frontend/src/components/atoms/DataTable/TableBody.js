@@ -1,5 +1,10 @@
+'use client';
+
 import PropTypes from 'prop-types';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { isFollowing } from 'services/follow.service';
+import CheckIcon from '@mui/icons-material/Check';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -9,9 +14,32 @@ import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 
 function TableBody(props) {
-  console.log('TableBody props:', props);
   const { header, rows, handleFollow, handleDelete, handleEdit, actions, user } = props;
   const { t } = useTranslation();
+  const [followingStatus, setFollowingStatus] = useState({});
+
+  useEffect(() => {
+    // Check following status for each user when rows change
+    if (rows.length > 0 && user) {
+      const checkFollowingStatus = async () => {
+        const statusMap = {};
+        for (const row of rows) {
+          try {
+            if (row.id !== user.id) {
+              // Don't check following status for current user
+              const following = await isFollowing(row.id);
+              statusMap[row.id] = following;
+            }
+          } catch (error) {
+            console.error(`Error checking following status for user ${row.id}:`, error);
+          }
+        }
+        setFollowingStatus(statusMap);
+      };
+
+      checkFollowingStatus();
+    }
+  }, [rows, user]);
 
   if (!user) {
     console.error('User is undefined in TableBody component.');
@@ -52,10 +80,19 @@ function TableBody(props) {
                     </IconButton>
                   </>
                 )}
-                {user.role !== 'admin' && (
+                {user.role !== 'admin' && row.id !== user.id && (
                   <>
-                    <IconButton onClick={() => handleFollow(row.id)}>
-                      <PersonAddIcon />
+                    <IconButton
+                      onClick={() => {
+                        handleFollow(row.id);
+                        // Optimistically update UI
+                        setFollowingStatus({
+                          ...followingStatus,
+                          [row.id]: !followingStatus[row.id],
+                        });
+                      }}
+                    >
+                      {followingStatus[row.id] ? <CheckIcon color="primary" /> : <PersonAddIcon />}
                     </IconButton>
                   </>
                 )}

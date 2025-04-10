@@ -6,11 +6,6 @@ const searchUsers = async (query) => {
   return { meta, data };
 };
 
-const followUser = async (id) => {
-  const req = api.post(`/users/${id}/follow`).then(({ data }) => data);
-  return await req;
-};
-
 const createUser = async (data) => {
   const req = api.post('/users', data).then(({ data }) => data.data);
   return await req;
@@ -32,4 +27,4 @@ const deleteUser = async (id) => {
   return deleted;
 };
 
-export { searchUsers, createUser, retrieveUser, updateUser, deleteUser, followUser };
+export { searchUsers, createUser, retrieveUser, updateUser, deleteUser };
