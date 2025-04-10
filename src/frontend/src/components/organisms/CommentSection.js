@@ -5,11 +5,11 @@ import React, { useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import { Avatar, Box, Button, IconButton, InputAdornment, TextField } from '@mui/material';
-import ImagePreview from '../atoms/ImagePreview';
-import ImageUploadButton from '../molecules/ImageUploadButton';
-import CommentsList from './CommentsList';
+import ImagePreview from 'components/atoms/ImagePreview';
+import CommentsList from 'components/molecules/CommentsList';
+import ImageUploadButton from 'components/molecules/ImageUploadButton';
 
-function CommentSection({
+const CommentSection = ({
   comments,
   onAddComment,
   replyToComment,
@@ -20,28 +20,29 @@ function CommentSection({
   onDeleteClick,
   editingCommentId,
   editingCommentText,
-  onEditingTextChange,
   onLoadMoreReplies,
   onBackReplies,
   replyHasMore,
   replyPage,
-}) {
+  onReactionChange,
+  user: propUser,
+}) => {
   const [newCommentText, setNewCommentText] = useState('');
   const [newCommentImage, setNewCommentImage] = useState(null);
   const [newCommentImagePreview, setNewCommentImagePreview] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
+  const reduxUser = useSelector((state) => state.profile.user);
+  const currentUser = propUser || reduxUser;
+
   const emojiButtonRef = useRef(null);
-  const user = useSelector((state) => state.profile.user);
 
   const { refs, floatingStyles } = useFloating({
     open: showEmojiPicker,
     placement: 'bottom-end',
     middleware: [offset(12), flip(), shift({ padding: 12 })],
     whileElementsMounted: autoUpdate,
-    elements: {
-      reference: emojiButtonRef.current,
-    },
+    elements: { reference: emojiButtonRef.current },
   });
 
   const handleAddComment = () => {
@@ -61,30 +62,20 @@ function CommentSection({
   };
 
   const handleEmojiClick = (emojiObject) => {
-    setNewCommentText((prevText) => prevText + emojiObject.emoji);
+    setNewCommentText((prev) => prev + emojiObject.emoji);
   };
 
   return (
     <Box sx={{ mt: 2, px: 2, position: 'relative', zIndex: 1 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-          gap: 2,
-          mb: 2,
-        }}
-      >
+      <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 2, mb: 2 }}>
         <Avatar
-          src={user?.avatar || ''}
-          alt={`${user?.first_name} ${user?.last_name}`}
-          sx={{
-            bgcolor: user?.avatar ? 'transparent' : '#4a3b6b',
-            width: 40,
-            height: 40,
-          }}
+          src={currentUser?.avatar || ''}
+          alt={`${currentUser?.first_name} ${currentUser?.last_name}`}
+          sx={{ bgcolor: currentUser?.avatar ? 'transparent' : '#4a3b6b', width: 40, height: 40 }}
         >
-          {user ? `${user.first_name?.charAt(0) || ''}${user.last_name?.charAt(0) || ''}` : 'U'}
+          {currentUser
+            ? `${currentUser.first_name?.charAt(0) || ''}${currentUser.last_name?.charAt(0) || ''}`
+            : 'U'}
         </Avatar>
         <Box sx={{ flexGrow: 1, position: 'relative' }}>
           <TextField
@@ -111,11 +102,7 @@ function CommentSection({
           {showEmojiPicker && (
             <Box
               ref={refs.setFloating}
-              style={{
-                ...floatingStyles,
-                zIndex: 1500,
-                position: 'absolute',
-              }}
+              style={{ ...floatingStyles, zIndex: 1500, position: 'absolute' }}
               sx={{
                 '& .emoji-picker-react': {
                   boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
@@ -141,7 +128,7 @@ function CommentSection({
             <ImageUploadButton
               onChange={handleImageUpload}
               id="new-comment-image"
-              buttonVariant="button" // Changed from "text" to "button"
+              buttonVariant="button"
               buttonText="Add Image"
             />
             <Button variant="contained" onClick={handleAddComment}>
@@ -160,15 +147,15 @@ function CommentSection({
         onDeleteClick={onDeleteClick}
         editingCommentId={editingCommentId}
         editingCommentText={editingCommentText}
-        onEditingTextChange={onEditingTextChange}
         onLoadMoreReplies={onLoadMoreReplies}
         onBackReplies={onBackReplies}
         replyHasMore={replyHasMore}
         replyPage={replyPage}
+        onReactionChange={onReactionChange}
       />
     </Box>
   );
-}
+};
 
 CommentSection.propTypes = {
   comments: PropTypes.array.isRequired,
@@ -181,11 +168,12 @@ CommentSection.propTypes = {
   onDeleteClick: PropTypes.func.isRequired,
   editingCommentId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   editingCommentText: PropTypes.string,
-  onEditingTextChange: PropTypes.func.isRequired,
   onLoadMoreReplies: PropTypes.func.isRequired,
   onBackReplies: PropTypes.func.isRequired,
   replyHasMore: PropTypes.object.isRequired,
   replyPage: PropTypes.object.isRequired,
+  onReactionChange: PropTypes.func.isRequired,
+  user: PropTypes.object,
 };
 
 export default CommentSection;

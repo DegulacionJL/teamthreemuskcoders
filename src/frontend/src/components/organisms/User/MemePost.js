@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
-import { addComment, deleteComment, getComments, updateComment } from 'services/comment.service';
 import { ChatBubbleOutline, Share } from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
@@ -13,32 +12,28 @@ import {
   CardHeader,
   CardMedia,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   IconButton,
   Menu,
   MenuItem,
-  TextField,
   Typography,
   useTheme,
 } from '@mui/material';
-import { useTheme as useCustomTheme } from '../../../theme/ThemeContext';
-import ImagePreview from '../../atoms/ImagePreview';
-import ImageUploadButton from '../../molecules/ImageUploadButton';
-import CommentSection from '../CommentSection';
+import CommentFeature from 'components/organisms/CommentFeature';
+import { useTheme as useCustomTheme } from 'theme/ThemeContext';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import EditPostModal from '../EditPostModal';
 import ReportPostConfirmationModal from '../ReportPostModal';
+// Adjust path
 import PostReactions from './PostReaction';
+
+// Adjust path
 
 function MemePost({
   id,
   caption,
   image,
   timestamp,
-  user, // This is the logged-in user's data passed as a prop
+  user,
   onDelete,
   onReportPost,
   onUpdate,
@@ -54,32 +49,15 @@ function MemePost({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentCaption, setCurrentCaption] = useState(caption);
   const [currentImage, setCurrentImage] = useState(image);
-  const [postComments, setPostComments] = useState([]);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [commentToDelete, setCommentToDelete] = useState(null);
   const [isPostDeleteModalOpen, setIsPostDeleteModalOpen] = useState(false);
   const [isReportPostModalOpen, setIsReportPostModalOpen] = useState(false);
-  const [editingCommentId, setEditingCommentId] = useState(null);
-  const [editingCommentText, setEditingCommentText] = useState('');
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const [commentImage, setCommentImage] = useState(null);
-  const [updateCommentImagePreview, setUpdateCommentImagePreview] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [tempEditingText, setTempEditingText] = useState('');
-  const [showComments, setShowComments] = useState(false);
-  const [replyToComment, setReplyToComment] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [replyPage, setReplyPage] = useState({});
-  const [totalCommentsCount, setTotalCommentsCount] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
-  const [replyHasMore, setReplyHasMore] = useState({});
-  // eslint-disable-next-line no-unused-vars
   const [reactionType, setReactionType] = useState(null);
   const [likeCount, setLikeCount] = useState(0);
+  const [showComments, setShowComments] = useState(false); // Added back for toggle
 
   const isDarkMode = darkMode !== undefined ? darkMode : contextDarkMode;
 
-  // Load saved reaction state from localStorage on component mount
   useEffect(() => {
     const savedReaction = localStorage.getItem(`post_reaction_${id}`);
     const savedLikeCount = localStorage.getItem(`post_like_count_${id}`);
@@ -91,10 +69,13 @@ function MemePost({
     if (savedLikeCount) {
       setLikeCount(Number.parseInt(savedLikeCount, 10));
     } else {
-      // If no saved count, use default or fetch from API
-      setLikeCount(5); // Default value or you could fetch from API
+      setLikeCount(5); // Default value or fetch from API
     }
   }, [id]);
+
+  useEffect(() => {
+    setCurrentImage(image);
+  }, [image]);
 
   const handleSave = useCallback(
     async (newCaption, newImage, removeImage = false) => {
@@ -111,6 +92,7 @@ function MemePost({
         console.error('Error updating post:', error);
       } finally {
         setIsLoading(false);
+        setIsEditModalOpen(false);
       }
     },
     [id, onUpdate]
@@ -140,277 +122,15 @@ function MemePost({
     }
   }, [id, onReportPost]);
 
-  const fetchComments = useCallback(
-    async (page = 1, append = false) => {
-      if (!showComments) return; // Only fetch if comments section is visible
-      setIsLoading(true);
-      try {
-        const response = await getComments(id, { page, per_page: 3, sort: 'asc' });
-        const processedComments = response.data.map((comment) => ({
-          ...comment,
-          replies: [], // Initialize replies as empty, fetch separately
-        }));
-
-        if (append) {
-          setPostComments((prevComments) => [...prevComments, ...processedComments]);
-        } else {
-          setPostComments(processedComments);
-          // Fetch initial replies for each comment
-          for (const comment of processedComments) {
-            await fetchReplies(comment.id, 1);
-          }
-        }
-
-        setTotalCommentsCount(response.pagination.total_with_replies);
-        setHasMore(response.pagination.has_more);
-        setCurrentPage(page);
-      } catch (error) {
-        console.error('Error fetching comments:', error);
-        if (!append) {
-          setPostComments([]);
-          setTotalCommentsCount(0);
-          setHasMore(false);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [id, showComments]
-  );
-
-  const fetchReplies = useCallback(
-    async (commentId, page = 1, append = false) => {
-      if (!showComments) return; // Only fetch replies if comments section is visible
-      setIsLoading(true);
-      try {
-        const response = await getComments(id, {
-          parent_id: commentId,
-          page,
-          per_page: 3,
-          sort: 'asc',
-        });
-        const newReplies = response.data || [];
-        setPostComments((prevComments) =>
-          prevComments.map((comment) => {
-            if (comment.id === commentId) {
-              return {
-                ...comment,
-                replies: append ? [...comment.replies, ...newReplies] : newReplies,
-              };
-            }
-            return comment;
-          })
-        );
-        setReplyHasMore((prev) => ({
-          ...prev,
-          [commentId]: response.pagination.has_more,
-        }));
-        setReplyPage((prev) => ({
-          ...prev,
-          [commentId]: page,
-        }));
-      } catch (error) {
-        console.error('Error fetching replies:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [id, showComments]
-  );
-
-  // Only fetch comments when showComments becomes true for the first time
-  useEffect(() => {
-    if (showComments && postComments.length === 0) {
-      fetchComments(1);
-    }
-  }, [showComments, postComments.length, fetchComments]);
-
-  useEffect(() => {
-    setCurrentImage(image);
-  }, [image]);
-
-  const handleAddReply = useCallback(
-    async (parentId, text, image) => {
-      if (!text.trim() && !image) return;
-      setIsLoading(true);
-      try {
-        const parentComment = postComments.find((comment) =>
-          comment.replies.some((reply) => reply.id === parentId)
-        );
-        const finalParentId = parentComment ? parentComment.id : parentId;
-
-        const newCommentResponse = await addComment(id, text, image, finalParentId);
-        // Ensure the new reply includes the current user's data
-        const newComment = {
-          ...newCommentResponse,
-          user: user, // Use the logged-in user's data from props
-          replies: [], // Initialize replies as empty
-        };
-
-        // Update local state with new reply
-        setPostComments((prevComments) =>
-          prevComments.map((comment) => {
-            if (comment.id === finalParentId) {
-              return {
-                ...comment,
-                replies: [...(comment.replies || []), newComment],
-              };
-            }
-            return comment;
-          })
-        );
-        setReplyToComment(null);
-        setReplyPage((prev) => ({ ...prev, [finalParentId]: 1 }));
-        await fetchReplies(finalParentId, 1);
-      } catch (error) {
-        console.error('Error adding reply:', error);
-        await fetchComments(1); // Fallback: refetch all if something goes wrong
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [id, fetchComments, postComments, fetchReplies, user] // Added user as a dependency
-  );
-
-  const handleAddComment = useCallback(
-    async (text, image) => {
-      if (!text.trim() && !image) return;
-      setIsLoading(true);
-      try {
-        await addComment(id, text, image);
-        await fetchComments(1);
-      } catch (error) {
-        console.error('Error adding comment:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [id, fetchComments]
-  );
-
-  const confirmDeleteComment = useCallback((commentId) => {
-    setCommentToDelete(commentId);
-    setIsDeleteModalOpen(true);
-  }, []);
-
-  const handleDeleteComment = useCallback(async () => {
-    if (commentToDelete) {
-      setIsLoading(true);
-      try {
-        await deleteComment(id, commentToDelete);
-        await fetchComments(1);
-      } catch (error) {
-        console.error('Error deleting comment:', error);
-      } finally {
-        setCommentToDelete(null);
-        setIsDeleteModalOpen(false);
-        setIsLoading(false);
-      }
-    }
-  }, [commentToDelete, id, fetchComments]);
-
-  const handleEditCommentClick = useCallback((comment) => {
-    setEditingCommentId(comment.id);
-    setEditingCommentText(comment.text || '');
-    setTempEditingText(comment.text || '');
-    setIsUpdateModalOpen(true);
-    setUpdateCommentImagePreview(comment.image || null);
-  }, []);
-
-  const handleUpdateCommentImage = useCallback((e) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setCommentImage(file);
-      setUpdateCommentImagePreview(URL.createObjectURL(file));
-    }
-  }, []);
-
-  const handleUpdateComment = useCallback(async () => {
-    if (!tempEditingText.trim() && !commentImage && updateCommentImagePreview === null) return;
-
-    setIsLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append('text', tempEditingText || '');
-
-      if (commentImage) {
-        formData.append('image', commentImage);
-      } else if (updateCommentImagePreview === null) {
-        formData.append('remove_image', true);
-      }
-      formData.append('_method', 'PUT');
-
-      await updateComment(id, editingCommentId, formData);
-      await fetchComments(1);
-
-      setEditingCommentId(null);
-      setEditingCommentText('');
-      setTempEditingText('');
-      setIsUpdateModalOpen(false);
-      setCommentImage(null);
-      setUpdateCommentImagePreview(null);
-    } catch (error) {
-      console.error('Error updating comment:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [
-    tempEditingText,
-    commentImage,
-    updateCommentImagePreview,
-    id,
-    editingCommentId,
-    fetchComments,
-  ]);
-  const handleCancelUpdateComment = useCallback(() => {
-    setEditingCommentId(null);
-    setEditingCommentText('');
-    setIsUpdateModalOpen(false);
-    setCommentImage(null);
-    setUpdateCommentImagePreview(null);
-  }, []);
-
-  const handleLoadMore = useCallback(() => {
-    fetchComments(currentPage + 1, true);
-  }, [fetchComments, currentPage]);
-
-  const handleLoadMoreReplies = useCallback(
-    (commentId) => {
-      const currentPage = replyPage[commentId] || 1;
-      fetchReplies(commentId, currentPage + 1, true);
-    },
-    [fetchReplies, replyPage]
-  );
-
-  const handleBackReplies = useCallback(
-    (commentId) => {
-      const currentPage = replyPage[commentId] || 1;
-      if (currentPage > 1) {
-        fetchReplies(commentId, currentPage - 1);
-      }
-    },
-    [fetchReplies, replyPage]
-  );
-
   const handleReactionChange = useCallback((postId, hasReacted, newReactionType, count) => {
-    console.log(
-      `Post ${postId} reaction changed: ${hasReacted ? 'added' : 'removed'} ${
-        newReactionType || ''
-      }, count: ${count}`
-    );
-
-    // Update the like count in the parent component
     setLikeCount(count);
     setReactionType(newReactionType);
 
-    // Save reaction state to localStorage to persist across page refreshes
     if (hasReacted && newReactionType) {
       localStorage.setItem(`post_reaction_${postId}`, newReactionType);
     } else {
       localStorage.removeItem(`post_reaction_${postId}`);
     }
-
-    // Save like count to localStorage
     localStorage.setItem(`post_like_count_${postId}`, count.toString());
   }, []);
 
@@ -527,28 +247,25 @@ function MemePost({
       )}
 
       <CardActions disableSpacing sx={{ p: 0 }}>
-        {/* Reactions component */}
         <PostReactions
           postId={id}
           isDarkMode={isDarkMode}
           onReactionChange={handleReactionChange}
-          initialReactionType={reactionType} // Pass the saved reaction type
+          initialReactionType={reactionType}
         />
-
         <Button
           startIcon={<ChatBubbleOutline />}
           size="small"
           onClick={() => setShowComments(!showComments)}
           sx={{ color: theme.palette.text.secondary }}
         >
-          {totalCommentsCount} Comments
+          Comments
         </Button>
         <Button startIcon={<Share />} size="small" sx={{ color: theme.palette.text.secondary }}>
           Share
         </Button>
       </CardActions>
 
-      {/* Reaction count display below the action buttons */}
       <Box
         sx={{
           px: 0,
@@ -556,8 +273,6 @@ function MemePost({
           mt: 0,
           display: 'flex',
           alignItems: 'center',
-          // border: '1px solid #eee',
-          borderRadius: '4px',
           mx: 1,
         }}
       >
@@ -578,34 +293,7 @@ function MemePost({
         )}
       </Box>
 
-      {showComments && (
-        <>
-          <CommentSection
-            comments={postComments}
-            onAddComment={handleAddComment}
-            replyToComment={replyToComment}
-            onReplyClick={setReplyToComment}
-            onCancelReply={() => setReplyToComment(null)}
-            onAddReply={handleAddReply}
-            onEditClick={handleEditCommentClick}
-            onDeleteClick={confirmDeleteComment}
-            editingCommentId={editingCommentId}
-            editingCommentText={editingCommentText}
-            onEditingTextChange={setEditingCommentText}
-            onLoadMoreReplies={handleLoadMoreReplies}
-            onBackReplies={handleBackReplies}
-            replyHasMore={replyHasMore}
-            replyPage={replyPage}
-          />
-          {hasMore && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-              <Button onClick={handleLoadMore} disabled={isLoading}>
-                Load More
-              </Button>
-            </Box>
-          )}
-        </>
-      )}
+      {showComments && <CommentFeature postId={id} user={user} />}
 
       <EditPostModal
         open={isEditModalOpen}
@@ -630,74 +318,6 @@ function MemePost({
         title="Delete Post"
         content="Are you sure you want to delete this post? This action cannot be undone."
       />
-
-      <DeleteConfirmationModal
-        open={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={handleDeleteComment}
-        title="Delete Comment"
-        content="Are you sure you want to delete this comment? This action cannot be undone."
-      />
-
-      <Dialog
-        open={isUpdateModalOpen}
-        onClose={handleCancelUpdateComment}
-        maxWidth="sm"
-        fullWidth
-        disableAutoFocus
-        disableEnforceFocus
-      >
-        <DialogTitle>Edit Comment</DialogTitle>
-        <DialogContent>
-          <TextField
-            margin="dense"
-            fullWidth
-            multiline
-            rows={3}
-            value={tempEditingText}
-            onChange={(e) => setTempEditingText(e.target.value)}
-            placeholder="Edit your comment here...."
-            sx={{ mb: 2 }}
-            disabled={isLoading}
-          />
-
-          {updateCommentImagePreview && (
-            <Box sx={{ mb: 2 }}>
-              <ImagePreview
-                src={updateCommentImagePreview || '/placeholder.svg'}
-                onRemove={() => setUpdateCommentImagePreview(null)}
-                maxHeight="150px"
-              />
-            </Box>
-          )}
-          {!updateCommentImagePreview && (
-            <Box sx={{ mb: 2 }}>
-              <ImageUploadButton
-                onChange={handleUpdateCommentImage}
-                id="update-comment-image"
-                buttonVariant="button"
-                buttonText="Add Image"
-                buttonProps={{ disabled: isLoading }}
-              />
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelUpdateComment} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button onClick={handleUpdateComment} variant="contained" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
-                Updating...
-              </>
-            ) : (
-              'Update'
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Card>
   );
 }
