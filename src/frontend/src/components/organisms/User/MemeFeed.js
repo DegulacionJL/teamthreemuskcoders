@@ -1,6 +1,9 @@
+'use client';
+
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
+import { useNavigate } from 'react-router-dom';
 import {
   createMemePost,
   deletePost,
@@ -40,6 +43,7 @@ import MemePost from './MemePost';
 function MemeFeed() {
   const theme = useTheme(); // MUI theme
   const { darkMode } = useCustomTheme(); // Our custom theme context
+  const navigate = useNavigate(); // Add this line
   const [caption, setCaption] = useState('');
   const [image, setImage] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
@@ -273,6 +277,12 @@ function MemeFeed() {
     setCaption(memeCaption);
     setImagePreview(editedImage);
     setShowMemeCreator(false);
+  };
+
+  const handleUserNameClick = (event, userId) => {
+    event.preventDefault();
+    event.stopPropagation();
+    navigate(`/users/${userId}`);
   };
 
   // Sample data for UI enhancements
@@ -611,6 +621,7 @@ function MemeFeed() {
                 selectedPostId={selectedPostId}
                 isMenuOpen={open && selectedPostId === post.id}
                 darkMode={darkMode}
+                onUserNameClick={handleUserNameClick}
               />
             ))}
           </InfiniteScroll>
@@ -669,7 +680,23 @@ function MemeFeed() {
                     U{index}
                   </Avatar>
                 </ListItemAvatar>
-                <ListItemText primary={`User ${index}`} secondary={`@user${index}`} />
+                <ListItemText
+                  primary={
+                    <Typography
+                      sx={{
+                        cursor: 'pointer',
+                        '&:hover': {
+                          textDecoration: 'underline',
+                          color: theme.palette.primary.main,
+                        },
+                      }}
+                      onClick={(e) => handleUserNameClick(e, index)}
+                    >
+                      {`User ${index}`}
+                    </Typography>
+                  }
+                  secondary={`@user${index}`}
+                />
               </ListItem>
             ))}
           </List>
@@ -751,7 +778,20 @@ function MemeFeed() {
                   </Avatar>
                 </ListItemIcon>
                 <ListItemText
-                  primary={user.name}
+                  primary={
+                    <Typography
+                      sx={{
+                        cursor: 'pointer',
+                        '&:hover': {
+                          textDecoration: 'underline',
+                          color: theme.palette.primary.main,
+                        },
+                      }}
+                      onClick={(e) => handleUserNameClick(e, user.id)}
+                    >
+                      {user.name}
+                    </Typography>
+                  }
                   secondary={`${user.points.toLocaleString()} points`}
                 />
                 {user.rank === 1 && (

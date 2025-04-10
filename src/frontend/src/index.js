@@ -25,15 +25,3 @@ root.render(
     </Provider>
   </React.StrictMode>
 );
-
-// Use this if you're NOT using Redux
-// ReactDOM.render(
-//   <React.StrictMode>
-//     <BrowserRouter>
-//       <ThemeProvider>
-//         <App />
-//       </ThemeProvider>
-//     </BrowserRouter>
-//   </React.StrictMode>,
-//   document.getElementById('root')
-// );

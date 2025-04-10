@@ -106,7 +106,7 @@ public function getPosts($page = 1)
         // Fetch posts with pagination, including related user and image data
         $posts = Post::with('user', 'image')
             ->latest()
-            ->paginate(10, ['*'], 'page', $page);
+            ->paginate(5, ['*'], 'page', $page);
         
         // Get the post IDs for efficient querying
         $postIds = [];
