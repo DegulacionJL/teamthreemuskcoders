@@ -3,6 +3,7 @@
 namespace App\Services\API;
 
 use App\Models\Comment;
+use App\Models\CommentLike;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
@@ -197,4 +198,81 @@ class CommentService
 
         $comment->delete();
     }
+
+    /**
+     * Like a comment.
+     *
+     * @param int $commentId
+     * @return Comment
+     * @throws Exception
+     */
+    public function likeComment($commentId)
+{
+    if (!Auth::check()) {
+        throw new Exception("Unauthorized. Please log in.");
+    }
+
+    $comment = Comment::findOrFail($commentId);
+    $userId = Auth::id();
+
+    $existingLike = CommentLike::where('user_id', $userId)
+        ->where('comment_id', $commentId)
+        ->first();
+
+    if ($existingLike) {
+        return [
+            'like_count' => $comment->likes()->count()
+        ];
+    }
+
+    CommentLike::create([
+        'user_id' => $userId,
+        'comment_id' => $commentId
+    ]);
+
+    return [
+        'like_count' => $comment->likes()->count()
+    ];
+}
+
+    /**
+     * Unlike a comment.
+     *
+     * @param int $commentId
+     * @return Comment
+     * @throws Exception
+     */
+    public function unlikeComment($commentId)
+{
+    if (!Auth::check()) {
+        throw new Exception("Unauthorized. Please log in.");
+    }
+
+    $comment = Comment::findOrFail($commentId);
+    $userId = Auth::id();
+
+    $like = CommentLike::where('user_id', $userId)
+        ->where('comment_id', $commentId)
+        ->first();
+
+    if ($like) {
+        $like->delete();
+    }
+
+    return [
+        'like_count' => $comment->likes()->count()
+    ];
+}
+
+    public function getCommentLikes($commentId)
+{
+    $comment = Comment::findOrFail($commentId);
+    $userId = Auth::check() ? Auth::id() : null;
+
+    return [
+        'like_count' => $comment->likes()->count(),
+        'user_has_liked' => $userId ? $comment->likes()->where('user_id', $userId)->exists() : false
+    ];
+}
+
 }

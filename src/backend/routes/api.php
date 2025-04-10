@@ -118,6 +118,13 @@ Route::prefix('posts/{postId}/comments')->group(function () {
     Route::delete('/{commentId}', [CommentController::class, 'destroy'])->middleware('auth:api');
 });
 
+// likes route
+Route::prefix('likes')->middleware('auth:api')->group(function() {
+    Route::post('/comments/{comment}', [CommentController::class, 'likeComment']);
+    Route::delete('/comments/{comment}/unlike', [CommentController::class, 'unlikeComment']); // Changed to DELETE
+    Route::get('/comments/{comment}/likes', [CommentController::class, 'getCommentLikes']);
+});
+
 Route::get('permissions', [PermissionController::class, 'index']);
 
 Route::get('notifications', [NotificationController::class, 'index']);
