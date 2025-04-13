@@ -32,6 +32,33 @@ const CommentItem = ({
   const handleLoadMore = () => onLoadMoreReplies && onLoadMoreReplies(comment.id);
   const handleBack = () => onBackReplies && currentReplyPage > 1 && onBackReplies(comment.id);
 
+  // Function to format the comment text, preserving new lines, spaces, and indentation
+  const formatCommentText = (text) => {
+    if (!text) return null;
+
+    // Split the text by new lines and map each line to a React fragment
+    const formattedText = text.split('\n').map((line, index, arr) => (
+      <React.Fragment key={index}>
+        {line}
+        {index < arr.length - 1 && <br />}
+      </React.Fragment>
+    ));
+
+    return (
+      <Typography
+        variant="body2"
+        component="div"
+        sx={{
+          mt: 0.5,
+          whiteSpace: 'pre-wrap', // Preserve spaces and indentation
+          wordBreak: 'break-word',
+        }}
+      >
+        {formattedText}
+      </Typography>
+    );
+  };
+
   return (
     <Box
       sx={{
@@ -56,11 +83,7 @@ const CommentItem = ({
           </Typography>
         </Box>
 
-        {comment.text && (
-          <Typography variant="body2" sx={{ mt: 0.5 }}>
-            {comment.text}
-          </Typography>
-        )}
+        {comment.text && formatCommentText(comment.text)}
         {comment.image && (
           <Box sx={{ mt: 1 }}>
             <ImagePreview src={comment.image} maxHeight="200px" showRemoveButton={false} />
