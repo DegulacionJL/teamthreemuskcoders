@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Box, Button, Typography } from '@mui/material';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { Box, Button, Typography, useTheme } from '@mui/material'; // Import useTheme
 import AvatarWithInitials from 'components/atoms/AvatarWithInitial';
 import ImagePreview from 'components/atoms/ImagePreview';
 import CommentActions from 'components/molecules/CommentActions';
@@ -28,9 +29,18 @@ const CommentItem = ({
   const isMaxDepthReached = depth >= maxDepth;
   const hasMoreReplies = !!replyHasMore[comment.id];
   const currentReplyPage = replyPage[comment.id] || 1;
+  const navigate = useNavigate(); // Initialize navigate
+  const theme = useTheme(); // Initialize theme for styling
 
   const handleLoadMore = () => onLoadMoreReplies && onLoadMoreReplies(comment.id);
   const handleBack = () => onBackReplies && currentReplyPage > 1 && onBackReplies(comment.id);
+
+  // Function to handle author click
+  const handleAuthorClick = (e) => {
+    if (comment.user?.id) {
+      navigate(`/users/${comment.user.id}`);
+    }
+  };
 
   // Function to format the comment text, preserving new lines, spaces, and indentation
   const formatCommentText = (text) => {
@@ -75,7 +85,20 @@ const CommentItem = ({
       <AvatarWithInitials user={comment.user} sx={{ mr: 1, width: 32, height: 32 }} />
       <Box sx={{ flexGrow: 1 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+          <Typography
+            variant="subtitle2"
+            sx={{
+              fontWeight: 'bold',
+              cursor: comment.user?.id ? 'pointer' : 'default',
+              '&:hover': comment.user?.id
+                ? {
+                    textDecoration: 'underline',
+                    color: theme.palette.primary.main,
+                  }
+                : {},
+            }}
+            onClick={handleAuthorClick}
+          >
             {comment.user?.full_name || 'Unknown User'}
           </Typography>
           <Typography variant="caption" color="gray">

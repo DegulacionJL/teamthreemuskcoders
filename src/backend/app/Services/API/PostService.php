@@ -215,6 +215,56 @@ public function getPosts($page = 1)
 
     }
 
+    public function getLeaderboard($period = 'daily')
+    {
+        try {
+            // Determine the time range based on the period
+            $startDate = now();
+            if ($period === 'daily') {
+                $startDate = now()->subDay();
+            } elseif ($period === 'weekly') {
+                $startDate = now()->subWeek();
+            } elseif ($period === 'monthly') {
+                $startDate = now()->subMonth();
+            } else {
+                throw new Exception('Invalid period specified. Use "daily", "weekly", or "monthly".');
+            }
+
+            // Fetch users with the most likes on their posts within the time range
+            $leaderboard = Like::select('posts.user_id')
+                ->selectRaw('users.first_name, users.last_name, COUNT(*) as total_likes')
+                ->join('posts', 'likes.post_id', '=', 'posts.id')
+                ->join('users', 'posts.user_id', '=', 'users.id')
+                ->where('likes.created_at', '>=', $startDate)
+                ->groupBy('posts.user_id', 'users.first_name', 'users.last_name')
+                ->orderByDesc('total_likes')
+                ->take(3) // Get top 3 users
+                ->get();
+
+            // Format the leaderboard data
+            $result = $leaderboard->map(function ($item, $index) {
+                return [
+                    'id' => $item->user_id,
+                    'name' => "{$item->first_name} {$item->last_name}",
+                    'points' => $item->total_likes,
+                    'rank' => $index + 1,
+                ];
+            })->toArray();
+
+            return [
+                'leaderboard' => $result,
+                'period' => $period,
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error in getLeaderboard: ' . $e->getMessage());
+            return [
+                'leaderboard' => [],
+                'period' => $period,
+                'error' => 'Failed to fetch leaderboard',
+            ];
+        }
+    }
+
     public function getLikes($postId)
     {
         try {

@@ -89,6 +89,16 @@ const unlikePost = async function (postId) {
   return await req;
 };
 
+const getLeaderboard = async (period = 'daily') => {
+  try {
+    const response = await api.get(`/posts/leaderboard?period=${period}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    throw error;
+  }
+};
+
 const getLikes = async (postId) => {
   try {
     const response = await api.get(`/likes/${postId}/likes`);
@@ -125,4 +135,5 @@ export {
   unlikePost,
   getLikes,
   reportPost,
+  getLeaderboard,
 };

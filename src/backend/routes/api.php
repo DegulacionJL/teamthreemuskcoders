@@ -45,6 +45,7 @@ Route::prefix('posts')
         Route::put('/{post}', [PostController::class, 'updatePost'])->middleware('auth:api');
         Route::delete('/{post}', [PostController::class, 'deletePost'])->middleware('auth:api');
         Route::post('/{post}/image', [PostController::class, 'updatePostImage'])->middleware('auth:api');
+        Route::get('/leaderboard', [PostController::class, 'getLeaderboard'])->middleware('auth:api'); // New endpoint
     });
 
     Route::prefix('likes')->group(function() {
