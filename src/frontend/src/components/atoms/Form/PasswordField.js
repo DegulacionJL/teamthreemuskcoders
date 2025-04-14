@@ -58,6 +58,7 @@ const PasswordField = forwardRef(function PasswordField(props, ref) {
       letterSpacing: 1,
       fontSize: theme.typography.body2.fontSize,
       transform: 'none',
+      color: error ? theme.palette.error.main : theme.palette.text.primary, // Dynamic label color
     }),
   };
 
@@ -66,11 +67,12 @@ const PasswordField = forwardRef(function PasswordField(props, ref) {
     type: hidePassword ? 'password' : 'text',
     sx: (theme) => ({
       borderRadius: 1,
-      background: 'white',
+      background: theme.palette.background.paper, // Dynamic background color
       fontSize: theme.typography.body1.fontSize,
-      border: `1px solid ${error ? theme.palette.error.main : theme.palette.grey[400]}`,
+      border: `1px solid ${error ? theme.palette.error.main : theme.palette.grey[400]}`, // Dynamic border color
+      color: theme.palette.text.primary, // Dynamic text color
       '&:active, &:focus, &:hover': {
-        border: `1px solid ${theme.palette[color].main}`,
+        border: `1px solid ${theme.palette[color].main}`, // Dynamic focus/hover border color
       },
       py: 0.75,
       px: 1,
