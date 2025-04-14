@@ -1,3 +1,4 @@
+// MemeFeed.js
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
@@ -9,6 +10,7 @@ import {
   reportPost,
   updateImage,
   updatePost,
+  getLeaderboard, // Import the new service
 } from 'services/meme.service';
 import { LocalFireDepartment, Star, ThumbUp, TrendingUp, Whatshot } from '@mui/icons-material';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
@@ -39,9 +41,9 @@ import { useTheme as useCustomTheme } from '../../../theme/ThemeContext';
 import MemePost from './MemePost';
 
 function MemeFeed() {
-  const theme = useTheme(); // MUI theme
-  const { darkMode } = useCustomTheme(); // Our custom theme context
-  const navigate = useNavigate(); // Add this line
+  const theme = useTheme();
+  const { darkMode } = useCustomTheme();
+  const navigate = useNavigate();
   const [caption, setCaption] = useState('');
   const [image, setImage] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
@@ -53,30 +55,30 @@ function MemeFeed() {
   const [tabValue, setTabValue] = useState(0);
   const [showMemeCreator, setShowMemeCreator] = useState(false);
   const [error, setError] = useState(null);
+  const [leaderboard, setLeaderboard] = useState([]); // State for dynamic leaderboard
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboardError, setLeaderboardError] = useState(null);
 
-  // State for menu handling
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedPostId, setSelectedPostId] = useState(null);
   const open = Boolean(anchorEl);
 
-  // Open menu
   const handleMenuOpen = (event, postId) => {
     setAnchorEl(event.currentTarget);
     setSelectedPostId(postId);
   };
 
-  // Close menu
   const handleMenuClose = () => {
     setAnchorEl(null);
     setSelectedPostId(null);
   };
 
-  // Handle delete post
   const handleDelete = async (postId) => {
     try {
       await deletePost(postId);
       setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
       handleMenuClose();
+      fetchLeaderboard(getPeriodFromTab(tabValue)); // Refresh leaderboard after deletion
     } catch (error) {
       console.error('Error deleting post:', error);
       setError('Failed to delete post. Please try again.');
@@ -88,13 +90,13 @@ function MemeFeed() {
       await reportPost(postId);
       setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
       handleMenuClose();
+      fetchLeaderboard(getPeriodFromTab(tabValue)); // Refresh leaderboard after reporting
     } catch (error) {
       console.error('Failed to report Post: ', error);
       setError('Failed to report Post. Please try again.');
     }
   };
 
-  // Helper function to convert data URL to File
   const dataURLtoFile = (dataurl, filename) => {
     const arr = dataurl.split(',');
     const mime = arr[0].match(/:(.*?);/)?.[1];
@@ -109,7 +111,6 @@ function MemeFeed() {
     return new File([u8arr], filename, { type: mime });
   };
 
-  // Handle new post creation
   const handlePost = async () => {
     try {
       const formData = new FormData();
@@ -123,10 +124,10 @@ function MemeFeed() {
         throw new Error('Failed to create post');
       }
 
-      // Reset page to 1 and fetch fresh posts
       setPage(1);
       setPosts([]);
       await fetchPosts(1);
+      fetchLeaderboard(getPeriodFromTab(tabValue)); // Refresh leaderboard after new post
 
       setCaption('');
       setImage(null);
@@ -157,17 +158,16 @@ function MemeFeed() {
         );
       }
 
-      // Reset page to 1 and fetch fresh posts
       setPage(1);
       setPosts([]);
       await fetchPosts(1);
+      fetchLeaderboard(getPeriodFromTab(tabValue)); // Refresh leaderboard after update
     } catch (error) {
       console.error('Error updating post:', error);
       setError('Failed to update post. Please try again.');
     }
   };
 
-  // Fetch posts from API
   const fetchPosts = async (pageNumber) => {
     setLoading(true);
     setError(null);
@@ -243,8 +243,25 @@ function MemeFeed() {
     }
   };
 
+  // Fetch leaderboard data based on the period
+  const fetchLeaderboard = async (period) => {
+    setLeaderboardLoading(true);
+    setLeaderboardError(null);
+    try {
+      const response = await getLeaderboard(period);
+      setLeaderboard(response.leaderboard || []);
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+      setLeaderboardError('Failed to load leaderboard.');
+      setLeaderboard([]);
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchPosts(1);
+    fetchLeaderboard('daily'); // Initial fetch for "Daily" tab
   }, []);
 
   const loadMorePosts = () => {
@@ -264,13 +281,26 @@ function MemeFeed() {
     }
   };
 
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
+  const getPeriodFromTab = (tabIndex) => {
+    switch (tabIndex) {
+      case 0:
+        return 'daily';
+      case 1:
+        return 'weekly';
+      case 2:
+        return 'monthly';
+      default:
+        return 'daily';
+    }
   };
 
-  // Handle meme creator save
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+    const period = getPeriodFromTab(newValue);
+    fetchLeaderboard(period); // Fetch leaderboard for the selected period
+  };
+
   const handleMemeCreatorSave = (editedImage, memeCaption) => {
-    // Convert the data URL to a file
     const file = dataURLtoFile(editedImage, 'meme.png');
     setImage(file);
     setCaption(memeCaption);
@@ -284,7 +314,6 @@ function MemeFeed() {
     navigate(`/users/${userId}`);
   };
 
-  // Sample data for UI enhancements
   const categories = [
     { id: 1, name: 'Popular Memes', icon: <LocalFireDepartment color="primary" />, active: true },
     { id: 2, name: 'Trending Now', icon: <TrendingUp />, active: false },
@@ -298,12 +327,6 @@ function MemeFeed() {
     { id: 3, label: '#MlbbFunnyMoments', color: 'primary' },
     { id: 4, label: '#ProgrammerHumor', color: 'secondary' },
     { id: 5, label: '#DadJokes', color: 'success' },
-  ];
-
-  const leaderboard = [
-    { id: 1, name: 'MemeKing', points: 10450, rank: 1 },
-    { id: 2, name: 'FunnyGuy', points: 8230, rank: 2 },
-    { id: 3, name: 'MemeLord', points: 6780, rank: 3 },
   ];
 
   return (
@@ -337,7 +360,6 @@ function MemeFeed() {
           display: { xs: 'none', md: 'block' },
         }}
       >
-        {/* Meme Categories */}
         <Card sx={{ mb: 3 }}>
           <CardHeader
             title="Meme Categories"
@@ -370,7 +392,6 @@ function MemeFeed() {
           </List>
         </Card>
 
-        {/* Daily Challenge */}
         <Card>
           <CardHeader
             title="Daily Challenge"
@@ -443,7 +464,6 @@ function MemeFeed() {
           mt: 2,
         }}
       >
-        {/* Create Post Section */}
         <Card sx={{ width: '100%', mb: 3, maxWidth: '80%' }}>
           <CardContent>
             {showMemeCreator ? (
@@ -618,7 +638,6 @@ function MemeFeed() {
           </CardContent>
         </Card>
 
-        {/* Error message */}
         {error && (
           <Box
             sx={{
@@ -635,14 +654,13 @@ function MemeFeed() {
           </Box>
         )}
 
-        {/* Meme Posts with InfiniteScroll */}
         <Box sx={{ width: '100%', maxWidth: '80%' }}>
           <InfiniteScroll
             dataLength={posts.length}
             next={loadMorePosts}
             hasMore={hasMore}
             loader={
-              <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+              <Box sx={{ TELEGRAMdisplay: 'flex', justifyContent: 'center', my: 4 }}>
                 <CircularProgress color="primary" />
               </Box>
             }
@@ -654,7 +672,7 @@ function MemeFeed() {
               </Box>
             }
             scrollThreshold={0.9}
-            style={{ overflow: 'visible' }} // Prevent scrollbar on the component itself
+            style={{ overflow: 'visible' }}
           >
             {posts.map((post) => (
               <MemePost
@@ -693,7 +711,6 @@ function MemeFeed() {
           display: { xs: 'none', md: 'block' },
         }}
       >
-        {/* Suggested Users */}
         <Card sx={{ mb: 3 }}>
           <CardHeader
             title="Suggested Users"
@@ -754,7 +771,6 @@ function MemeFeed() {
           </List>
         </Card>
 
-        {/* Trending Tags */}
         <Card sx={{ mb: 3 }}>
           <CardHeader
             title="Trending Memes"
@@ -778,16 +794,16 @@ function MemeFeed() {
                       tag.color === 'primary'
                         ? '#4a3b6b'
                         : tag.color === 'secondary'
-                        ? '#5d4037'
-                        : '#2e7d32',
+                          ? '#5d4037'
+                          : '#2e7d32',
                     color: '#ffffff',
                     '&:hover': {
                       bgcolor:
                         tag.color === 'primary'
                           ? '#5a4b7b'
                           : tag.color === 'secondary'
-                          ? '#6d5047'
-                          : '#3e8d42',
+                            ? '#6d5047'
+                            : '#3e8d42',
                     },
                   }}
                 />
@@ -796,7 +812,6 @@ function MemeFeed() {
           </CardContent>
         </Card>
 
-        {/* Leaderboard */}
         <Card>
           <CardHeader
             title="Leaderboard"
@@ -813,53 +828,69 @@ function MemeFeed() {
               <Tab label="Monthly" />
             </Tabs>
           </Box>
-          <List disablePadding>
-            {leaderboard.map((user) => (
-              <ListItem key={user.id} divider>
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <Avatar
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      bgcolor:
-                        user.rank === 1 ? '#ffb300' : user.rank === 2 ? 'grey.500' : '#CD7F32',
-                      color: user.rank === 1 ? '#000000' : '#ffffff',
-                    }}
-                  >
-                    {user.rank}
-                  </Avatar>
-                </ListItemIcon>
-                <ListItemText
-                  primary={
-                    <Typography
+          {leaderboardLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : leaderboardError ? (
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              <Typography color="error">{leaderboardError}</Typography>
+            </Box>
+          ) : leaderboard.length === 0 ? (
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary">
+                No data available for this period.
+              </Typography>
+            </Box>
+          ) : (
+            <List disablePadding>
+              {leaderboard.map((user) => (
+                <ListItem key={user.id} divider>
+                  <ListItemIcon sx={{ minWidth: 40 }}>
+                    <Avatar
                       sx={{
-                        cursor: 'pointer',
-                        '&:hover': {
-                          textDecoration: 'underline',
-                          color: theme.palette.primary.main,
-                        },
+                        width: 32,
+                        height: 32,
+                        bgcolor:
+                          user.rank === 1 ? '#ffb300' : user.rank === 2 ? 'grey.500' : '#CD7F32',
+                        color: user.rank === 1 ? '#000000' : '#ffffff',
                       }}
-                      onClick={(e) => handleUserNameClick(e, user.id)}
                     >
-                      {user.name}
-                    </Typography>
-                  }
-                  secondary={`${user.points.toLocaleString()} points`}
-                />
-                {user.rank === 1 && (
-                  <Chip
-                    icon={<Whatshot />}
-                    label="King"
-                    size="small"
-                    sx={{
-                      bgcolor: '#ffb300',
-                      color: '#000000',
-                    }}
+                      {user.rank}
+                    </Avatar>
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={
+                      <Typography
+                        sx={{
+                          cursor: 'pointer',
+                          '&:hover': {
+                            textDecoration: 'underline',
+                            color: theme.palette.primary.main,
+                          },
+                        }}
+                        onClick={(e) => handleUserNameClick(e, user.id)}
+                      >
+                        {user.name}
+                      </Typography>
+                    }
+                    secondary={`${user.points.toLocaleString()} Haha Reactions`}
                   />
-                )}
-              </ListItem>
-            ))}
-          </List>
+                  {user.rank === 1 && (
+                    <Chip
+                      icon={<Whatshot />}
+                      label="King"
+                      size="small"
+                      sx={{
+                        bgcolor: '#ffb300',
+                        color: '#000000',
+                      }}
+                    />
+                  )}
+                </ListItem>
+              ))}
+            </List>
+          )}
         </Card>
       </Box>
     </Box>

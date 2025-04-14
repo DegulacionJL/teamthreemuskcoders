@@ -181,5 +181,18 @@ public function index(PostRequest $request)
        }
     }
 
+    public function getLeaderboard(Request $request)
+    {
+        try {
+            $period = $request->query('period', 'daily'); // Default to 'daily'
+            $result = $this->postService->getLeaderboard($period);
+            return response()->json($result);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch leaderboard',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
 }
