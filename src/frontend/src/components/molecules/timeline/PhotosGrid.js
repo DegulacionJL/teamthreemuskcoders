@@ -27,23 +27,16 @@ const PhotosGrid = ({ userId, isCurrentUser }) => {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
   useEffect(() => {
-    // Fetch user photos
     const fetchPhotos = async () => {
       setLoading(true);
       try {
-        // Mock data - replace with actual API call
-        setTimeout(() => {
-          const mockPhotos = Array.from({ length: 12 }, (_, i) => ({
-            id: i + 1,
-            url: `/placeholder.svg?height=300&width=300&text=Photo ${i + 1}`,
-            caption: `Photo caption ${i + 1}`,
-            createdAt: new Date(Date.now() - i * 86400000).toISOString(),
-          }));
-          setPhotos(mockPhotos);
-          setLoading(false);
-        }, 1000);
+        const response = await fetch(`/timeline/users/${userId}/photos`);
+        if (!response.ok) throw new Error('Failed to fetch photos');
+        const data = await response.json();
+        setPhotos(data);
       } catch (error) {
         console.error('Error fetching photos:', error);
+      } finally {
         setLoading(false);
       }
     };
@@ -93,7 +86,7 @@ const PhotosGrid = ({ userId, isCurrentUser }) => {
               <Grid item xs={6} sm={4} md={3} key={photo.id}>
                 <Box
                   sx={{
-                    paddingTop: '100%', // 1:1 Aspect Ratio
+                    paddingTop: '100%',
                     position: 'relative',
                     borderRadius: 1,
                     overflow: 'hidden',
@@ -136,7 +129,6 @@ const PhotosGrid = ({ userId, isCurrentUser }) => {
         )}
       </Paper>
 
-      {/* Photo Viewer Dialog */}
       <Dialog open={viewerOpen} onClose={() => setViewerOpen(false)} maxWidth="md" fullWidth>
         <Box sx={{ position: 'relative' }}>
           <IconButton
@@ -205,6 +197,7 @@ const PhotosGrid = ({ userId, isCurrentUser }) => {
     </Box>
   );
 };
+
 PhotosGrid.propTypes = {
   userId: PropTypes.number.isRequired,
   isCurrentUser: PropTypes.bool.isRequired,

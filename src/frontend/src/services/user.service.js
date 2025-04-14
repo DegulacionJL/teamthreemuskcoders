@@ -39,7 +39,7 @@ const getUserProfile = async (userId) => {
 
     // Fallback return if API fails
     return {
-      id: parseInt(userId),
+      id: Number.parseInt(userId),
       firstName: 'User',
       lastName: '',
       avatar: '/placeholder.svg?height=180&width=180&text=User',
@@ -65,6 +65,17 @@ const getUserPosts = async (userId) => {
   } catch (error) {
     console.error('Error fetching user posts:', error);
     return [];
+  }
+};
+
+// Get user connections (friends, followers, following)
+const getUserConnections = async (userId) => {
+  try {
+    const req = api.get(`/timeline/users/${userId}/friends`).then(({ data }) => data.data);
+    return await req;
+  } catch (error) {
+    console.error('Error fetching user connections:', error);
+    return { followers: [], following: [] };
   }
 };
 
@@ -128,6 +139,7 @@ export {
   deleteUser,
   getUserProfile,
   getUserPosts,
+  getUserConnections,
   updateUserProfile,
   uploadUserAvatar,
   uploadCoverPhoto,

@@ -1,3 +1,5 @@
+'use client';
+
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -23,38 +25,32 @@ import {
   Typography,
 } from '@mui/material';
 import { followUser, unfollowUser } from '../../../services/follow.service';
+import { getUserConnections } from '../../../services/user.service';
 
 const FriendsList = ({ userId, isCurrentUser }) => {
   const [activeTab, setActiveTab] = useState(0);
-  const [friends, setFriends] = useState([]);
+  const [connections, setConnections] = useState({ followers: [], following: [] });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    // Fetch user friends/followers
-    const fetchFriends = async () => {
+    // Fetch user connections (friends, followers, following)
+    const fetchConnections = async () => {
       setLoading(true);
       try {
-        // Mock data - replace with actual API call
-        setTimeout(() => {
-          const mockFriends = Array.from({ length: 20 }, (_, i) => ({
-            id: i + 1,
-            name: `Friend ${i + 1}`,
-            avatar: `/placeholder.svg?height=50&width=50&text=F${i + 1}`,
-            isFollowing: Math.random() > 0.5,
-            mutualFriends: Math.floor(Math.random() * 10),
-          }));
-          setFriends(mockFriends);
-          setLoading(false);
-        }, 1000);
+        const data = await getUserConnections(userId);
+        setConnections(data);
       } catch (error) {
-        console.error('Error fetching friends:', error);
+        console.error('Error fetching connections:', error);
+        toast.error('Failed to load connections');
+        setConnections({ followers: [], following: [] });
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchFriends();
-  }, [userId, activeTab]);
+    fetchConnections();
+  }, [userId]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -74,20 +70,64 @@ const FriendsList = ({ userId, isCurrentUser }) => {
         toast.success('Followed successfully');
       }
 
-      // Update local state
-      setFriends(
-        friends.map((friend) =>
-          friend.id === friendId ? { ...friend, isFollowing: !isFollowingNow } : friend
-        )
-      );
+      // Refresh connections after follow/unfollow
+      const data = await getUserConnections(userId);
+      setConnections(data);
     } catch (error) {
       console.error('Error toggling follow status:', error);
       toast.error('Failed to update follow status');
     }
   };
 
-  const filteredFriends = friends.filter((friend) =>
-    friend.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // Determine which connections to display based on active tab
+  const getDisplayConnections = () => {
+    // For the Friends tab, we'll combine followers and following to show mutual connections
+    if (activeTab === 0) {
+      // Create a map of user IDs who are both followers and following
+      const followingIds = new Set(connections.following.map((user) => user.id));
+      const mutualConnections = connections.followers.filter((user) => followingIds.has(user.id));
+
+      return mutualConnections.map((user) => ({
+        id: user.id,
+        name: user.name,
+        avatar: user.avatar || `/placeholder.svg?height=50&width=50&text=${user.name.charAt(0)}`,
+        isFollowing: true, // They must be following if they're mutual
+        mutualFriends: 0, // We don't have this data from the API
+        since: user.since,
+      }));
+    }
+    // For the Followers tab
+    else if (activeTab === 1) {
+      return connections.followers.map((user) => {
+        // Check if we're following this follower
+        const isFollowing = connections.following.some((following) => following.id === user.id);
+
+        return {
+          id: user.id,
+          name: user.name,
+          avatar: user.avatar || `/placeholder.svg?height=50&width=50&text=${user.name.charAt(0)}`,
+          isFollowing: isFollowing,
+          mutualFriends: 0, // We don't have this data from the API
+          since: user.since,
+        };
+      });
+    }
+    // For the Following tab
+    else {
+      return connections.following.map((user) => ({
+        id: user.id,
+        name: user.name,
+        avatar: user.avatar || `/placeholder.svg?height=50&width=50&text=${user.name.charAt(0)}`,
+        isFollowing: true, // We're following them by definition
+        mutualFriends: 0, // We don't have this data from the API
+        since: user.since,
+      }));
+    }
+  };
+
+  const displayConnections = getDisplayConnections();
+  const filteredConnections = displayConnections.filter((connection) =>
+    connection.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -103,7 +143,7 @@ const FriendsList = ({ userId, isCurrentUser }) => {
 
         <TextField
           fullWidth
-          placeholder="Search friends"
+          placeholder="Search connections"
           variant="outlined"
           size="small"
           value={searchQuery}
@@ -122,21 +162,21 @@ const FriendsList = ({ userId, isCurrentUser }) => {
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
             <CircularProgress />
           </Box>
-        ) : filteredFriends.length > 0 ? (
+        ) : filteredConnections.length > 0 ? (
           <Grid container spacing={2}>
-            {filteredFriends.map((friend) => (
-              <Grid item xs={12} sm={6} md={4} key={friend.id}>
+            {filteredConnections.map((connection) => (
+              <Grid item xs={12} sm={6} md={4} key={connection.id}>
                 <Card sx={{ height: '100%' }}>
                   <CardContent sx={{ pb: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Avatar src={friend.avatar} sx={{ width: 60, height: 60, mr: 2 }} />
+                      <Avatar src={connection.avatar} sx={{ width: 60, height: 60, mr: 2 }} />
                       <Box>
                         <Typography variant="subtitle1" fontWeight="medium">
-                          {friend.name}
+                          {connection.name}
                         </Typography>
-                        {friend.mutualFriends > 0 && (
+                        {connection.since && (
                           <Typography variant="body2" color="text.secondary">
-                            {friend.mutualFriends} mutual friend{friend.mutualFriends !== 1 && 's'}
+                            Connected since {new Date(connection.since).toLocaleDateString()}
                           </Typography>
                         )}
                       </Box>
@@ -145,12 +185,12 @@ const FriendsList = ({ userId, isCurrentUser }) => {
                   <CardActions>
                     <Button
                       fullWidth
-                      variant={friend.isFollowing ? 'outlined' : 'contained'}
+                      variant={connection.isFollowing ? 'outlined' : 'contained'}
                       size="small"
-                      startIcon={friend.isFollowing ? <CheckIcon /> : <PersonAddIcon />}
-                      onClick={() => handleFollowToggle(friend.id, friend.isFollowing)}
+                      startIcon={connection.isFollowing ? <CheckIcon /> : <PersonAddIcon />}
+                      onClick={() => handleFollowToggle(connection.id, connection.isFollowing)}
                     >
-                      {friend.isFollowing ? 'Following' : 'Follow'}
+                      {connection.isFollowing ? 'Following' : 'Follow'}
                     </Button>
                   </CardActions>
                 </Card>
@@ -161,9 +201,9 @@ const FriendsList = ({ userId, isCurrentUser }) => {
           <Box sx={{ textAlign: 'center', py: 4 }}>
             <Typography variant="body1" color="text.secondary">
               {searchQuery
-                ? 'No friends match your search'
+                ? 'No connections match your search'
                 : activeTab === 0
-                ? 'No friends to show'
+                ? 'No mutual connections to show'
                 : activeTab === 1
                 ? 'No followers to show'
                 : 'Not following anyone'}
@@ -174,6 +214,7 @@ const FriendsList = ({ userId, isCurrentUser }) => {
     </Box>
   );
 };
+
 FriendsList.propTypes = {
   userId: PropTypes.number.isRequired,
   isCurrentUser: PropTypes.bool.isRequired,

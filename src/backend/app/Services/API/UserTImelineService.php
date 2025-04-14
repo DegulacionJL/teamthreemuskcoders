@@ -257,7 +257,8 @@ class UserTimelineService
                     'id' => $follower->id,
                     'name' => trim($follower->first_name . ' ' . $follower->last_name),
                     'avatar' => $follower->avatar ? env('STORAGE_DISK_URL') . '/' . $follower->avatar : null,
-                    'since' => $follow->created_at->format('Y-m-d')
+                    'since' => $follow->created_at ? $follow->created_at->format('Y-m-d') : null
+
                 ];
             }
             
@@ -267,15 +268,16 @@ class UserTimelineService
                 ->with('following')
                 ->get();
                 
-            foreach ($following as $follow) {
-                $followingUser = $follow->following;
-                $followingData[] = [
-                    'id' => $followingUser->id,
-                    'name' => trim($followingUser->first_name . ' ' . $followingUser->last_name),
-                    'avatar' => $followingUser->avatar ? env('STORAGE_DISK_URL') . '/' . $followingUser->avatar : null,
-                    'since' => $follow->created_at->format('Y-m-d')
-                ];
-            }
+                foreach ($following as $follow) {
+                    $followingUser = $follow->following;
+                    $followingData[] = [
+                        'id' => $followingUser->id,
+                        'name' => trim($followingUser->first_name . ' ' . $followingUser->last_name),
+                        'avatar' => $followingUser->avatar ? env('STORAGE_DISK_URL') . '/' . $followingUser->avatar : null,
+                        'since' => $follow->created_at ? $follow->created_at->format('Y-m-d') : null
+                    ];
+                }
+                
             
             return [
                 'followers' => $followersData,
