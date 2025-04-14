@@ -26,17 +26,15 @@ import { useTheme as useCustomTheme } from 'theme/ThemeContext';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import EditPostModal from '../EditPostModal';
 import ReportPostConfirmationModal from '../ReportPostModal';
-// Adjust path
 import PostReactions from './PostReaction';
-
-// Adjust path
 
 function MemePost({
   id,
   caption,
   image,
   timestamp,
-  user,
+  user, // Post author
+  loggedInUser, // Add new prop for logged-in user
   onDelete,
   onReportPost,
   onUpdate,
@@ -58,7 +56,7 @@ function MemePost({
   const [isLoading, setIsLoading] = useState(false);
   const [reactionType, setReactionType] = useState(null);
   const [likeCount, setLikeCount] = useState(0);
-  const [showComments, setShowComments] = useState(false); // Added back for toggle
+  const [showComments, setShowComments] = useState(false);
 
   const isDarkMode = darkMode !== undefined ? darkMode : contextDarkMode;
 
@@ -156,11 +154,9 @@ function MemePost({
     return `${days} day${days === 1 ? '' : 's'} ago`;
   }
 
-  // Replace the formatCaption function with this simpler approach
   const formatCaption = (text) => {
     if (!text) return '';
 
-    // Replace newlines with <br /> tags
     const formattedText = text.split('\n').map((line, i, arr) => (
       <React.Fragment key={i}>
         {line}
@@ -194,7 +190,6 @@ function MemePost({
         width: '100%',
         mx: 'auto',
         position: 'relative',
-        // Change from 1 to 0, or remove entirely
       }}
     >
       {isLoading && (
@@ -271,7 +266,6 @@ function MemePost({
         </MenuItem>
       </Menu>
 
-      {/* Update the CardContent section */}
       <CardContent sx={{ pt: 0, pb: 1 }}>
         <Box sx={{ mb: 2, mt: 2 }}>{formatCaption(currentCaption)}</Box>
       </CardContent>
@@ -336,7 +330,7 @@ function MemePost({
         )}
       </Box>
 
-      {showComments && <CommentFeature postId={id} user={user} />}
+      {showComments && <CommentFeature postId={id} user={loggedInUser} />}
 
       <EditPostModal
         open={isEditModalOpen}
@@ -371,6 +365,7 @@ MemePost.propTypes = {
   image: PropTypes.string,
   timestamp: PropTypes.string.isRequired,
   user: PropTypes.object.isRequired,
+  loggedInUser: PropTypes.object, // Add new prop
   onDelete: PropTypes.func.isRequired,
   onReportPost: PropTypes.func.isRequired,
   onUpdate: PropTypes.func.isRequired,

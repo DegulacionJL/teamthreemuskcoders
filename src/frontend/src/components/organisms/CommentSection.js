@@ -45,6 +45,17 @@ const CommentSection = ({
     elements: { reference: emojiButtonRef.current },
   });
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && e.shiftKey) {
+      // Allow Shift + Enter to add a new line
+      e.preventDefault();
+      setNewCommentText((prev) => prev + '\n');
+    } else if (e.key === 'Enter') {
+      // Prevent Enter from submitting the form (we'll use the Post button)
+      e.preventDefault();
+    }
+  };
+
   const handleAddComment = () => {
     if (!newCommentText.trim() && !newCommentImage) return;
     onAddComment(newCommentText, newCommentImage);
@@ -65,6 +76,28 @@ const CommentSection = ({
     setNewCommentText((prev) => prev + emojiObject.emoji);
   };
 
+  if (!currentUser) {
+    return (
+      <CommentsList
+        comments={comments}
+        replyToComment={replyToComment}
+        onReplyClick={onReplyClick}
+        onCancelReply={onCancelReply}
+        onAddReply={onAddReply}
+        onEditClick={onEditClick}
+        onDeleteClick={onDeleteClick}
+        editingCommentId={editingCommentId}
+        editingCommentText={editingCommentText}
+        onLoadMoreReplies={onLoadMoreReplies}
+        onBackReplies={onBackReplies}
+        replyHasMore={replyHasMore}
+        replyPage={replyPage}
+        onReactionChange={onReactionChange}
+        currentUser={currentUser}
+      />
+    );
+  }
+
   return (
     <Box sx={{ mt: 2, px: 2, position: 'relative', zIndex: 1 }}>
       <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 2, mb: 2 }}>
@@ -84,7 +117,10 @@ const CommentSection = ({
             placeholder="Add a comment..."
             value={newCommentText}
             onChange={(e) => setNewCommentText(e.target.value)}
+            onKeyDown={handleKeyDown}
             sx={{ mb: 1 }}
+            multiline // Enable multiline input
+            rows={2} // Set initial rows
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
