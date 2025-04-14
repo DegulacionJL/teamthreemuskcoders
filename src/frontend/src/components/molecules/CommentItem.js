@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
-import { Box, Button, Typography, useTheme } from '@mui/material'; // Import useTheme
+import { useNavigate } from 'react-router-dom';
+import { Box, Button, Typography, useTheme } from '@mui/material';
 import AvatarWithInitials from 'components/atoms/AvatarWithInitial';
 import ImagePreview from 'components/atoms/ImagePreview';
 import CommentActions from 'components/molecules/CommentActions';
@@ -29,14 +29,14 @@ const CommentItem = ({
   const isMaxDepthReached = depth >= maxDepth;
   const hasMoreReplies = !!replyHasMore[comment.id];
   const currentReplyPage = replyPage[comment.id] || 1;
-  const navigate = useNavigate(); // Initialize navigate
-  const theme = useTheme(); // Initialize theme for styling
+  const navigate = useNavigate();
+  const theme = useTheme();
 
   const handleLoadMore = () => onLoadMoreReplies && onLoadMoreReplies(comment.id);
   const handleBack = () => onBackReplies && currentReplyPage > 1 && onBackReplies(comment.id);
 
-  // Function to handle author click
-  const handleAuthorClick = (e) => {
+  // Function to handle author click (removed unused 'e' parameter)
+  const handleAuthorClick = () => {
     if (comment.user?.id) {
       navigate(`/users/${comment.user.id}`);
     }
@@ -46,7 +46,6 @@ const CommentItem = ({
   const formatCommentText = (text) => {
     if (!text) return null;
 
-    // Split the text by new lines and map each line to a React fragment
     const formattedText = text.split('\n').map((line, index, arr) => (
       <React.Fragment key={index}>
         {line}
@@ -60,7 +59,7 @@ const CommentItem = ({
         component="div"
         sx={{
           mt: 0.5,
-          whiteSpace: 'pre-wrap', // Preserve spaces and indentation
+          whiteSpace: 'pre-wrap',
           wordBreak: 'break-word',
         }}
       >
