@@ -76,7 +76,10 @@ const UserTimeline = () => {
     };
 
     fetchUserData();
-  }, [userId]);
+
+    // Scroll to the top of the page when userId changes (i.e., on navigation)
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [userId]); // Dependency on userId ensures this runs on navigation
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -459,7 +462,7 @@ const UserTimeline = () => {
                         color: 'text.secondary',
                       }}
                     >
-                      <p>What&#39;s on your mind?</p>
+                      <p>What's on your mind?</p>
                     </Button>
                   </Box>
                 </Paper>
