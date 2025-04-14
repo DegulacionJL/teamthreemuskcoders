@@ -17,14 +17,12 @@ const root = createRoot(container);
 // Render the app
 root.render(
   <AuthProvider>
-    <React.StrictMode>
-      <Provider store={store}>
-        <BrowserRouter>
-          <ThemeProvider>
-            <App />
-          </ThemeProvider>
-        </BrowserRouter>
-      </Provider>
-    </React.StrictMode>
+    <Provider store={store}>
+      <BrowserRouter>
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
+      </BrowserRouter>
+    </Provider>
   </AuthProvider>
 );

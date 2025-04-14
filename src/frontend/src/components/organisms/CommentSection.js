@@ -47,12 +47,24 @@ const CommentSection = ({
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && e.shiftKey) {
-      // Allow Shift + Enter to add a new line
+      // Allow Shift+Enter to add a new line
       e.preventDefault();
-      setNewCommentText((prev) => prev + '\n');
+      const cursorPosition = e.target.selectionStart; // Get the current cursor position
+      const newText =
+        newCommentText.slice(0, cursorPosition) + '\n' + newCommentText.slice(cursorPosition); // Insert a new line at the cursor position
+      setNewCommentText(newText);
+
+      // Move the cursor to the correct position after the new line
+      setTimeout(() => {
+        e.target.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+
+        // Scroll the TextField to ensure the cursor is visible
+        e.target.scrollTop = e.target.scrollHeight; // Scroll to the bottom of the TextField
+      }, 0);
     } else if (e.key === 'Enter') {
       // Prevent Enter from submitting the form (we'll use the Post button)
       e.preventDefault();
+      handleAddComment();
     }
   };
 

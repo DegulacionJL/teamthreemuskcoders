@@ -19,9 +19,7 @@ const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
     placement: 'bottom-end',
     middleware: [offset(4), flip(), shift()],
     whileElementsMounted: autoUpdate,
-    elements: {
-      reference: emojiButtonRef.current,
-    },
+    elements: { reference: emojiButtonRef.current },
   });
 
   const handleImageChange = (e) => {
@@ -45,22 +43,46 @@ const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
     setShowEmojiPicker(false);
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && e.shiftKey) {
+      // Allow Shift+Enter to add a new line
+      e.preventDefault();
+      const cursorPosition = e.target.selectionStart; // Get the current cursor position
+      const newText = text.slice(0, cursorPosition) + '\n' + text.slice(cursorPosition); // Insert a new line at the cursor position
+      setText(newText);
+
+      // Move the cursor to the correct position after the new line
+      setTimeout(() => {
+        e.target.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+
+        // Scroll the TextField to ensure the cursor is visible
+        const inputElement = e.target;
+        inputElement.scrollTop = inputElement.scrollHeight; // Scroll to the bottom of the TextField
+      }, 0);
+    } else if (e.key === 'Enter') {
+      // Submit the form when Enter is pressed without Shift
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
   return (
     <Box sx={{ mt: 2, ml: 2, position: 'relative' }}>
-      {' '}
-      {/* Added position: 'relative' for stability */}
       <TextField
         fullWidth
         size="small"
         placeholder="Write a reply..."
         value={text}
         onChange={(e) => setText(e.target.value)}
+        onKeyDown={handleKeyDown}
         sx={{ mb: 1 }}
+        multiline // Enable multiline input
+        rows={2} // Set initial rows
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
               <IconButton
-                ref={emojiButtonRef} // Ensure this ref is correctly set
+                ref={emojiButtonRef}
                 onClick={() => setShowEmojiPicker((prev) => !prev)}
                 edge="end"
               >
@@ -75,8 +97,8 @@ const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
           ref={refs.setFloating}
           style={{
             ...floatingStyles,
-            zIndex: 1000, // Increased zIndex for better stacking
-            position: 'absolute', // Ensure absolute positioning
+            zIndex: 1000,
+            position: 'absolute',
           }}
         >
           <EmojiPicker onEmojiClick={handleEmojiClick} />
