@@ -616,7 +616,7 @@ const UserTimeline = () => {
           <TextField
             margin="dense"
             name="work"
-            label="Work"
+            label="Works at"
             type="text"
             fullWidth
             value={profileData.work}
@@ -625,7 +625,7 @@ const UserTimeline = () => {
           <TextField
             margin="dense"
             name="education"
-            label="Education"
+            label="Studied at"
             type="text"
             fullWidth
             value={profileData.education}
@@ -634,7 +634,7 @@ const UserTimeline = () => {
           <TextField
             margin="dense"
             name="location"
-            label="Location"
+            label="Adress"
             type="text"
             fullWidth
             value={profileData.location}
