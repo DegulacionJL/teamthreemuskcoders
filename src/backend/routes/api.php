@@ -17,6 +17,7 @@ use Laravel\Passport\Http\Controllers\AccessTokenController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\UserListController;
 use App\Http\Controllers\FollowController;
+use App\Http\Controllers\UserTimelineController;
 
 /*
 |--------------------------------------------------------------------------
@@ -74,7 +75,13 @@ Route::prefix('users')
         Route::put('{id}', [UserController::class, 'update']);
         Route::delete('bulk-delete', [UserController::class, 'bulkDelete']);
         Route::delete('{id}', [UserController::class, 'delete']);
-    });
+
+        // Profile-related-UserTimeline
+        Route::get('{id}/profile', [UserController::class, 'getProfile']);
+        Route::put('{id}/profile', [UserController::class, 'updateProfile']);
+        Route::post('{id}/avatar', [UserController::class, 'uploadAvatar']);
+        Route::post('{id}/cover-photo', [UserController::class, 'uploadCoverPhoto']);
+        });
     Route::prefix('userlist')
     ->group(function () {
         Route::get('/', [UserListController::class, 'index'])->middleware('auth:api');
@@ -131,3 +138,14 @@ Route::get('notifications', [NotificationController::class, 'index']);
 Route::put('notifications/{id}/seen', [NotificationController::class, 'seen']);
 // DEMO PURPOSES ONLY. REMOVE ON ACTUAL PROJECT
 Route::post('notifications/test', [NotificationController::class, 'create']);
+
+
+Route::prefix('timeline')->group(function () {
+    Route::get('/users/{id}/profile', [UserTimelineController::class, 'getUserProfile']);
+    Route::get('/users/{id}/posts', [UserTimelineController::class, 'getUserPosts']);
+    Route::put('/users/{id}/profile', [UserTimelineController::class, 'updateProfile'])->middleware('auth:api');
+    Route::post('/users/{id}/avatar', [UserTimelineController::class, 'uploadAvatar'])->middleware('auth:api');
+    Route::post('/users/{id}/cover-photo', [UserTimelineController::class, 'uploadCoverPhoto'])->middleware('auth:api');
+    Route::get('/users/{id}/friends', [UserTimelineController::class, 'getFriends']);
+    Route::get('/users/{id}/photos', [UserTimelineController::class, 'getPhotos']);
+});

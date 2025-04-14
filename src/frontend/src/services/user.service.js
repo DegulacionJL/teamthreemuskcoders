@@ -37,7 +37,7 @@ const getUserProfile = async (userId) => {
     userData = await retrieveUser(userId);
 
     // Get additional profile data if needed
-    const req = api.get(`/users/${userId}/profile`).then(({ data }) => data.data);
+    const req = api.get(`/timeline/users/${userId}/profile`).then(({ data }) => data.data);
     const profileData = await req;
 
     // Combine user data with profile data
@@ -74,7 +74,7 @@ const getUserProfile = async (userId) => {
 
 const getUserPosts = async (userId) => {
   try {
-    const req = api.get(`/users/${userId}/posts`).then(({ data }) => data.data);
+    const req = api.get(`/timeline/users/${userId}/posts`).then(({ data }) => data.data);
     return await req;
   } catch (error) {
     console.error('Error fetching user posts:', error);
@@ -84,7 +84,9 @@ const getUserPosts = async (userId) => {
 
 const updateUserProfile = async (userId, profileData) => {
   try {
-    const req = api.put(`/users/${userId}/profile`, profileData).then(({ data }) => data.data);
+    const req = api
+      .put(`/timeline/users/${userId}/profile`, profileData)
+      .then(({ data }) => data.data);
     return await req;
   } catch (error) {
     console.error('Error updating user profile:', error);
@@ -98,7 +100,7 @@ const uploadUserAvatar = async (userId, file) => {
     formData.append('avatar', file);
 
     const req = api
-      .post(`/users/${userId}/avatar`, formData, {
+      .post(`/timeline/users/${userId}/avatar`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -118,7 +120,7 @@ const uploadCoverPhoto = async (userId, file) => {
     formData.append('coverPhoto', file);
 
     const req = api
-      .post(`/users/${userId}/cover-photo`, formData, {
+      .post(`/timeline/users/${userId}/cover-photo`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

@@ -14,6 +14,7 @@ use App\Http\Requests\API\Users\SearchUserRequest;
 use App\Http\Requests\API\Users\UpdateUserRequest;
 use App\Http\Requests\API\Users\RegisterUserRequest;
 use App\Http\Requests\API\Users\ActivateAccountRequest;
+use App\http\Requests\API\Users\UserProfileResource;
 
 /**
  * @group User Management
@@ -287,4 +288,6 @@ class UserController extends Controller
 
         return response()->json($this->response, $this->response['code']);
     }
+
+   
 }
