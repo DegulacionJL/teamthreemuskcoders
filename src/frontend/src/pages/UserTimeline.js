@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import {
   Cake as CakeIcon,
@@ -15,6 +15,10 @@ import {
   Box,
   Button,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   Grid,
   IconButton,
@@ -22,6 +26,7 @@ import {
   Skeleton,
   Tab,
   Tabs,
+  TextField,
   Typography,
   useMediaQuery,
   useTheme,
@@ -30,11 +35,21 @@ import AboutSection from '../components/molecules/timeline/AboutSection';
 import FriendsList from '../components/molecules/timeline/FriendsList';
 import PhotosGrid from '../components/molecules/timeline/PhotosGrid';
 import PostCard from '../components/molecules/timeline/PostCard';
+import { useAuth } from '../contexts/AuthContext';
 import { followUser, isFollowing, unfollowUser } from '../services/follow.service';
-import { getUserPosts, getUserProfile } from '../services/user.service';
+import {
+  getUserPosts,
+  getUserProfile,
+  updateUserProfile,
+  uploadCoverPhoto,
+  uploadUserAvatar,
+} from '../services/user.service';
+
+// Import your auth context
 
 const UserTimeline = () => {
   const { userId } = useParams();
+  const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [activeTab, setActiveTab] = useState(0);
@@ -43,29 +58,56 @@ const UserTimeline = () => {
   const [loading, setLoading] = useState(true);
   const [isFollowingUser, setIsFollowingUser] = useState(false);
   const [isCurrentUser, setIsCurrentUser] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [profileData, setProfileData] = useState({
+    bio: '',
+    work: '',
+    education: '',
+    location: '',
+    birthday: '',
+    website: '',
+    relationship: '',
+  });
 
-  // Mock current user - replace with your auth context
-  const currentUser = { id: 1, role: 'user' };
+  // Get actual authenticated user from your auth context
+  const { user: currentUser, isAuthenticated } = useAuth();
 
   useEffect(() => {
     const fetchUserData = async () => {
       setLoading(true);
       try {
         // Check if this is the current user's profile
-        setIsCurrentUser(Number.parseInt(userId) === currentUser.id);
+        const parsedUserId = Number.parseInt(userId);
+        const isOwner = isAuthenticated && currentUser && currentUser.id === parsedUserId;
+        setIsCurrentUser(isOwner);
 
         // Fetch user profile data
         const profileData = await getUserProfile(userId);
         setProfile(profileData);
 
+        // Initialize edit form data
+        setProfileData({
+          bio: profileData.bio || '',
+          work: profileData.work || '',
+          education: profileData.education || '',
+          location: profileData.location || '',
+          birthday: profileData.birthday || '',
+          website: profileData.website || '',
+          relationship: profileData.relationship || '',
+        });
+
         // Fetch user posts
         const postsData = await getUserPosts(userId);
-        setPosts(postsData);
+        setPosts(postsData.posts || []);
 
         // Check if current user is following this user
-        if (!isCurrentUser) {
-          const followStatus = await isFollowing(userId);
-          setIsFollowingUser(followStatus);
+        if (isAuthenticated && !isOwner) {
+          try {
+            const followStatus = await isFollowing(userId);
+            setIsFollowingUser(followStatus.following);
+          } catch (error) {
+            console.error('Error checking follow status:', error);
+          }
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -76,13 +118,19 @@ const UserTimeline = () => {
     };
 
     fetchUserData();
-  }, [userId]);
+  }, [userId, currentUser, isAuthenticated]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
   const handleFollowToggle = async () => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to follow users');
+      navigate('/login');
+      return;
+    }
+
     try {
       if (isFollowingUser) {
         await unfollowUser(userId);
@@ -98,14 +146,75 @@ const UserTimeline = () => {
     }
   };
 
-  const handleCoverPhotoUpload = () => {
-    // Implement cover photo upload logic
-    console.log('Upload cover photo');
+  const handleCoverPhotoUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('coverPhoto', file);
+
+      const result = await uploadCoverPhoto(userId, file);
+
+      // Update the profile state with the new cover photo
+      setProfile({
+        ...profile,
+        coverPhoto: result.coverPhoto,
+      });
+
+      toast.success('Cover photo updated successfully');
+    } catch (error) {
+      console.error('Error uploading cover photo:', error);
+      toast.error('Failed to upload cover photo');
+    }
   };
 
-  const handleProfilePhotoUpload = () => {
-    // Implement profile photo upload logic
-    console.log('Upload profile photo');
+  const handleProfilePhotoUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      const result = await uploadUserAvatar(userId, file);
+
+      // Update the profile state with the new avatar
+      setProfile({
+        ...profile,
+        avatar: result.avatar,
+      });
+
+      toast.success('Profile photo updated successfully');
+    } catch (error) {
+      console.error('Error uploading profile photo:', error);
+      toast.error('Failed to upload profile photo');
+    }
+  };
+
+  const handleEditProfile = () => {
+    setEditDialogOpen(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setEditDialogOpen(false);
+  };
+
+  const handleProfileDataChange = (e) => {
+    const { name, value } = e.target;
+    setProfileData({
+      ...profileData,
+      [name]: value,
+    });
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const updatedProfile = await updateUserProfile(userId, profileData);
+      setProfile(updatedProfile);
+      setEditDialogOpen(false);
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile');
+    }
   };
 
   if (loading) {
@@ -151,20 +260,31 @@ const UserTimeline = () => {
         }}
       >
         {isCurrentUser && (
-          <IconButton
-            sx={{
-              position: 'absolute',
-              bottom: 16,
-              right: 16,
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              },
-            }}
-            onClick={handleCoverPhotoUpload}
-          >
-            <PhotoCameraIcon />
-          </IconButton>
+          <>
+            <input
+              accept="image/*"
+              style={{ display: 'none' }}
+              id="cover-photo-upload"
+              type="file"
+              onChange={handleCoverPhotoUpload}
+            />
+            <label htmlFor="cover-photo-upload">
+              <IconButton
+                component="span"
+                sx={{
+                  position: 'absolute',
+                  bottom: 16,
+                  right: 16,
+                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  },
+                }}
+              >
+                <PhotoCameraIcon />
+              </IconButton>
+            </label>
+          </>
         )}
       </Paper>
 
@@ -191,21 +311,32 @@ const UserTimeline = () => {
             }}
           />
           {isCurrentUser && (
-            <IconButton
-              size="small"
-              sx={{
-                position: 'absolute',
-                bottom: 5,
-                right: 5,
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                },
-              }}
-              onClick={handleProfilePhotoUpload}
-            >
-              <PhotoCameraIcon fontSize="small" />
-            </IconButton>
+            <>
+              <input
+                accept="image/*"
+                style={{ display: 'none' }}
+                id="avatar-upload"
+                type="file"
+                onChange={handleProfilePhotoUpload}
+              />
+              <label htmlFor="avatar-upload">
+                <IconButton
+                  component="span"
+                  size="small"
+                  sx={{
+                    position: 'absolute',
+                    bottom: 5,
+                    right: 5,
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    },
+                  }}
+                >
+                  <PhotoCameraIcon fontSize="small" />
+                </IconButton>
+              </label>
+            </>
           )}
         </Box>
 
@@ -240,7 +371,7 @@ const UserTimeline = () => {
           </Box>
 
           <Box sx={{ mt: isMobile ? 2 : 0, display: 'flex', gap: 1 }}>
-            {!isCurrentUser && (
+            {!isCurrentUser && isAuthenticated && (
               <Button
                 variant={isFollowingUser ? 'outlined' : 'contained'}
                 color="primary"
@@ -249,13 +380,13 @@ const UserTimeline = () => {
                 {isFollowingUser ? 'Unfollow' : 'Follow'}
               </Button>
             )}
-            {!isCurrentUser && (
+            {!isCurrentUser && isAuthenticated && (
               <Button variant="outlined" startIcon={<MessageIcon />}>
                 Message
               </Button>
             )}
             {isCurrentUser && (
-              <Button variant="outlined" startIcon={<EditIcon />}>
+              <Button variant="outlined" startIcon={<EditIcon />} onClick={handleEditProfile}>
                 Edit Profile
               </Button>
             )}
@@ -354,7 +485,7 @@ const UserTimeline = () => {
                 </Box>
               </Paper>
 
-              {/* Photos Card */}
+              {/* Photos Card - Will be populated by the PhotosGrid component */}
               <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
                 <Box
                   sx={{
@@ -367,41 +498,19 @@ const UserTimeline = () => {
                   <Typography variant="h6" fontWeight="bold">
                     Photos
                   </Typography>
-                  <Typography variant="body2" color="primary" sx={{ cursor: 'pointer' }}>
+                  <Typography
+                    variant="body2"
+                    color="primary"
+                    sx={{ cursor: 'pointer' }}
+                    onClick={() => setActiveTab(3)}
+                  >
                     See All
                   </Typography>
                 </Box>
-                <Grid container spacing={1}>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((item) => (
-                    <Grid item xs={4} key={item}>
-                      <Box
-                        sx={{
-                          paddingTop: '100%', // 1:1 Aspect Ratio
-                          position: 'relative',
-                          borderRadius: 1,
-                          overflow: 'hidden',
-                        }}
-                      >
-                        <Box
-                          component="img"
-                          src={`/placeholder.svg?height=100&width=100&text=Photo ${item}`}
-                          alt={`Photo ${item}`}
-                          sx={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                          }}
-                        />
-                      </Box>
-                    </Grid>
-                  ))}
-                </Grid>
+                <PhotosGrid userId={userId} isCurrentUser={isCurrentUser} preview={true} />
               </Paper>
 
-              {/* Friends Card */}
+              {/* Friends Card - Will be populated by the FriendsList component */}
               <Paper sx={{ p: 3, borderRadius: 2 }}>
                 <Box
                   sx={{
@@ -414,25 +523,16 @@ const UserTimeline = () => {
                   <Typography variant="h6" fontWeight="bold">
                     Friends
                   </Typography>
-                  <Typography variant="body2" color="primary" sx={{ cursor: 'pointer' }}>
+                  <Typography
+                    variant="body2"
+                    color="primary"
+                    sx={{ cursor: 'pointer' }}
+                    onClick={() => setActiveTab(2)}
+                  >
                     See All
                   </Typography>
                 </Box>
-                <Grid container spacing={1}>
-                  {[1, 2, 3, 4, 5, 6].map((item) => (
-                    <Grid item xs={6} key={item}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                        <Avatar
-                          src={`/placeholder.svg?height=40&width=40&text=F${item}`}
-                          sx={{ mr: 1 }}
-                        />
-                        <Typography variant="body2" noWrap>
-                          Friend {item}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  ))}
-                </Grid>
+                <FriendsList userId={userId} isCurrentUser={isCurrentUser} preview={true} />
               </Paper>
             </Box>
           </Grid>
@@ -443,8 +543,8 @@ const UserTimeline = () => {
           {/* Tab Content */}
           {activeTab === 0 && (
             <Box>
-              {/* Create Post Card - only for current user or on mobile */}
-              {(isCurrentUser || isMobile) && (
+              {/* Create Post Card - only for current user */}
+              {isCurrentUser && (
                 <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Avatar src={currentUser?.avatar} sx={{ mr: 2 }} />
@@ -458,6 +558,7 @@ const UserTimeline = () => {
                         borderRadius: 10,
                         color: 'text.secondary',
                       }}
+                      onClick={() => navigate('/create-post')}
                     >
                       <p>What&#39;s on your mind?</p>
                     </Button>
@@ -474,7 +575,11 @@ const UserTimeline = () => {
                     No posts to show
                   </Typography>
                   {isCurrentUser && (
-                    <Button variant="contained" sx={{ mt: 2 }}>
+                    <Button
+                      variant="contained"
+                      sx={{ mt: 2 }}
+                      onClick={() => navigate('/create-post')}
+                    >
                       Create Your First Post
                     </Button>
                   )}
@@ -488,6 +593,88 @@ const UserTimeline = () => {
           {activeTab === 3 && <PhotosGrid userId={userId} isCurrentUser={isCurrentUser} />}
         </Grid>
       </Grid>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={editDialogOpen} onClose={handleCloseEditDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Profile</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            name="bio"
+            label="Bio"
+            type="text"
+            fullWidth
+            multiline
+            rows={3}
+            value={profileData.bio}
+            onChange={handleProfileDataChange}
+          />
+          <TextField
+            margin="dense"
+            name="work"
+            label="Work"
+            type="text"
+            fullWidth
+            value={profileData.work}
+            onChange={handleProfileDataChange}
+          />
+          <TextField
+            margin="dense"
+            name="education"
+            label="Education"
+            type="text"
+            fullWidth
+            value={profileData.education}
+            onChange={handleProfileDataChange}
+          />
+          <TextField
+            margin="dense"
+            name="location"
+            label="Location"
+            type="text"
+            fullWidth
+            value={profileData.location}
+            onChange={handleProfileDataChange}
+          />
+          <TextField
+            margin="dense"
+            name="birthday"
+            label="Birthday"
+            type="date"
+            fullWidth
+            InputLabelProps={{
+              shrink: true,
+            }}
+            value={profileData.birthday}
+            onChange={handleProfileDataChange}
+          />
+          <TextField
+            margin="dense"
+            name="website"
+            label="Website"
+            type="url"
+            fullWidth
+            value={profileData.website}
+            onChange={handleProfileDataChange}
+          />
+          <TextField
+            margin="dense"
+            name="relationship"
+            label="Relationship Status"
+            type="text"
+            fullWidth
+            value={profileData.relationship}
+            onChange={handleProfileDataChange}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEditDialog}>Cancel</Button>
+          <Button onClick={handleSaveProfile} color="primary">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

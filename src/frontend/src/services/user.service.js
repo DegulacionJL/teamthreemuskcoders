@@ -30,41 +30,27 @@ const deleteUser = async (id) => {
 
 // New timeline-related functions
 const getUserProfile = async (userId) => {
-  let userData; // Declare outside so it's accessible in catch
-
   try {
-    // Use the existing retrieveUser function to get basic user data
-    userData = await retrieveUser(userId);
-
-    // Get additional profile data if needed
-    const req = api.get(`/timeline/users/${userId}/profile`).then(({ data }) => data.data);
-    const profileData = await req;
-
-    // Combine user data with profile data
-    return {
-      ...userData,
-      ...profileData,
-      postsCount: profileData?.postsCount || 0,
-      followersCount: profileData?.followersCount || 0,
-      followingCount: profileData?.followingCount || 0,
-    };
+    // Use only the new timeline endpoint
+    const response = await api.get(`/timeline/users/${userId}/profile`);
+    return response.data.data;
   } catch (error) {
     console.error('Error fetching user profile:', error);
 
-    // Fallback return if API fails or doesn't exist yet
+    // Fallback return if API fails
     return {
       id: parseInt(userId),
-      firstName: userData?.first_name || 'User',
-      lastName: userData?.last_name || '',
-      avatar: userData?.avatar || '/placeholder.svg?height=180&width=180&text=User',
+      firstName: 'User',
+      lastName: '',
+      avatar: '/placeholder.svg?height=180&width=180&text=User',
       coverPhoto: '/placeholder.svg?height=300&width=1000&text=Cover',
-      bio: userData?.bio || '',
-      work: userData?.work || '',
-      education: userData?.education || '',
-      location: userData?.location || '',
-      birthday: userData?.birthday || '',
-      website: userData?.website || '',
-      relationship: userData?.relationship || '',
+      bio: '',
+      work: '',
+      education: '',
+      location: '',
+      birthday: '',
+      website: '',
+      relationship: '',
       postsCount: 0,
       followersCount: 0,
       followingCount: 0,
