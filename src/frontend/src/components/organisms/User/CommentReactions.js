@@ -1,11 +1,9 @@
-'use client';
-
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getCommentLikes, likeComment, unlikeComment } from 'services/comment.service';
-import { FavoriteBorder } from '@mui/icons-material';
 import { Box, Button, CircularProgress, Fade, Popper, Typography } from '@mui/material';
 import AnimatedEmoji from '../../atoms/animation/AnimatedEmoji';
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 
 const CommentReactions = ({ commentId, isDarkMode, onReactionChange }) => {
   const [showReactions, setShowReactions] = useState(false);
@@ -107,7 +105,7 @@ const CommentReactions = ({ commentId, isDarkMode, onReactionChange }) => {
           ) : hasReacted ? (
             <Typography sx={{ fontSize: '16px' }}>😂</Typography>
           ) : (
-            <FavoriteBorder />
+            <EmojiEmotionsIcon />
           )
         }
         size="small"
@@ -120,7 +118,7 @@ const CommentReactions = ({ commentId, isDarkMode, onReactionChange }) => {
         onClick={handleToggleReaction}
         disabled={isLoading || isInitializing}
       >
-        {hasReacted ? 'Haha' : 'Like'} {likeCount > 0 && `(${likeCount})`}
+        {hasReacted ? 'Laugh' : 'Laugh'} {likeCount > 0 && `(${likeCount})`}
       </Button>
 
       <Popper
