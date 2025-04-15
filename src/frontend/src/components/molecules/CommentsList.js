@@ -18,6 +18,7 @@ const CommentsList = ({
   replyHasMore,
   replyPage,
   onReactionChange,
+  currentUser,
 }) => {
   return (
     <Box sx={{ mt: 2, ml: 2 }}>
@@ -39,6 +40,7 @@ const CommentsList = ({
             replyHasMore={replyHasMore}
             replyPage={replyPage}
             onReactionChange={onReactionChange}
+            currentUser={currentUser}
           />
         ))
       ) : (
@@ -65,6 +67,7 @@ CommentsList.propTypes = {
   replyHasMore: PropTypes.object.isRequired,
   replyPage: PropTypes.object.isRequired,
   onReactionChange: PropTypes.func.isRequired,
+  currentUser: PropTypes.object,
 };
 
 export default CommentsList;

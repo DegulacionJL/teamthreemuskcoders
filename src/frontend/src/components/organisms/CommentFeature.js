@@ -137,7 +137,7 @@ const CommentFeature = ({ postId, user }) => {
           Edit Comment
           <IconButton
             aria-label="close"
-            onClick={() => setIsUpdateModalOpen(false)} // Direct use of setIsUpdateModalOpen
+            onClick={() => setIsUpdateModalOpen(false)}
             sx={{ position: 'absolute', right: 8, top: 8 }}
           >
             <CloseIcon />

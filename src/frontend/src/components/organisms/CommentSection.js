@@ -200,6 +200,7 @@ const CommentSection = ({
         replyHasMore={replyHasMore}
         replyPage={replyPage}
         onReactionChange={onReactionChange}
+        currentUser={currentUser}
       />
     </Box>
   );
