@@ -39,8 +39,28 @@ class CommentController extends Controller
     public function index($postId)
     {
         try {
-            $comments = $this->commentService->getComments($postId);
+            $perPage = request()->query('per_page', 5);
+            $page = request()->query('page', 1);
+            $parentId = request()->query('parent_id');
+
+            if ($parentId) {
+                $result = $this->commentService->getReplies($postId, $parentId, $perPage, $page);
+            } else {
+                $result = $this->commentService->getComments($postId, $perPage, $page);
+            }
+
+            $comments = $result['comments'];
+            $totalWithReplies = $result['total_with_replies'];
+
             $this->response['data'] = CommentResource::collection($comments);
+            $this->response['pagination'] = [
+                'total' => $comments->total(),
+                'total_with_replies' => $totalWithReplies,
+                'per_page' => $comments->perPage(),
+                'current_page' => $comments->currentPage(),
+                'last_page' => $comments->lastPage(),
+                'has_more' => $comments->hasMorePages(),
+            ];
         } catch (Exception $e) {
             $this->response = [
                 'error' => $e->getMessage(),
@@ -144,4 +164,58 @@ class CommentController extends Controller
 
         return response()->json($this->response, $this->response['code']);
     }
+
+    public function likeComment($commentId): JsonResponse
+{
+    try {
+        $result = $this->commentService->likeComment($commentId);
+        $this->response['data'] = [
+            'like_count' => $result['like_count'],
+            'user_has_liked' => true
+        ];
+    } catch (Exception $e) {
+        $this->response = [
+            'error' => $e->getMessage(),
+            'code' => 500,
+        ];
+    }
+
+    return response()->json($this->response, $this->response['code']);
+}
+
+public function unlikeComment($commentId): JsonResponse
+{
+    try {
+        $result = $this->commentService->unlikeComment($commentId);
+        $this->response['data'] = [
+            'like_count' => $result['like_count'],
+            'user_has_liked' => false
+        ];
+    } catch (Exception $e) {
+        $this->response = [
+            'error' => $e->getMessage(),
+            'code' => 500,
+        ];
+    }
+
+    return response()->json($this->response, $this->response['code']);
+}
+
+public function getCommentLikes($commentId): JsonResponse
+{
+    try {
+        $result = $this->commentService->getCommentLikes($commentId);
+        $this->response['data'] = [
+            'like_count' => $result['like_count'],
+            'user_has_liked' => $result['user_has_liked']
+        ];
+    } catch (Exception $e) {
+        $this->response = [
+            'error' => $e->getMessage(),
+            'code' => 500,
+        ];
+    }
+
+    return response()->json($this->response, $this->response['code']);
+}
 }

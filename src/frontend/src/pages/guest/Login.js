@@ -7,7 +7,7 @@ import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { login } from 'services/auth';
 import * as yup from 'yup';
-import { Box, Card, Container, Grid, Link } from '@mui/material';
+import { Box, Card, Container, Grid, Link, useTheme } from '@mui/material';
 import Button from 'components/atoms/Button';
 import PasswordField from 'components/atoms/Form/PasswordField';
 import TextField from 'components/atoms/Form/TextField';
@@ -17,6 +17,7 @@ function Login() {
   const { t } = useTranslation();
   const location = useLocation();
   const user = useSelector((state) => state.profile.user);
+  const theme = useTheme(); // Access the current theme
 
   // form validation
   const schema = yup.object({
@@ -38,7 +39,7 @@ function Login() {
     if (user) {
       const { role } = user;
       const redirect = role === 'System Admin' ? '/admin/' : '/';
-      // use native redirect to avoid ui glitch on state change
+      // use native redirect to avoid UI glitch on state change
       window.location = redirect;
     }
   }, [user]);
@@ -59,7 +60,7 @@ function Login() {
             break;
         }
         const query = new URLSearchParams(location.search);
-        // use native redirect to avoid ui glitch on state change
+        // use native redirect to avoid UI glitch on state change
         window.location = query.get('redirect_to') ?? redirect;
       })
       .catch((err) => {
@@ -74,15 +75,23 @@ function Login() {
       sx={{
         mt: 8,
         pt: 8,
-        backgroundImage: "url('/static/images/background_memema.jpg')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         borderRadius: 2,
         padding: 4,
       }}
     >
-      <Card sx={{ p: 4, backgroundColor: 'rgba(255, 255, 255, 0.8)' }}>
-        <PageTitle title={'asdadas'} />
+      <Card
+        sx={{
+          p: 4,
+          backgroundColor:
+            theme.palette.mode === 'dark'
+              ? 'rgba(26, 34, 53, 0.8)' // Dark mode card background
+              : 'rgba(255, 255, 255, 0.8)', // Light mode card background
+          color: theme.palette.text.primary, // Dynamic text color
+        }}
+      >
+        <PageTitle title={t('labels.login')} />
 
         <Box component="form" noValidate onSubmit={handleSubmit(handleLogin)} sx={{ mt: 3 }}>
           <Grid container spacing={2}>
@@ -95,9 +104,7 @@ function Login() {
                 label={t('labels.email_address')}
                 name="username"
                 type="text"
-              >
-                asdasda
-              </TextField>
+              />
             </Grid>
 
             <Grid item xs={12}>
@@ -127,6 +134,7 @@ function Login() {
                   width: '100%',
                   display: 'block',
                   textDecoration: 'none',
+                  color: theme.palette.text.secondary, // Dynamic link color
                 }}
               >
                 {t('labels.forgot_password')}

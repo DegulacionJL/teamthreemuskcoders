@@ -15,6 +15,8 @@ use App\Http\Requests\UpdateImagePostRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+
 
 
 
@@ -100,13 +102,13 @@ public function updatePostImage(UpdateImagePostRequest $request, Post $post): Js
 }
 
 
-    public function index() {
-        $posts = Post::with('user', 'image')->latest()->get();
-        
-        return response()->json([
-            'posts' => $posts,
-            'currentUser' => auth()->user(),
-        ]);
+public function index(PostRequest $request)
+    {
+        // Fetch the posts through the service
+        $data = $this->postService->getPosts($request->page());
+
+        // Return the response
+        return response()->json($data);
     }
 
     public function deletePost($id)
@@ -133,5 +135,64 @@ public function updatePostImage(UpdateImagePostRequest $request, Post $post): Js
         return response()->json(['message' => 'Post and image deleted successfully']);
     }
 
+    public function likePost(Request $request, $postId)
+    {
+        try{
+
+            $user = Auth::user();
+            $result = $this->postService->likePost($user,$postId);
+            return response()->json($result);
+        }catch (Exception $e){
+            return response()->json([
+                'error' => 'Failed to like post',
+                'message' => $e->getMessage()
+
+            ], 500);
+        }
+
+        return response()->json($response);
+
+    }
+
+    public function unlikePost(Request $request, $postId)
+    {
+        try{
+            $user = Auth::user();
+            $result = $this->postService->unlikePost($user,$postId);
+            return response()->json($result);
+        }catch (Exception $e){
+            return response ()->json([
+                'error' =>'Failed to unlike post',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getLikes(Request $request, $postId)
+    {
+       try{
+        $result = $this->postService->getLikes($postId);
+        return response()->json($result);
+       }catch (Exception $e){
+        return response()->json([
+            'error' => 'Failed to fetch likes',
+            'message' => $e->getMessage()
+        ],500);
+       }
+    }
+
+    public function getLeaderboard(Request $request)
+    {
+        try {
+            $period = $request->query('period', 'daily'); // Default to 'daily'
+            $result = $this->postService->getLeaderboard($period);
+            return response()->json($result);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch leaderboard',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
 }

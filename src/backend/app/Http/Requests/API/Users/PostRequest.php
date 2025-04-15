@@ -13,12 +13,18 @@ class PostRequest extends FormRequest
             'caption' => 'sometimes|required|string|max:255',
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
             'user_id' => 'exists:users,id',
+            'page' => 'nullable|integer|min:1',
         ];
     }
 
     public function getCaption(): ?string
     {
         return $this->has('caption') ? $this->input('caption', null) : null;
+    }
+
+    public function page()
+    {
+        return $this->input('page', 1);
     }
 
     public function getImage()

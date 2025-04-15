@@ -15,7 +15,9 @@ use App\Http\Controllers\calculateController;
 use App\Http\Controllers\CommentController;
 use Laravel\Passport\Http\Controllers\AccessTokenController;
 use App\Http\Controllers\PostController;
-use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\UserListController;
+use App\Http\Controllers\FollowController;
+use App\Http\Controllers\UserTimelineController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,10 +45,15 @@ Route::prefix('posts')
         Route::put('/{post}', [PostController::class, 'updatePost'])->middleware('auth:api');
         Route::delete('/{post}', [PostController::class, 'deletePost']);
         Route::post('/{post}/image', [PostController::class, 'updatePostImage'])->middleware('auth:api');
-
-    
-        
+        Route::get('/leaderboard', [PostController::class, 'getLeaderboard'])->middleware('auth:api'); // New endpoint
     });
+
+    Route::prefix('likes')->group(function() {
+        Route::post('/{post}', [PostController::class, 'likePost'])->middleware('auth:api');
+        Route::post('/{post}/unlike', [PostController::class, 'unlikePost'])->middleware('auth:api');
+        Route::get('/{post}/likes', [PostController::class, 'getLikes'])->middleware('auth:api');
+    });
+    
     
 // user logout
 Route::delete('oauth/token', [TokenController::class, 'delete'])->middleware('auth:api');
@@ -69,7 +76,29 @@ Route::prefix('users')
         Route::put('{id}', [UserController::class, 'update']);
         Route::delete('bulk-delete', [UserController::class, 'bulkDelete']);
         Route::delete('{id}', [UserController::class, 'delete']);
+
+        // Profile-related-UserTimeline
+        Route::get('{id}/profile', [UserController::class, 'getProfile']);
+        Route::put('{id}/profile', [UserController::class, 'updateProfile']);
+        Route::post('{id}/avatar', [UserController::class, 'uploadAvatar']);
+        Route::post('{id}/cover-photo', [UserController::class, 'uploadCoverPhoto']);
+        });
+    Route::prefix('userlist')
+    ->group(function () {
+        Route::get('/', [UserListController::class, 'index'])->middleware('auth:api');
+        Route::post('/', [UserController::class, 'create']);
+        Route::get('{id}', [UserController::class, 'read']);
+        Route::put('{id}', [UserController::class, 'update']);
+        Route::delete('bulk-delete', [UserController::class, 'bulkDelete']);
+        Route::delete('{id}', [UserController::class, 'delete']);
     });
+
+    // Follow routes - update to use auth:api middleware to match your frontend
+Route::middleware('auth:api')->group(function () {
+    Route::post('/follow/{id}', [FollowController::class, 'follow']);
+    Route::post('/follow/{id}/unfollow', [FollowController::class, 'unfollow']);
+    Route::get('/is-following/{id}', [FollowController::class, 'isFollowing']);
+});
 
 Route::post('/inquiries', [InquiryController::class, 'create']);
 
@@ -97,6 +126,13 @@ Route::prefix('posts/{postId}/comments')->group(function () {
     Route::delete('/{commentId}', [CommentController::class, 'destroy'])->middleware('auth:api');
 });
 
+// likes route
+Route::prefix('likes')->middleware('auth:api')->group(function() {
+    Route::post('/comments/{comment}', [CommentController::class, 'likeComment']);
+    Route::delete('/comments/{comment}/unlike', [CommentController::class, 'unlikeComment']); // Changed to DELETE
+    Route::get('/comments/{comment}/likes', [CommentController::class, 'getCommentLikes']);
+});
+
 Route::get('permissions', [PermissionController::class, 'index']);
 
 Route::get('notifications', [NotificationController::class, 'index']);
@@ -113,3 +149,14 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
 });
 // DEMO PURPOSES ONLY. REMOVE ON ACTUAL PROJECT
 Route::post('notifications/test', [NotificationController::class, 'create']);
+
+
+Route::prefix('timeline')->group(function () {
+    Route::get('/users/{id}/profile', [UserTimelineController::class, 'getUserProfile']);
+    Route::get('/users/{id}/posts', [UserTimelineController::class, 'getUserPosts']);
+    Route::put('/users/{id}/profile', [UserTimelineController::class, 'updateProfile'])->middleware('auth:api');
+    Route::post('/users/{id}/avatar', [UserTimelineController::class, 'uploadAvatar'])->middleware('auth:api');
+    Route::post('/users/{id}/cover-photo', [UserTimelineController::class, 'uploadCoverPhoto'])->middleware('auth:api');
+    Route::get('/users/{id}/friends', [UserTimelineController::class, 'getFriends']);
+    Route::get('/users/{id}/photos', [UserTimelineController::class, 'getPhotos']);
+});

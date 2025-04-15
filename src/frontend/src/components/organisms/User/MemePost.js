@@ -1,7 +1,9 @@
+'use client';
+
 import PropTypes from 'prop-types';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { addComment, deleteComment, getComments, updateComment } from 'services/comment.service';
-import { ChatBubbleOutline, FavoriteBorder, Share } from '@mui/icons-material';
+import { useCallback, useEffect, useState } from 'react';
+import React from 'react';
+import { ChatBubbleOutline, Share } from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   Avatar,
@@ -13,78 +15,70 @@ import {
   CardHeader,
   CardMedia,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Fade,
   IconButton,
   Menu,
   MenuItem,
-  Popper,
-  TextField,
   Typography,
   useTheme,
 } from '@mui/material';
-import { useTheme as useCustomTheme } from '../../../theme/ThemeContext';
-import ImagePreview from '../../atoms/ImagePreview';
-import AnimatedEmoji from '../../atoms/animation/AnimatedEmoji';
-import ImageUploadButton from '../../molecules/ImageUploadButton';
-import CommentSection from '../CommentSection';
+import CommentFeature from 'components/organisms/CommentFeature';
+import { useTheme as useCustomTheme } from 'theme/ThemeContext';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import EditPostModal from '../EditPostModal';
+import ReportPostConfirmationModal from '../ReportPostModal';
+import PostReactions from './PostReaction';
 
 function MemePost({
   id,
   caption,
   image,
   timestamp,
-  user,
+  user, // Post author
+  loggedInUser, // Add new prop for logged-in user
   onDelete,
+  onReportPost,
   onUpdate,
   onMenuOpen,
   onMenuClose,
   menuAnchor,
   isMenuOpen,
   darkMode,
+  onUserNameClick,
 }) {
-  const theme = useTheme(); // MUI theme
-  const { darkMode: contextDarkMode } = useCustomTheme(); // Our custom theme context
+  const theme = useTheme();
+  const { darkMode: contextDarkMode } = useCustomTheme();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentCaption, setCurrentCaption] = useState(caption);
   const [currentImage, setCurrentImage] = useState(image);
-  const [postComments, setPostComments] = useState([]);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [commentToDelete, setCommentToDelete] = useState(null);
   const [isPostDeleteModalOpen, setIsPostDeleteModalOpen] = useState(false);
-  const [editingCommentId, setEditingCommentId] = useState(null);
-  const [editingCommentText, setEditingCommentText] = useState('');
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const [commentImage, setCommentImage] = useState(null);
-  const [updateCommentImagePreview, setUpdateCommentImagePreview] = useState(null);
+  const [isReportPostModalOpen, setIsReportPostModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [tempEditingText, setTempEditingText] = useState('');
+  const [reactionType, setReactionType] = useState(null);
+  const [likeCount, setLikeCount] = useState(0);
   const [showComments, setShowComments] = useState(false);
-  // State for reply functionality
-  const [replyToComment, setReplyToComment] = useState(null);
-
-  // State for reaction hover
-  const [showReactions, setShowReactions] = useState(false);
-  const [hasReacted, setHasReacted] = useState(false);
-  const likeButtonRef = useRef(null);
 
   const isDarkMode = darkMode !== undefined ? darkMode : contextDarkMode;
 
-  // Handle emoji reaction click
-  const handleReaction = useCallback(() => {
-    setHasReacted(true);
-    setShowReactions(false);
-    // Here you would typically call an API to record the reaction
-    console.log('User reacted with 😂 to post:', id);
+  useEffect(() => {
+    const savedReaction = localStorage.getItem(`post_reaction_${id}`);
+    const savedLikeCount = localStorage.getItem(`post_like_count_${id}`);
+
+    if (savedReaction) {
+      setReactionType(savedReaction);
+    }
+
+    if (savedLikeCount) {
+      setLikeCount(Number.parseInt(savedLikeCount, 10));
+    } else {
+      setLikeCount(5); // Default value or fetch from API
+    }
   }, [id]);
 
-  // Memoize handlers to prevent unnecessary re-renders
+  useEffect(() => {
+    setCurrentImage(image);
+  }, [image]);
+
   const handleSave = useCallback(
     async (newCaption, newImage, removeImage = false) => {
       setIsLoading(true);
@@ -100,6 +94,7 @@ function MemePost({
         console.error('Error updating post:', error);
       } finally {
         setIsLoading(false);
+        setIsEditModalOpen(false);
       }
     },
     [id, onUpdate]
@@ -117,202 +112,28 @@ function MemePost({
     }
   }, [id, onDelete]);
 
-  const fetchComments = useCallback(async () => {
+  const handleConfirmReportPost = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await getComments(id);
-      console.log('Fetched comments:', response.data);
-
-      // Process the comments to ensure nested structure is preserved
-      const processedComments = processCommentsHierarchy(response.data || []);
-      setPostComments(processedComments);
+      await onReportPost(id);
     } catch (error) {
-      console.error('Error fetching comments:', error);
-      setPostComments([]);
+      console.error('Error reporting this post: ', error);
     } finally {
       setIsLoading(false);
+      setIsReportPostModalOpen(false);
     }
-  }, [id]);
+  }, [id, onReportPost]);
 
-  // Helper function to ensure comments are properly nested
-  const processCommentsHierarchy = (commentsArray) => {
-    const commentsMap = {};
-    const rootComments = [];
+  const handleReactionChange = useCallback((postId, hasReacted, newReactionType, count) => {
+    setLikeCount(count);
+    setReactionType(newReactionType);
 
-    // First pass: map all comments by their ID
-    commentsArray.forEach((comment) => {
-      comment.replies = comment.replies || [];
-      commentsMap[comment.id] = comment;
-    });
-
-    // Second pass: establish hierarchy with max depth = 2
-    commentsArray.forEach((comment) => {
-      if (comment.parent_id) {
-        const parent = commentsMap[comment.parent_id];
-
-        if (parent) {
-          if (!parent.parent_id) {
-            // If parent is a root-level comment, add reply normally
-            parent.replies.push(comment);
-          } else {
-            // If parent is already a nested comment, push reply to the same level
-            const grandparent = commentsMap[parent.parent_id];
-            if (grandparent) {
-              grandparent.replies.push(comment); // Keep replies at level 2
-            } else {
-              rootComments.push(comment); // Fallback (shouldn't happen)
-            }
-          }
-        } else {
-          rootComments.push(comment); // If parent is missing, treat as root (failsafe)
-        }
-      } else {
-        rootComments.push(comment); // Root-level comments
-      }
-    });
-
-    return rootComments;
-  };
-
-  useEffect(() => {
-    fetchComments();
-  }, [fetchComments]);
-
-  useEffect(() => {
-    setCurrentImage(image);
-  }, [image]);
-
-  const handleAddReply = useCallback(
-    async (parentId, text, image) => {
-      if (!text.trim() && !image) return;
-      setIsLoading(true);
-
-      try {
-        // Ensure replies to nested comments stay at level 2
-        const parentComment = postComments.find((comment) =>
-          comment.replies.some((reply) => reply.id === parentId)
-        );
-        const finalParentId = parentComment ? parentComment.id : parentId;
-
-        await addComment(id, text, image, finalParentId); // Use adjusted parent ID
-        await fetchComments();
-        setReplyToComment(null);
-      } catch (error) {
-        console.error('Error adding reply:', error);
-        await fetchComments();
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [id, fetchComments, postComments]
-  );
-
-  const handleAddComment = useCallback(
-    async (text, image) => {
-      if (!text.trim() && !image) return;
-      setIsLoading(true);
-      try {
-        await addComment(id, text, image);
-        // Refresh comments to ensure consistent state
-        await fetchComments();
-      } catch (error) {
-        console.error('Error adding comment:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [id, fetchComments]
-  );
-
-  const confirmDeleteComment = useCallback((commentId) => {
-    setCommentToDelete(commentId);
-    setIsDeleteModalOpen(true);
-  }, []);
-
-  const handleDeleteComment = useCallback(async () => {
-    if (commentToDelete) {
-      setIsLoading(true);
-      try {
-        await deleteComment(id, commentToDelete);
-        // Refresh comments completely to ensure consistent state
-        await fetchComments();
-      } catch (error) {
-        console.error('Error deleting comment:', error);
-      } finally {
-        setCommentToDelete(null);
-        setIsDeleteModalOpen(false);
-        setIsLoading(false);
-      }
+    if (hasReacted && newReactionType) {
+      localStorage.setItem(`post_reaction_${postId}`, newReactionType);
+    } else {
+      localStorage.removeItem(`post_reaction_${postId}`);
     }
-  }, [commentToDelete, id, fetchComments]);
-
-  const handleEditCommentClick = useCallback((comment) => {
-    setEditingCommentId(comment.id);
-    setEditingCommentText(comment.text || '');
-    setTempEditingText(comment.text || ''); // Store initial text separately
-    setIsUpdateModalOpen(true);
-    setUpdateCommentImagePreview(comment.image || null);
-  }, []);
-
-  const handleUpdateCommentImage = useCallback((e) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setCommentImage(file);
-      setUpdateCommentImagePreview(URL.createObjectURL(file));
-    }
-  }, []);
-
-  const handleUpdateComment = useCallback(async () => {
-    if (!tempEditingText.trim() && !commentImage && updateCommentImagePreview === null) return;
-
-    setIsLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append('text', tempEditingText || '');
-
-      // Image handling logic
-      if (commentImage) {
-        // New image uploaded - replace existing image
-        formData.append('image', commentImage);
-      } else if (updateCommentImagePreview === null) {
-        // User explicitly removed the image
-        formData.append('remove_image', true);
-      }
-      // If neither of the above conditions are met, don't include any image fields
-      // to preserve the existing image
-
-      formData.append('_method', 'PUT');
-
-      await updateComment(id, editingCommentId, formData);
-      await fetchComments();
-
-      // Reset states
-      setEditingCommentId(null);
-      setEditingCommentText('');
-      setTempEditingText('');
-      setIsUpdateModalOpen(false);
-      setCommentImage(null);
-      setUpdateCommentImagePreview(null);
-    } catch (error) {
-      console.error('Error updating comment:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [
-    tempEditingText,
-    commentImage,
-    updateCommentImagePreview,
-    id,
-    editingCommentId,
-    fetchComments,
-  ]);
-
-  const handleCancelUpdateComment = useCallback(() => {
-    setEditingCommentId(null);
-    setEditingCommentText('');
-    setIsUpdateModalOpen(false);
-    setCommentImage(null);
-    setUpdateCommentImagePreview(null);
+    localStorage.setItem(`post_like_count_${postId}`, count.toString());
   }, []);
 
   function getRelativeTime(timestamp) {
@@ -333,12 +154,36 @@ function MemePost({
     return `${days} day${days === 1 ? '' : 's'} ago`;
   }
 
+  const formatCaption = (text) => {
+    if (!text) return '';
+
+    const formattedText = text.split('\n').map((line, i, arr) => (
+      <React.Fragment key={i}>
+        {line}
+        {i < arr.length - 1 && <br />}
+      </React.Fragment>
+    ));
+
+    return (
+      <Typography
+        variant="body1"
+        component="div"
+        sx={{
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
+        }}
+      >
+        {formattedText}
+      </Typography>
+    );
+  };
+
   return (
     <Card
       sx={{
         mb: 3,
         borderRadius: 1,
-        overflow: 'hidden',
+        overflow: 'visible',
         backgroundColor: theme.palette.background.paper,
         transition: 'background-color 0.3s, color 0.3s',
         maxWidth: '800px',
@@ -359,7 +204,7 @@ function MemePost({
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: 'rgba(255, 255, 255, 0.7)',
-            zIndex: 10,
+            zIndex: 100,
           }}
         >
           <CircularProgress />
@@ -384,8 +229,26 @@ function MemePost({
           </IconButton>
         }
         title={
-          <Typography variant="subtitle1" fontWeight="medium">
-            {user ? `${user.first_name} ${user.last_name}` : 'Unknown User'}
+          <Typography
+            variant="subtitle1"
+            fontWeight="medium"
+            onClick={(e) => (user?.id && onUserNameClick ? onUserNameClick(e, user.id) : null)}
+            sx={{
+              cursor: user?.id && onUserNameClick ? 'pointer' : 'default',
+              '&:hover':
+                user?.id && onUserNameClick
+                  ? {
+                      textDecoration: 'underline',
+                      color: theme.palette.primary.main,
+                    }
+                  : {},
+            }}
+          >
+            {user
+              ? `${user.first_name?.charAt(0).toUpperCase() + user.first_name?.slice(1)} ${
+                  user.last_name?.charAt(0).toUpperCase() + user.last_name?.slice(1)
+                }`
+              : 'Unknown User'}
           </Typography>
         }
         subheader={
@@ -397,15 +260,14 @@ function MemePost({
 
       <Menu anchorEl={menuAnchor} open={isMenuOpen} onClose={onMenuClose}>
         <MenuItem onClick={() => setIsEditModalOpen(true)}>Edit</MenuItem>
+        <MenuItem onClick={() => setIsReportPostModalOpen(true)}>Report</MenuItem>
         <MenuItem onClick={() => setIsPostDeleteModalOpen(true)} sx={{ color: 'red' }}>
           Delete
         </MenuItem>
       </Menu>
 
       <CardContent sx={{ pt: 0, pb: 1 }}>
-        <Typography variant="body1" sx={{ mb: 2, mt: 2 }}>
-          {currentCaption}
-        </Typography>
+        <Box sx={{ mb: 2, mt: 2 }}>{formatCaption(currentCaption)}</Box>
       </CardContent>
 
       {currentImage && (
@@ -421,106 +283,55 @@ function MemePost({
         />
       )}
 
-      <CardActions disableSpacing>
-        <Box sx={{ position: 'relative' }}>
-          <Button
-            ref={likeButtonRef}
-            startIcon={
-              hasReacted ? (
-                <Typography sx={{ fontSize: '16px' }}>😂</Typography>
-              ) : (
-                <FavoriteBorder />
-              )
-            }
-            size="small"
-            sx={{ color: theme.palette.text.secondary }}
-            onMouseEnter={() => !hasReacted && setShowReactions(true)}
-            onMouseLeave={() => setTimeout(() => setShowReactions(false), 300)}
-            onClick={() => hasReacted && setHasReacted(false)} // Toggle reaction off if already reacted
-          >
-            {hasReacted ? 'Haha' : 'Like'}
-          </Button>
-
-          <Popper
-            open={showReactions}
-            anchorEl={likeButtonRef.current}
-            placement="top"
-            transition
-            disablePortal
-          >
-            {({ TransitionProps }) => (
-              <Fade {...TransitionProps} timeout={350}>
-                <Box
-                  sx={{
-                    position: 'relative',
-                    mb: 1,
-                    mt: 0.5,
-                    '&:after': {
-                      content: '""',
-                      position: 'absolute',
-                      bottom: -8,
-                      left: 20,
-                      borderWidth: 8,
-                      borderStyle: 'solid',
-                      borderColor: `${
-                        isDarkMode ? 'rgba(40, 40, 40, 0.9)' : 'rgba(245, 245, 245, 0.9)'
-                      } transparent transparent transparent`,
-                    },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      p: 1,
-                      borderRadius: 2,
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      bgcolor: isDarkMode ? 'rgba(40, 40, 40, 0.9)' : 'rgba(245, 245, 245, 0.9)',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                      minWidth: 50,
-                      minHeight: 40,
-                    }}
-                    onMouseEnter={() => setShowReactions(true)}
-                    onMouseLeave={() => setShowReactions(false)}
-                  >
-                    <AnimatedEmoji emoji="😂" size={32} onClick={handleReaction} />
-                  </Box>
-                </Box>
-              </Fade>
-            )}
-          </Popper>
-        </Box>
-
+      <CardActions disableSpacing sx={{ p: 0 }}>
+        <PostReactions
+          postId={id}
+          isDarkMode={isDarkMode}
+          onReactionChange={handleReactionChange}
+          initialReactionType={reactionType}
+        />
         <Button
           startIcon={<ChatBubbleOutline />}
           size="small"
           onClick={() => setShowComments(!showComments)}
           sx={{ color: theme.palette.text.secondary }}
         >
-          {postComments.length} Comments
+          Comments
         </Button>
         <Button startIcon={<Share />} size="small" sx={{ color: theme.palette.text.secondary }}>
           Share
         </Button>
       </CardActions>
 
-      {showComments && (
-        <CommentSection
-          comments={postComments}
-          onAddComment={handleAddComment}
-          replyToComment={replyToComment}
-          onReplyClick={setReplyToComment}
-          onCancelReply={() => setReplyToComment(null)}
-          onAddReply={handleAddReply}
-          onEditClick={handleEditCommentClick}
-          onDeleteClick={confirmDeleteComment}
-          editingCommentId={editingCommentId}
-          editingCommentText={editingCommentText}
-          onEditingTextChange={setEditingCommentText}
-        />
-      )}
+      <Box
+        sx={{
+          px: 0,
+          pb: 0,
+          mt: 0,
+          display: 'flex',
+          alignItems: 'center',
+          mx: 1,
+        }}
+      >
+        {likeCount > 0 && (
+          <Typography
+            variant="caption"
+            sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', py: 0 }}
+          >
+            <span
+              role="img"
+              aria-label="laughing emoji"
+              style={{ marginRight: '4px', fontSize: '16px' }}
+            >
+              😂
+            </span>
+            {likeCount}
+          </Typography>
+        )}
+      </Box>
 
-      {/* Edit Post Modal - Using component state instead of props for open/close */}
+      {showComments && <CommentFeature postId={id} user={loggedInUser} />}
+
       <EditPostModal
         open={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -529,7 +340,14 @@ function MemePost({
         onSave={handleSave}
       />
 
-      {/* Delete Post Confirmation */}
+      <ReportPostConfirmationModal
+        open={isReportPostModalOpen}
+        onClose={() => setIsReportPostModalOpen(false)}
+        onConfirm={handleConfirmReportPost}
+        title="Report Post"
+        content="Are you sure you want to report this Post? This action cannot be undone."
+      />
+
       <DeleteConfirmationModal
         open={isPostDeleteModalOpen}
         onClose={() => setIsPostDeleteModalOpen(false)}
@@ -537,76 +355,6 @@ function MemePost({
         title="Delete Post"
         content="Are you sure you want to delete this post? This action cannot be undone."
       />
-
-      {/* Delete Comment Confirmation */}
-      <DeleteConfirmationModal
-        open={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={handleDeleteComment}
-        title="Delete Comment"
-        content="Are you sure you want to delete this comment? This action cannot be undone."
-      />
-
-      {/* Update Comment Modal */}
-      <Dialog
-        open={isUpdateModalOpen}
-        onClose={handleCancelUpdateComment}
-        maxWidth="sm"
-        fullWidth
-        disableAutoFocus
-        disableEnforceFocus
-      >
-        <DialogTitle>Edit Comment</DialogTitle>
-        <DialogContent>
-          <TextField
-            margin="dense"
-            fullWidth
-            multiline
-            rows={3}
-            value={tempEditingText} // Use tempEditingText instead of editingCommentText
-            onChange={(e) => setTempEditingText(e.target.value)}
-            placeholder="Edit your comment here...."
-            sx={{ mb: 2 }}
-            disabled={isLoading}
-          />
-
-          {updateCommentImagePreview && (
-            <Box sx={{ mb: 2 }}>
-              <ImagePreview
-                src={updateCommentImagePreview || '/placeholder.svg'}
-                onRemove={() => setUpdateCommentImagePreview(null)}
-                maxHeight="150px"
-              />
-            </Box>
-          )}
-          {!updateCommentImagePreview && (
-            <Box sx={{ mb: 2 }}>
-              <ImageUploadButton
-                onChange={handleUpdateCommentImage}
-                id="update-comment-image"
-                buttonVariant="button"
-                buttonText="Add Image"
-                buttonProps={{ disabled: isLoading }}
-              />
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelUpdateComment} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button onClick={handleUpdateComment} variant="contained" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
-                Updating...
-              </>
-            ) : (
-              'Update'
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Card>
   );
 }
@@ -617,13 +365,16 @@ MemePost.propTypes = {
   image: PropTypes.string,
   timestamp: PropTypes.string.isRequired,
   user: PropTypes.object.isRequired,
+  loggedInUser: PropTypes.object, // Add new prop
   onDelete: PropTypes.func.isRequired,
+  onReportPost: PropTypes.func.isRequired,
   onUpdate: PropTypes.func.isRequired,
   onMenuOpen: PropTypes.func.isRequired,
   onMenuClose: PropTypes.func.isRequired,
   menuAnchor: PropTypes.object,
   isMenuOpen: PropTypes.bool.isRequired,
   darkMode: PropTypes.bool,
+  onUserNameClick: PropTypes.func,
 };
 
 export default MemePost;

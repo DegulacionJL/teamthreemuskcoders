@@ -8,6 +8,7 @@ use App\Models\Comment;
 use App\Models\Image;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Exception;
 
 class PostService
@@ -48,16 +49,6 @@ class PostService
         } catch (\Exception $e) {
             throw new Exception("Error creating post: " . $e->getMessage());
         }
-    }
-    public function likePost(int $post_id, int $user_id)
-    {
-        // Create the like
-        $like = Like::create([
-            'post_id' => $post_id,
-            'user_id' => $user_id,
-        ]);
-
-        return $like;
     }
 
     public function updatePost(Post $post, $caption)
@@ -107,4 +98,217 @@ class PostService
 
     return $post->load('image');
 }
+
+public function getPosts($page = 1)
+    {
+        $currentUser = Auth::user();
+        
+        // Fetch posts with pagination, including related user and image data
+        $posts = Post::with('user', 'image')
+            ->latest()
+            ->paginate(5, ['*'], 'page', $page);
+        
+        // Get the post IDs for efficient querying
+        $postIds = [];
+        foreach ($posts->items() as $post) {
+            $postIds[] = $post->id;
+        }
+        
+        // If user is logged in, get their likes for these posts in a single query
+        $userLikes = [];
+        if ($currentUser) {
+            $userLikesQuery = Like::where('user_id', $currentUser->id)
+                ->whereIn('post_id', $postIds)
+                ->get();
+                
+            foreach ($userLikesQuery as $like) {
+                $userLikes[] = $like->post_id;
+            }
+        }
+        
+        // Get like counts for all posts in a single query (more efficient)
+        $likeCounts = [];
+        $likeCountsQuery = Like::whereIn('post_id', $postIds)
+            ->selectRaw('post_id, count(*) as count')
+            ->groupBy('post_id')
+            ->get();
+            
+        foreach ($likeCountsQuery as $count) {
+            $likeCounts[$count->post_id] = $count->count;
+        }
+        
+        // Add reaction data to each post
+        $postsWithReactions = $posts->items();
+        foreach ($postsWithReactions as $post) {
+            $post->reaction_data = [
+                'has_liked' => in_array($post->id, $userLikes),
+                'like_count' => isset($likeCounts[$post->id]) ? $likeCounts[$post->id] : 0
+            ];
+        }
+        
+        // Return data with pagination information
+        return [
+            'posts' => $postsWithReactions,
+            'currentPage' => $posts->currentPage(),
+            'lastPage' => $posts->lastPage(),
+            'total' => $posts->total(),
+            'currentUser' => $currentUser,
+        ];
+    }
+
+    public function likePost($user, $postId)
+    {
+        $post = Post::findOrFail($postId);
+
+        $existingLike = Like::where('user_id', $user->id)->where('post_id', $post->id)->first();
+
+        if ($existingLike) {
+            // Return the current like count even if already liked
+            $likeCount = $post->likes()->count();
+            
+            return [
+                'message' => 'You already liked this post.',
+                'like_count' => $likeCount,
+                'liked' => true
+            ];
+        }
+
+        $like = new Like();
+        $like->user_id = $user->id;
+        $like->post_id = $post->id;
+        $like->save();
+
+        $likeCount = $post->likes()->count();
+
+        return [
+            'message' => 'Post liked successfully',
+            'like_count' => $likeCount,
+            'liked' => true
+        ];
+    }
+
+    public function unlikePost($user, $postId)
+    {
+        $post = Post::findOrFail($postId);
+
+        $like = Like::where('user_id', $user->id)->where('post_id', $post->id)->first();
+
+        if (!$like){
+            $likeCount = $post->likes()->count();
+
+            return[
+                'message' => 'You have not liked this post yet.',
+                'like_count' => $likeCount,
+                'liked' => false
+            ];
+        }
+
+        $like->delete();
+
+        $likeCount = $post->likes()->count();
+
+        return [
+            'message' => 'Post unliked successfully.',
+            'like_count' => $likeCount,
+            'liked'=>false
+        ];
+
+    }
+
+    public function getLeaderboard($period = 'daily')
+    {
+        try {
+            // Determine the time range based on the period
+            $startDate = now();
+            if ($period === 'daily') {
+                $startDate = now()->subDay();
+            } elseif ($period === 'weekly') {
+                $startDate = now()->subWeek();
+            } elseif ($period === 'monthly') {
+                $startDate = now()->subMonth();
+            } else {
+                throw new Exception('Invalid period specified. Use "daily", "weekly", or "monthly".');
+            }
+
+            // Fetch users with the most likes on their posts within the time range
+            $leaderboard = Like::select('posts.user_id')
+                ->selectRaw('users.first_name, users.last_name, COUNT(*) as total_likes')
+                ->join('posts', 'likes.post_id', '=', 'posts.id')
+                ->join('users', 'posts.user_id', '=', 'users.id')
+                ->where('likes.created_at', '>=', $startDate)
+                ->groupBy('posts.user_id', 'users.first_name', 'users.last_name')
+                ->orderByDesc('total_likes')
+                ->take(3) // Get top 3 users
+                ->get();
+
+            // Format the leaderboard data
+            $result = $leaderboard->map(function ($item, $index) {
+                return [
+                    'id' => $item->user_id,
+                    'name' => "{$item->first_name} {$item->last_name}",
+                    'points' => $item->total_likes,
+                    'rank' => $index + 1,
+                ];
+            })->toArray();
+
+            return [
+                'leaderboard' => $result,
+                'period' => $period,
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error in getLeaderboard: ' . $e->getMessage());
+            return [
+                'leaderboard' => [],
+                'period' => $period,
+                'error' => 'Failed to fetch leaderboard',
+            ];
+        }
+    }
+
+    public function getLikes($postId)
+    {
+        try {
+            $post = Post::findOrFail($postId);
+            $currentUser = Auth::user();
+
+            $likes = $post->likes()->with('user')->get();
+            $likeCount = $post->likes()->count();
+
+            // Initialize $userReaction as null
+            $userReaction = null;
+            $userHasLiked = false;
+
+            // Check if the user has liked the post
+            if ($currentUser) {
+                $userLike = $likes->where('user_id', $currentUser->id)->first();
+                if ($userLike) {
+                    $userReaction = [
+                        'id' => $userLike->id,
+                        'created_at' => $userLike->created_at,
+                        'user_id' => $currentUser->id
+                    ];
+                    $userHasLiked = true;
+                }
+            }
+
+            return [
+                'likes' => $likes,
+                'like_count' => $likeCount,
+                'user_has_liked' => $userHasLiked,
+                'user_reaction' => $userReaction
+            ];
+        } catch (\Exception $e) {
+            // Log the error
+            Log::error('Error in getLikes: ' . $e->getMessage());
+            
+            // Return a basic response to prevent frontend errors
+            return [
+                'likes' => [],
+                'like_count' => 0,
+                'user_has_liked' => false,
+                'user_reaction' => null,
+                'error' => 'Failed to fetch likes'
+            ];
+        }
+    }
 }

@@ -1,13 +1,16 @@
-// CommentSection.js
+import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
+import EmojiPicker from 'emoji-picker-react';
 import PropTypes from 'prop-types';
-import React from 'react';
-import { Box, Typography } from '@mui/material';
-// Remove TextField from import
-import CommentInputForm from '../molecules/CommentInputForm';
-import CommentsList from './CommentsList';
+import React, { useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
+import { Avatar, Box, Button, IconButton, InputAdornment, TextField } from '@mui/material';
+import ImagePreview from 'components/atoms/ImagePreview';
+import CommentsList from 'components/molecules/CommentsList';
+import ImageUploadButton from 'components/molecules/ImageUploadButton';
 
 const CommentSection = ({
-  comments, // Remove postId since it's not being used
+  comments,
   onAddComment,
   replyToComment,
   onReplyClick,
@@ -17,12 +20,76 @@ const CommentSection = ({
   onDeleteClick,
   editingCommentId,
   editingCommentText,
-  onEditingTextChange,
+  onLoadMoreReplies,
+  onBackReplies,
+  replyHasMore,
+  replyPage,
+  onReactionChange,
+  user: propUser,
 }) => {
-  return (
-    <Box sx={{ mt: 3 }}>
-      <Typography variant="subtitle1">Comments</Typography>
-      <CommentInputForm onSubmit={(text, image) => onAddComment(text, image)} />
+  const [newCommentText, setNewCommentText] = useState('');
+  const [newCommentImage, setNewCommentImage] = useState(null);
+  const [newCommentImagePreview, setNewCommentImagePreview] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const reduxUser = useSelector((state) => state.profile.user);
+  const currentUser = propUser || reduxUser;
+
+  const emojiButtonRef = useRef(null);
+
+  const { refs, floatingStyles } = useFloating({
+    open: showEmojiPicker,
+    placement: 'bottom-end',
+    middleware: [offset(12), flip(), shift({ padding: 12 })],
+    whileElementsMounted: autoUpdate,
+    elements: { reference: emojiButtonRef.current },
+  });
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && e.shiftKey) {
+      // Allow Shift+Enter to add a new line
+      e.preventDefault();
+      const cursorPosition = e.target.selectionStart; // Get the current cursor position
+      const newText =
+        newCommentText.slice(0, cursorPosition) + '\n' + newCommentText.slice(cursorPosition); // Insert a new line at the cursor position
+      setNewCommentText(newText);
+
+      // Move the cursor to the correct position after the new line
+      setTimeout(() => {
+        e.target.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+
+        // Scroll the TextField to ensure the cursor is visible
+        e.target.scrollTop = e.target.scrollHeight; // Scroll to the bottom of the TextField
+      }, 0);
+    } else if (e.key === 'Enter') {
+      // Prevent Enter from submitting the form (we'll use the Post button)
+      e.preventDefault();
+      handleAddComment();
+    }
+  };
+
+  const handleAddComment = () => {
+    if (!newCommentText.trim() && !newCommentImage) return;
+    onAddComment(newCommentText, newCommentImage);
+    setNewCommentText('');
+    setNewCommentImage(null);
+    setNewCommentImagePreview(null);
+  };
+
+  const handleImageUpload = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setNewCommentImage(file);
+      setNewCommentImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleEmojiClick = (emojiObject) => {
+    setNewCommentText((prev) => prev + emojiObject.emoji);
+  };
+
+  if (!currentUser) {
+    return (
       <CommentsList
         comments={comments}
         replyToComment={replyToComment}
@@ -33,14 +100,114 @@ const CommentSection = ({
         onDeleteClick={onDeleteClick}
         editingCommentId={editingCommentId}
         editingCommentText={editingCommentText}
-        onEditingTextChange={onEditingTextChange}
+        onLoadMoreReplies={onLoadMoreReplies}
+        onBackReplies={onBackReplies}
+        replyHasMore={replyHasMore}
+        replyPage={replyPage}
+        onReactionChange={onReactionChange}
+        currentUser={currentUser}
+      />
+    );
+  }
+
+  return (
+    <Box sx={{ mt: 2, px: 2, position: 'relative', zIndex: 1 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 2, mb: 2 }}>
+        <Avatar
+          src={currentUser?.avatar || ''}
+          alt={`${currentUser?.first_name} ${currentUser?.last_name}`}
+          sx={{ bgcolor: currentUser?.avatar ? 'transparent' : '#4a3b6b', width: 40, height: 40 }}
+        >
+          {currentUser
+            ? `${currentUser.first_name?.charAt(0) || ''}${currentUser.last_name?.charAt(0) || ''}`
+            : 'U'}
+        </Avatar>
+        <Box sx={{ flexGrow: 1, position: 'relative' }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Add a comment..."
+            value={newCommentText}
+            onChange={(e) => setNewCommentText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            sx={{ mb: 1 }}
+            multiline // Enable multiline input
+            rows={2} // Set initial rows
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    ref={emojiButtonRef}
+                    onClick={() => setShowEmojiPicker((prev) => !prev)}
+                    edge="end"
+                  >
+                    <EmojiEmotionsIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+          {showEmojiPicker && (
+            <Box
+              ref={refs.setFloating}
+              style={{ ...floatingStyles, zIndex: 1500, position: 'absolute' }}
+              sx={{
+                '& .emoji-picker-react': {
+                  boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
+                  borderRadius: 8,
+                  overflow: 'visible',
+                },
+              }}
+            >
+              <EmojiPicker onEmojiClick={handleEmojiClick} />
+            </Box>
+          )}
+          {newCommentImagePreview && (
+            <ImagePreview
+              src={newCommentImagePreview}
+              onRemove={() => {
+                setNewCommentImage(null);
+                setNewCommentImagePreview(null);
+              }}
+              maxHeight="100px"
+            />
+          )}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+            <ImageUploadButton
+              onChange={handleImageUpload}
+              id="new-comment-image"
+              buttonVariant="button"
+              buttonText="Add Image"
+            />
+            <Button variant="contained" onClick={handleAddComment}>
+              Post
+            </Button>
+          </Box>
+        </Box>
+      </Box>
+      <CommentsList
+        comments={comments}
+        replyToComment={replyToComment}
+        onReplyClick={onReplyClick}
+        onCancelReply={onCancelReply}
+        onAddReply={onAddReply}
+        onEditClick={onEditClick}
+        onDeleteClick={onDeleteClick}
+        editingCommentId={editingCommentId}
+        editingCommentText={editingCommentText}
+        onLoadMoreReplies={onLoadMoreReplies}
+        onBackReplies={onBackReplies}
+        replyHasMore={replyHasMore}
+        replyPage={replyPage}
+        onReactionChange={onReactionChange}
+        currentUser={currentUser}
       />
     </Box>
   );
 };
 
 CommentSection.propTypes = {
-  comments: PropTypes.array.isRequired, // Remove postId from PropTypes
+  comments: PropTypes.array.isRequired,
   onAddComment: PropTypes.func.isRequired,
   replyToComment: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onReplyClick: PropTypes.func.isRequired,
@@ -50,7 +217,12 @@ CommentSection.propTypes = {
   onDeleteClick: PropTypes.func.isRequired,
   editingCommentId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   editingCommentText: PropTypes.string,
-  onEditingTextChange: PropTypes.func.isRequired,
+  onLoadMoreReplies: PropTypes.func.isRequired,
+  onBackReplies: PropTypes.func.isRequired,
+  replyHasMore: PropTypes.object.isRequired,
+  replyPage: PropTypes.object.isRequired,
+  onReactionChange: PropTypes.func.isRequired,
+  user: PropTypes.object,
 };
 
 export default CommentSection;

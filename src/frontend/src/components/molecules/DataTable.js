@@ -1,3 +1,5 @@
+'use client';
+
 import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
 import Pagination from '@mui/material/Pagination';
@@ -23,8 +25,11 @@ function DataTable(props) {
     handleDelete,
     handleEdit,
     handleAdd,
+    handleFollow,
     toolbar,
     actions,
+    alignSearchRight,
+    user,
   } = props;
 
   return (
@@ -47,7 +52,10 @@ function DataTable(props) {
               rows={data}
               handleDelete={handleDelete}
               handleEdit={handleEdit}
+              handleAdd={handleAdd}
+              handleFollow={handleFollow}
               actions={actions}
+              user={user}
             />
           </Table>
         </TableContainer>
@@ -75,6 +83,9 @@ DataTable.propTypes = {
   handleAdd: PropTypes.func,
   toolbar: PropTypes.bool,
   actions: PropTypes.bool,
+  alignSearchRight: PropTypes.bool,
+  handleFollow: PropTypes.func,
+  user: PropTypes.object,
 };
 
 DataTable.defaultProps = {
