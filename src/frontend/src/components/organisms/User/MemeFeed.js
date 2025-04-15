@@ -795,16 +795,16 @@ function MemeFeed() {
                       tag.color === 'primary'
                         ? '#4a3b6b'
                         : tag.color === 'secondary'
-                          ? '#5d4037'
-                          : '#2e7d32',
+                        ? '#5d4037'
+                        : '#2e7d32',
                     color: '#ffffff',
                     '&:hover': {
                       bgcolor:
                         tag.color === 'primary'
                           ? '#5a4b7b'
                           : tag.color === 'secondary'
-                            ? '#6d5047'
-                            : '#3e8d42',
+                          ? '#6d5047'
+                          : '#3e8d42',
                     },
                   }}
                 />

@@ -30,20 +30,24 @@ function Dashboard() {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const data = await getDashboardStats();
-        console.log('📡 Raw API Data:', data);
+        const response = await getDashboardStats();
+        console.log('📡 Raw API Data:', response); // Log the entire response
 
-        if (data && Object.keys(data).length > 0) {
-          setStats((prevStats) => {
-            const updated = {
-              ...prevStats,
-              ...Object.fromEntries(
-                Object.entries(data).filter(([_, v]) => v !== null && v !== undefined)
-              ),
-            };
-            console.log('✅ Updated stats state:', updated);
-            return updated;
-          });
+        if (response && response.data) {
+          // Accessing data from the nested object
+          const { data } = response;
+          if (data && Object.keys(data).length > 0) {
+            setStats((prevStats) => {
+              const updated = {
+                ...prevStats,
+                ...Object.fromEntries(
+                  Object.entries(data).filter(([_, v]) => v !== null && v !== undefined)
+                ),
+              };
+              console.log('✅ Updated stats state:', updated);
+              return updated;
+            });
+          }
         }
       } catch (err) {
         console.error('Error fetching dashboard stats:', err);

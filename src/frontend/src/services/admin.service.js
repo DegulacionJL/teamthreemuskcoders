@@ -28,13 +28,12 @@ const getReportedMemes = async () => {
 const getDashboardStats = async () => {
   try {
     console.log('📡 Fetching dashboard stats...');
-    const req = api.get('/admin/dashboard').then(({ data }) => data);
-    const result = await req;
-    console.log('✅ Dashboard stats received:', result);
-    return result;
+    const { data } = await api.get('/admin/dashboard'); // Await the API request directly
+    console.log('✅ Dashboard stats received:', data); // Log the received data
+    return data; // Return the data directly from the response
   } catch (error) {
     console.error('❌ Error fetching dashboard stats:', error);
-    throw error;
+    throw error; // Re-throw the error after logging
   }
 };
 

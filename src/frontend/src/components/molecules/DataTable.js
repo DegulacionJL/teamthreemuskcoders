@@ -7,6 +7,7 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableContainer from '@mui/material/TableContainer';
+import AdminTableBody from 'components/atoms/DataTable/AdminTableBody';
 import TableBody from 'components/atoms/DataTable/TableBody';
 import TableHead from 'components/atoms/DataTable/TableHead';
 import TableToolbar from 'components/atoms/DataTable/TableToolbar';
@@ -47,7 +48,7 @@ function DataTable(props) {
               headCells={header}
               actions={actions}
             />
-            <TableBody
+            <AdminTableBody
               header={header}
               rows={data}
               handleDelete={handleDelete}
@@ -56,6 +57,7 @@ function DataTable(props) {
               handleFollow={handleFollow}
               actions={actions}
               user={user}
+              role={user?.role}
             />
           </Table>
         </TableContainer>
