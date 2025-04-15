@@ -19,6 +19,7 @@
     "dayjs": "^1.11.7",
     "i18next": "^22.4.9",
     "laravel-echo": "^1.16.0",
+    "lucide-react": "^0.488.0",
     "pusher-js": "^8.4.0-rc2",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",

@@ -1,31 +1,41 @@
-import axios from 'axios';
+import api from 'utils/api';
 
-const API_URL = 'http://localhost:8000/api/admin'; // Adjust as needed
-
-export const getUsers = async () => {
-  const response = await axios.get(`${API_URL}/users`);
-  return response.data;
+const getUsers = async () => {
+  const req = api.get('/admin/users').then(({ data }) => data);
+  return await req;
 };
 
-export const deleteUser = async (id) => {
-  await axios.delete(`${API_URL}/users/${id}`);
+const deleteUser = async (id) => {
+  const req = api.delete(`/admin/users/${id}`).then(({ data }) => data);
+  return await req;
 };
 
-export const getMemes = async () => {
-  const response = await axios.get(`${API_URL}/memes`);
-  return response.data;
+const getMemes = async () => {
+  const req = api.get('/admin/memes').then(({ data }) => data);
+  return await req;
 };
 
-export const deleteMeme = async (id) => {
-  await axios.delete(`${API_URL}/memes/${id}`);
+const deleteMeme = async (id) => {
+  const req = api.delete(`/admin/memes/${id}`).then(({ data }) => data);
+  return await req;
 };
 
-export const getReportedMemes = async () => {
-  const response = await axios.get(`${API_URL}/memes/reported`);
-  return response.data;
+const getReportedMemes = async () => {
+  const req = api.get('/admin/memes/reported').then(({ data }) => data);
+  return await req;
 };
 
-export const getDashboardStats = async () => {
-  const response = await axios.get(`${API_URL}/dashboard`);
-  return response.data;
+const getDashboardStats = async () => {
+  try {
+    console.log('📡 Fetching dashboard stats...');
+    const req = api.get('/admin/dashboard').then(({ data }) => data);
+    const result = await req;
+    console.log('✅ Dashboard stats received:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Error fetching dashboard stats:', error);
+    throw error;
+  }
 };
+
+export { getUsers, deleteUser, getMemes, deleteMeme, getReportedMemes, getDashboardStats };

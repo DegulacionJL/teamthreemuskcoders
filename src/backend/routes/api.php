@@ -103,8 +103,13 @@ Route::get('notifications', [NotificationController::class, 'index']);
 Route::put('notifications/{id}/seen', [NotificationController::class, 'seen']);
 
 // Admin Dashboard Route
-Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
-    Route::get('/admin/dashboard-stats', [AdminDashboardController::class, 'getStats']);
+Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', 'AdminDashboardController@getStats');
+    Route::get('/users', 'AdminUserController@index');
+    Route::delete('/users/{id}', 'AdminUserController@destroy');
+    Route::get('/memes', 'AdminMemeController@index');
+    Route::delete('/memes/{id}', 'AdminMemeController@destroy');
+    Route::get('/memes/reported', 'AdminMemeController@reported');
 });
 // DEMO PURPOSES ONLY. REMOVE ON ACTUAL PROJECT
 Route::post('notifications/test', [NotificationController::class, 'create']);

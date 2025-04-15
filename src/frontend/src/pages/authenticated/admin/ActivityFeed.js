@@ -16,7 +16,7 @@ import {
 const activityLogs = [
   {
     id: 1,
-    admin: 'Daeneyra Targaryen',
+    admin: 'Daeneyrs Targaryen',
     role: 'Admin',
     action: 'Suspended user @nightKing for violating content guidelines.',
     timestamp: 'April 7, 2025 – 09:50 AM',

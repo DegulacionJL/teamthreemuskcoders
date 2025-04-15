@@ -96,6 +96,7 @@ const en = {
         active_users: 'Active Users',
         total_memes: 'Total Memes',
         reported_memes: 'Reported Memes',
+        reported_comments: 'Reported Comments',
 
         banned_users: 'Banned Users',
       },
