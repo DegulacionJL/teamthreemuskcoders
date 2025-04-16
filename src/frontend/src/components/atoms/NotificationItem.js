@@ -1,9 +1,9 @@
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import utc from 'dayjs/plugin/utc';
 import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
 import BodyText from 'components/atoms/BodyText';
-import utc from 'dayjs/plugin/utc';
 
 dayjs.extend(relativeTime);
 dayjs.extend(utc);
