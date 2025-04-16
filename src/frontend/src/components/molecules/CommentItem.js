@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Lightbox from 'yet-another-react-lightbox';
+import 'yet-another-react-lightbox/styles.css';
 import { Box, Button, Typography, useTheme } from '@mui/material';
 import AvatarWithInitials from 'components/atoms/AvatarWithInitial';
 import ImagePreview from 'components/atoms/ImagePreview';
@@ -27,6 +29,7 @@ const CommentItem = ({
   onReactionChange,
   currentUser,
 }) => {
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const isMaxDepthReached = depth >= maxDepth;
   const hasMoreReplies = !!replyHasMore[comment.id];
   const currentReplyPage = replyPage[comment.id] || 1;
@@ -69,6 +72,12 @@ const CommentItem = ({
     );
   };
 
+  // Function to open lightbox with debugging
+  const handleImageClick = () => {
+    console.log('Image clicked, opening lightbox'); // Debug log
+    setIsLightboxOpen(true);
+  };
+
   return (
     <Box
       sx={{
@@ -109,7 +118,36 @@ const CommentItem = ({
         {comment.text && formatCommentText(comment.text)}
         {comment.image && (
           <Box sx={{ mt: 1 }}>
-            <ImagePreview src={comment.image} maxHeight="200px" showRemoveButton={false} />
+            {/* Wrap ImagePreview in a clickable Box to ensure clickability */}
+            <Box
+              onClick={handleImageClick}
+              sx={{
+                cursor: 'pointer',
+                display: 'inline-block',
+              }}
+            >
+              <ImagePreview
+                src={comment.image}
+                maxHeight="200px"
+                showRemoveButton={false}
+                onClick={handleImageClick}
+              />
+            </Box>
+            <Lightbox
+              open={isLightboxOpen}
+              close={() => {
+                console.log('Closing lightbox'); // Debug log
+                setIsLightboxOpen(false);
+              }}
+              slides={[{ src: comment.image }]}
+              render={{
+                buttonPrev: () => null,
+                buttonNext: () => null,
+              }}
+              styles={{
+                root: { zIndex: 2000 }, // Ensure lightbox appears above other elements
+              }}
+            />
           </Box>
         )}
 
