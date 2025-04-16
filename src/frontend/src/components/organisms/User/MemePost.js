@@ -3,6 +3,8 @@
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import React from 'react';
+import Lightbox from 'yet-another-react-lightbox';
+import 'yet-another-react-lightbox/styles.css';
 import { ChatBubbleOutline, Share } from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
@@ -27,8 +29,6 @@ import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import EditPostModal from '../EditPostModal';
 import ReportPostConfirmationModal from '../ReportPostModal';
 import PostReactions from './PostReaction';
-import Lightbox from 'yet-another-react-lightbox';
-import 'yet-another-react-lightbox/styles.css';
 
 function MemePost({
   id,
