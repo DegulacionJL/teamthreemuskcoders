@@ -1,7 +1,8 @@
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import React from 'react';
-import { getComments } from 'services/comment.service';
+import Lightbox from 'yet-another-react-lightbox';
+import 'yet-another-react-lightbox/styles.css';
 import { ChatBubbleOutline, Share } from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
@@ -25,19 +26,14 @@ import { useComments } from 'hooks/useComments'; // Import the useComments hook
 import { useTheme as useCustomTheme } from 'theme/ThemeContext';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import EditPostModal from '../EditPostModal';
-import LightBox from '../LightBox';
 import ReportPostConfirmationModal from '../ReportPostModal';
 import PostReactions from './PostReaction';
-
-// Import the API function for fetching comments
 
 function MemePost({
   id,
   caption,
   image,
   timestamp,
-  user,
-  loggedInUser,
   user,
   loggedInUser,
   onDelete,
@@ -145,43 +141,6 @@ function MemePost({
     localStorage.setItem(`post_like_count_${postId}`, count.toString());
   }, []);
 
-  const fetchComments = async () => {
-    setIsLoading(true);
-    try {
-      const response = await getComments(id); // Fetch comments from the backend
-      setComments(response.data);
-    } catch (error) {
-      console.error('Error fetching comments:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleImageClick = async () => {
-    if (currentImage) {
-      await fetchComments(); // Fetch real comments for the lightbox
-      setIsLightboxOpen(true);
-    }
-  };
-
-  const handleAddComment = (text) => {
-    if (!text.trim()) return;
-
-    const newComment = {
-      user: loggedInUser || {
-        first_name: 'Current',
-        last_name: 'User',
-        avatar: '/placeholder.svg?height=40&width=40',
-      },
-      text: text,
-    };
-
-    setComments((prev) => [...prev, newComment]);
-
-    // In a real app, you would send this to your backend
-    console.log('New comment added:', newComment);
-  };
-
   function getRelativeTime(timestamp) {
     const now = new Date();
     const postedTime = new Date(timestamp);
@@ -288,12 +247,10 @@ function MemePost({
             sx={{
               cursor: user?.id && onUserNameClick ? 'pointer' : 'default',
               color: isDarkMode ? '#ffffff' : '#000000',
-              color: isDarkMode ? '#ffffff' : '#000000',
               '&:hover':
                 user?.id && onUserNameClick
                   ? {
                       textDecoration: 'underline',
-                      color: isDarkMode ? theme.palette.primary.main : theme.palette.primary.dark,
                       color: isDarkMode ? theme.palette.primary.main : theme.palette.primary.dark,
                     }
                   : {},
@@ -336,22 +293,18 @@ function MemePost({
             objectFit: 'contain',
             bgcolor: isDarkMode ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)',
             cursor: 'pointer',
-            cursor: 'pointer',
           }}
         />
       )}
 
-      <LightBox
-        isOpen={isLightboxOpen}
-        onClose={() => setIsLightboxOpen(false)}
-        image={currentImage}
-        caption={currentCaption}
-        user={user}
-        timestamp={timestamp}
-        comments={comments || []}
-        reactionCount={likeCount}
-        onAddComment={handleAddComment}
-        darkMode={isDarkMode}
+      <Lightbox
+        open={isLightboxOpen}
+        close={() => setIsLightboxOpen(false)}
+        slides={[{ src: currentImage }]}
+        render={{
+          buttonPrev: currentImage ? undefined : () => null,
+          buttonNext: currentImage ? undefined : () => null,
+        }}
       />
 
       <CardActions disableSpacing sx={{ p: 0 }}>
@@ -437,7 +390,6 @@ MemePost.propTypes = {
   image: PropTypes.string,
   timestamp: PropTypes.string.isRequired,
   user: PropTypes.object.isRequired,
-  loggedInUser: PropTypes.object,
   loggedInUser: PropTypes.object,
   onDelete: PropTypes.func.isRequired,
   onReportPost: PropTypes.func.isRequired,
