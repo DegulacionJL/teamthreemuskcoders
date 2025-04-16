@@ -557,7 +557,13 @@ function MemeFeed() {
                   multiline
                   rows={3}
                   value={caption}
-                  onChange={(e) => setCaption(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const fixedValue = value.replace(/^( +) /, (match) =>
+                      '\u00A0'.repeat(match.length)
+                    );
+                    setCaption(fixedValue);
+                  }}
                   sx={{
                     width: '100%',
                     mb: 2,
@@ -567,6 +573,10 @@ function MemeFeed() {
                           ? 'rgba(255,255,255,0.05)'
                           : 'rgba(0,0,0,0.02)',
                       borderRadius: 1,
+                      '& textarea': {
+                        whiteSpace: 'pre-wrap',
+                        fontFamily: 'monospace',
+                      },
                     },
                   }}
                 />

@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { followUser, isFollowing, unfollowUser } from 'services/follow.service';
 import { searchUsers } from 'services/user.list.service';
 import Box from '@mui/material/Box';
-import DataTable from 'components/molecules/DataTable';
+import UsersDataTable from 'components/molecules/UsersDataTable';
 import AddEditModal from 'components/molecules/users/AddEditModal';
 import { criteria, meta as defaultMeta } from 'config/search';
 
@@ -163,7 +163,7 @@ function Users() {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <DataTable
+        <UsersDataTable
           header={headers}
           data={data}
           page={query.page}

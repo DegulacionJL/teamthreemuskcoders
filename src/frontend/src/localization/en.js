@@ -193,7 +193,7 @@ const en = {
       broadcast: 'Broadcast',
       calculate: 'calculate',
       memefeed: 'Meme Feed',
-      userlist: 'User List',
+      userlist: 'Find Friends',
     },
     table: {
       no_data: 'No data.',
