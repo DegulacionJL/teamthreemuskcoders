@@ -1,5 +1,6 @@
 'use client';
 
+import PropTypes from 'prop-types';
 import { PhotoCamera } from '@mui/icons-material';
 import { Avatar, Box, Button, Card, CardContent, TextField, Typography } from '@mui/material';
 import { useTheme } from '@mui/material';
@@ -200,6 +201,23 @@ const CreatePostCard = ({
       </CardContent>
     </Card>
   );
+};
+
+CreatePostCard.propTypes = {
+  currentUser: PropTypes.shape({
+    avatar: PropTypes.string,
+    first_name: PropTypes.string,
+    last_name: PropTypes.string,
+  }),
+  caption: PropTypes.string.isRequired,
+  setCaption: PropTypes.func.isRequired,
+  imagePreview: PropTypes.string,
+  setImagePreview: PropTypes.func.isRequired,
+  setImage: PropTypes.func.isRequired,
+  showMemeCreator: PropTypes.bool.isRequired,
+  setShowMemeCreator: PropTypes.func.isRequired,
+  handlePost: PropTypes.func.isRequired,
+  handleMemeCreatorSave: PropTypes.func.isRequired,
 };
 
 export default CreatePostCard;

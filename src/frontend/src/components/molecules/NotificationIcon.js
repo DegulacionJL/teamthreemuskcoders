@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
 import { Fragment, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { markNotificationSeen, searchNotifications } from 'services/notification.service';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
@@ -19,6 +20,7 @@ import { criteria, meta as defaultMeta } from 'config/search';
 const NotificationIcon = (props) => {
   const { user, darkMode = false } = props;
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
@@ -30,29 +32,41 @@ const NotificationIcon = (props) => {
   const id = open ? 'simple-popover' : undefined;
 
   const handleClickNotification = async (notification) => {
-    const { id, type, content, read_at } = notification;
+    const { id, type, content, read_at, notifiable_id } = notification;
 
     toast.info(content);
-    // mark the notification as seen if not yet seen
+    // Mark the notification as seen if not yet seen
     if (read_at === null) {
       await markNotificationSeen(id);
-      // update rendered list view
+      // Update rendered list view
       const updatedList = [...notifications];
       const index = updatedList.findIndex((row) => Number.parseInt(row.id) === Number.parseInt(id));
       updatedList[index].read_at = dayjs().format('YYYY-MM-DDTHH:mm:ssZ[Z]');
       setNotifications(updatedList);
-      // update unread count
+      // Update unread count
       setUnread((prev) => prev - 1);
     }
 
     // Handle different notification types
     switch (type) {
       case 'comment_reply':
-        // Here you would typically navigate to the comment thread
-        // For demo purposes, we'll just show an alert
-        alert(`Notification: ${notification.content}. Comment ID: ${notification.notifiable_id}`);
+      case 'post_comment':
+        // Navigate to the post containing the comment
+        // Assuming we can get the post_id from the comment
+        try {
+          // Fetch the comment to get the post_id (you may need to adjust this based on your API)
+          const commentResponse = await fetch(`/api/posts/comments/${notifiable_id}`);
+          const comment = await commentResponse.json();
+          if (comment.post_id) {
+            navigate(`/posts/${comment.post_id}`);
+          } else {
+            toast.error('Unable to navigate to post.');
+          }
+        } catch (error) {
+          console.error('Error fetching comment:', error);
+          toast.error('Unable to navigate to post.');
+        }
         break;
-      // Add other cases as needed
       default:
         alert(JSON.stringify(notification));
         break;
@@ -74,18 +88,18 @@ const NotificationIcon = (props) => {
   };
 
   const handleOnScroll = (e) => {
-    // check if user has scrolled to bottom of notification list
+    // Check if user has scrolled to bottom of notification list
     const bottom = e.target.scrollHeight - e.target.scrollTop === e.target.clientHeight;
-    // trigger fetch next page
+    // Trigger fetch next page
     if (bottom && meta && meta.currentPage < meta.lastPage && loading === false) {
       setQuery({ ...query, page: meta.currentPage + 1 });
     }
   };
 
   const handleNewNotification = (notification) => {
-    // add to very top of the list
+    // Add to very top of the list
     setNotifications((prev) => [notification, ...prev]);
-    // increment unread count
+    // Increment unread count
     setUnread((prev) => prev + 1);
     toast(t('labels.newNotification'), { type: 'info' });
   };
@@ -99,13 +113,13 @@ const NotificationIcon = (props) => {
     // Also check if window.Echo exists before using it
     if (user && window.Echo) {
       try {
-        // subscribe to private channel & listen to specific event from backend \App\Events\
+        // Subscribe to private channel & listen to specific event from backend \App\Events\
         window.Echo.private(`user-notification.${user.id}`).listen('NotificationCreated', (e) => {
           const { notification } = e;
           handleNewNotification(notification);
         });
 
-        // clean up connection to avoid duplicate broadcast
+        // Clean up connection to avoid duplicate broadcast
         return () => {
           if (window.Echo) {
             window.Echo.private(`user-notification.${user.id}`).stopListening(

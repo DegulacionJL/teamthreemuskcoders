@@ -1,14 +1,18 @@
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import utc from 'dayjs/plugin/utc';
 import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
 import BodyText from 'components/atoms/BodyText';
 
 dayjs.extend(relativeTime);
+dayjs.extend(utc);
 
 const NotificationItem = (props) => {
   const { notification, onClick } = props;
   const { content, created_at, read_at } = notification;
+
+  const time = dayjs.utc(created_at);
 
   return (
     <Box
@@ -39,7 +43,7 @@ const NotificationItem = (props) => {
           {content}
         </BodyText>
         <BodyText disableGutter color="text.secondary" sx={{ fontSize: 12 }}>
-          {dayjs(created_at).fromNow()}
+          {time.fromNow()}
         </BodyText>
       </Box>
     </Box>
@@ -52,6 +56,11 @@ NotificationItem.propTypes = {
     content: PropTypes.string,
     created_at: PropTypes.string,
     read_at: PropTypes.string,
+    sender: PropTypes.shape({
+      id: PropTypes.number,
+      full_name: PropTypes.string,
+      avatar: PropTypes.string,
+    }),
   }),
   onClick: PropTypes.func,
 };

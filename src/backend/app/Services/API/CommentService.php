@@ -3,6 +3,7 @@
 namespace App\Services\API;
 
 use App\Models\Comment;
+use App\Models\Post;
 use App\Models\CommentLike;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -84,25 +85,46 @@ class CommentService
 
         $comment = Comment::create($data);
 
-        // If this is a reply (has parent_id), create a notification
-    if (!empty($data['parent_id'])) {
-        $parentComment = Comment::with('user')->find($data['parent_id']);
-        
-        if ($parentComment && $parentComment->user_id !== Auth::id()) {
-            // Create notification for the parent comment's owner
-            $notification = Notification::create([
-                'recipient_id' => $parentComment->user_id,
-                'sender_id' => Auth::id(),
-                'type' => 'comment_reply',
-                'content' => 'replied to your comment',
-                'notifiable_id' => $comment->id,
-                'notifiable_type' => Comment::class,
-            ]);
+        $sender = Auth::user();
+        $senderName = $sender->first_name . ' ' . $sender->last_name;
 
-            // Dispatch notification event
-            NotificationCreated::dispatch($notification);
+        // If this is a reply (has parent_id), create a notification for the parent comment's owner
+        if (!empty($data['parent_id'])) {
+            $parentComment = Comment::with('user')->find($data['parent_id']);
+            
+            if ($parentComment && $parentComment->user_id !== Auth::id()) {
+                // Create notification for the parent comment's owner
+                $notification = Notification::create([
+                    'recipient_id' => $parentComment->user_id,
+                    'sender_id' => Auth::id(),
+                    'type' => 'comment_reply',
+                    'content' => "$senderName replied to your comment",
+                    'notifiable_id' => $comment->id,
+                    'notifiable_type' => Comment::class,
+                ]);
+
+                // Dispatch notification event
+                NotificationCreated::dispatch($notification);
+            }
+        } else {
+            // If this is a top-level comment, notify the post owner
+            $post = Post::with('user')->find($data['post_id']);
+            
+            if ($post && $post->user_id !== Auth::id()) {
+                // Create notification for the post owner
+                $notification = Notification::create([
+                    'recipient_id' => $post->user_id,
+                    'sender_id' => Auth::id(),
+                    'type' => 'post_comment',
+                    'content' => "$senderName commented on your post",
+                    'notifiable_id' => $comment->id,
+                    'notifiable_type' => Comment::class,
+                ]);
+
+                // Dispatch notification event
+                NotificationCreated::dispatch($notification);
+            }
         }
-    }
 
         // Load the relationships
         return Comment::with(['user', 'replies.user'])->find($comment->id);
