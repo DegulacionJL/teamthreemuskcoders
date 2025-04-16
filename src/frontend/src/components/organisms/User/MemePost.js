@@ -27,6 +27,8 @@ import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import EditPostModal from '../EditPostModal';
 import ReportPostConfirmationModal from '../ReportPostModal';
 import PostReactions from './PostReaction';
+import Lightbox from 'yet-another-react-lightbox';
+import 'yet-another-react-lightbox/styles.css';
 
 function MemePost({
   id,
@@ -57,6 +59,7 @@ function MemePost({
   const [reactionType, setReactionType] = useState(null);
   const [likeCount, setLikeCount] = useState(0);
   const [showComments, setShowComments] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false); // State for lightbox
 
   const isDarkMode = darkMode !== undefined ? darkMode : contextDarkMode;
 
@@ -178,6 +181,13 @@ function MemePost({
     );
   };
 
+  // Handle image click to open lightbox
+  const handleImageClick = () => {
+    if (currentImage) {
+      setIsLightboxOpen(true);
+    }
+  };
+
   return (
     <Card
       sx={{
@@ -275,13 +285,25 @@ function MemePost({
           component="img"
           image={currentImage}
           alt="Meme"
+          onClick={handleImageClick}
           sx={{
             maxHeight: 500,
             objectFit: 'contain',
             bgcolor: isDarkMode ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)',
+            cursor: 'pointer', // Indicate image is clickable
           }}
         />
       )}
+
+      <Lightbox
+        open={isLightboxOpen}
+        close={() => setIsLightboxOpen(false)}
+        slides={[{ src: currentImage }]}
+        render={{
+          buttonPrev: currentImage ? undefined : () => null,
+          buttonNext: currentImage ? undefined : () => null,
+        }}
+      />
 
       <CardActions disableSpacing sx={{ p: 0 }}>
         <PostReactions
