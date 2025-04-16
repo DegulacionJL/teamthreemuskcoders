@@ -1,5 +1,4 @@
-'use client';
-
+import PropTypes from 'prop-types';
 import React from 'react';
 import {
   ChatBubbleOutline,
@@ -28,10 +27,10 @@ export default function LightBox({
   comments = [],
   reactionCount = 0,
   onAddComment,
-  darkMode,
+  // darkMode,
 }) {
   const theme = useTheme();
-  const isDarkMode = darkMode !== undefined ? darkMode : theme.palette.mode === 'dark';
+  // const isDarkMode = darkMode !== undefined ? darkMode : theme.palette.mode === 'dark';
 
   if (!isOpen) {
     return null;
@@ -348,3 +347,29 @@ export default function LightBox({
     </Box>
   );
 }
+
+LightBox.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  image: PropTypes.string,
+  caption: PropTypes.string,
+  user: PropTypes.shape({
+    avatar: PropTypes.string,
+    first_name: PropTypes.string,
+    last_name: PropTypes.string,
+  }),
+  timestamp: PropTypes.string,
+  comments: PropTypes.arrayOf(
+    PropTypes.shape({
+      text: PropTypes.string,
+      user: PropTypes.shape({
+        avatar: PropTypes.string,
+        first_name: PropTypes.string,
+        last_name: PropTypes.string,
+      }),
+    })
+  ),
+  reactionCount: PropTypes.number,
+  onAddComment: PropTypes.func,
+  darkMode: PropTypes.bool,
+};

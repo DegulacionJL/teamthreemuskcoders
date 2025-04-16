@@ -1,5 +1,6 @@
 'use client';
 
+import PropTypes from 'prop-types';
 import { Whatshot } from '@mui/icons-material';
 import {
   Avatar,
@@ -249,6 +250,23 @@ const RightContent = ({
       </Card>
     </Box>
   );
+};
+
+RightContent.propTypes = {
+  leaderboard: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      first_name: PropTypes.string,
+      last_name: PropTypes.string,
+      avatar: PropTypes.string,
+      // add more fields if needed
+    })
+  ).isRequired,
+  leaderboardLoading: PropTypes.bool.isRequired,
+  leaderboardError: PropTypes.bool.isRequired,
+  tabValue: PropTypes.number.isRequired,
+  handleTabChange: PropTypes.func.isRequired,
+  handleUserNameClick: PropTypes.func.isRequired,
 };
 
 export default RightContent;
