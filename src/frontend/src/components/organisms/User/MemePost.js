@@ -1,5 +1,3 @@
-'use client';
-
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import React from 'react';
@@ -24,6 +22,7 @@ import {
   useTheme,
 } from '@mui/material';
 import CommentFeature from 'components/organisms/CommentFeature';
+import { useComments } from 'hooks/useComments'; // Import the useComments hook
 import { useTheme as useCustomTheme } from 'theme/ThemeContext';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import EditPostModal from '../EditPostModal';
@@ -35,8 +34,8 @@ function MemePost({
   caption,
   image,
   timestamp,
-  user, // Post author
-  loggedInUser, // Add new prop for logged-in user
+  user,
+  loggedInUser,
   onDelete,
   onReportPost,
   onUpdate,
@@ -59,7 +58,10 @@ function MemePost({
   const [reactionType, setReactionType] = useState(null);
   const [likeCount, setLikeCount] = useState(0);
   const [showComments, setShowComments] = useState(false);
-  const [isLightboxOpen, setIsLightboxOpen] = useState(false); // State for lightbox
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+
+  // Use the useComments hook to get the total comment count
+  const { totalCommentsCount } = useComments(id);
 
   const isDarkMode = darkMode !== undefined ? darkMode : contextDarkMode;
 
@@ -181,7 +183,6 @@ function MemePost({
     );
   };
 
-  // Handle image click to open lightbox
   const handleImageClick = () => {
     if (currentImage) {
       setIsLightboxOpen(true);
@@ -245,12 +246,12 @@ function MemePost({
             onClick={(e) => (user?.id && onUserNameClick ? onUserNameClick(e, user.id) : null)}
             sx={{
               cursor: user?.id && onUserNameClick ? 'pointer' : 'default',
-              color: isDarkMode ? '#ffffff' : '#000000', // Adjust color based on dark mode
+              color: isDarkMode ? '#ffffff' : '#000000',
               '&:hover':
                 user?.id && onUserNameClick
                   ? {
                       textDecoration: 'underline',
-                      color: isDarkMode ? theme.palette.primary.main : theme.palette.primary.dark, // Adjust hover color
+                      color: isDarkMode ? theme.palette.primary.main : theme.palette.primary.dark,
                     }
                   : {},
             }}
@@ -291,7 +292,7 @@ function MemePost({
             maxHeight: 500,
             objectFit: 'contain',
             bgcolor: isDarkMode ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)',
-            cursor: 'pointer', // Indicate image is clickable
+            cursor: 'pointer',
           }}
         />
       )}
@@ -319,7 +320,8 @@ function MemePost({
           onClick={() => setShowComments(!showComments)}
           sx={{ color: theme.palette.text.secondary }}
         >
-          Comments
+          Comments {totalCommentsCount > 0 && `(${totalCommentsCount})`}{' '}
+          {/* Display comment count */}
         </Button>
         <Button startIcon={<Share />} size="small" sx={{ color: theme.palette.text.secondary }}>
           Share
@@ -388,7 +390,7 @@ MemePost.propTypes = {
   image: PropTypes.string,
   timestamp: PropTypes.string.isRequired,
   user: PropTypes.object.isRequired,
-  loggedInUser: PropTypes.object, // Add new prop
+  loggedInUser: PropTypes.object,
   onDelete: PropTypes.func.isRequired,
   onReportPost: PropTypes.func.isRequired,
   onUpdate: PropTypes.func.isRequired,
