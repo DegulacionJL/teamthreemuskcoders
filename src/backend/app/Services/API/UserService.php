@@ -157,7 +157,6 @@ class UserService
         // perform update
         $user->update($params);
         $user->assignRole($role);
-        $user->role = count($user->roles) > 0 ? $user->roles[0]->name : null;
 
         return $user;
     }
@@ -182,13 +181,6 @@ class UserService
     public function bulkDelete(array $ids): bool
     {
         return $this->user->whereIn('id', $ids)->delete();
-    }
-
-    public function follow(int $id): User
-    {
-        $user = $this->findById($id);
-        $user->followers()->attached(auth()->user()->id);
-        return $user;
     }
 
     /**

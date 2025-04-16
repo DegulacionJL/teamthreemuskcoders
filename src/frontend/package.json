@@ -5,7 +5,7 @@
   "dependencies": {
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
-    "@floating-ui/react": "^0.27.6",
+    "@floating-ui/react": "^0.27.7",
     "@hookform/resolvers": "^2.9.10",
     "@mui/icons-material": "^5.11.0",
     "@mui/lab": "^5.0.0-alpha.76",
@@ -23,6 +23,7 @@
     "i18next": "^22.4.9",
     "konva": "^8.4.3",
     "laravel-echo": "^1.16.0",
+    "lucide-react": "^0.488.0",
     "pusher-js": "^8.4.0-rc2",
     "react": "^18.2.0",
     "react-awesome-slider": "^4.1.0",

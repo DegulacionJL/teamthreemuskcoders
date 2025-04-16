@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { TableHead as MUITableHead, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import TableCell from '@mui/material/TableCell';
@@ -59,6 +60,7 @@ function TableHead(props) {
                 letterSpacing: 0.5,
               })}
             >
+              <AdminPanelSettingsIcon sx={{ verticalAlign: 'middle', color: '#512DA8' }} />
               {t('labels.action')}
             </Typography>
           </TableCell>

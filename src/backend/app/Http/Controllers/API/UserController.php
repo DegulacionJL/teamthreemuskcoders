@@ -63,6 +63,12 @@ class UserController extends Controller
 
             $results = $this->userService->search($conditions);
             $this->response = array_merge($results, $this->response);
+        }
+        catch(RoleDoesNotExist $e){
+            $this->response = [
+                'error' => $e->getMessage(),
+                'code' => 400,
+            ];
         } catch (Exception $e) { // @codeCoverageIgnoreStart
             $this->response = [
                 'error' => $e->getMessage(),
@@ -155,6 +161,7 @@ class UserController extends Controller
             ];
 
             $user = $this->userService->update($formData);
+            $user->syncRoles([$formData['role']]);
             $this->response['data'] = new UserResource($user);
         } catch (Exception $e) { // @codeCoverageIgnoreStart
             $this->response = [
@@ -188,19 +195,6 @@ class UserController extends Controller
         }
 
         return response()->json($this->response, $this->response['code']);
-    }
-
-    public function follow($id)
-    {
-        try{
-            $this->response['data'] = $this->userService->follow((int)$id);
-        }
-        catch (Exception $e) {
-            $this->response = [
-                'error' => $e->getMessage(),
-                'code' => 500,
-            ];
-        }
     }
 
     /**
