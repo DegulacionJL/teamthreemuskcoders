@@ -1,164 +1,353 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Heart, MessageCircle, Send, Share2, ThumbsUp, X } from 'lucide-react';
-import { useState } from 'react';
+'use client';
 
-export default function Lightbox() {
-  const [isOpen, setIsOpen] = useState(true);
+import React from 'react';
+import {
+  ChatBubbleOutline,
+  Close as CloseIcon,
+  Favorite as HeartIcon,
+  Send as SendIcon,
+  Share as ShareIcon,
+  ThumbUp,
+} from '@mui/icons-material';
+import {
+  Avatar,
+  Box,
+  Button,
+  IconButton,
+  InputBase,
+  Paper,
+  Typography,
+  useTheme,
+} from '@mui/material';
+
+export default function LightBox({
+  isOpen,
+  onClose,
+  image,
+  caption,
+  user,
+  timestamp,
+  comments = [],
+  reactionCount = 0,
+  onAddComment,
+  darkMode,
+}) {
+  const theme = useTheme();
+  const isDarkMode = darkMode !== undefined ? darkMode : theme.palette.mode === 'dark';
 
   if (!isOpen) {
     return null;
   }
 
+  function getRelativeTime(timestamp) {
+    const now = new Date();
+    const postedTime = new Date(timestamp);
+    const diff = Math.floor((now - postedTime) / 1000);
+
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) {
+      const minutes = Math.floor(diff / 60);
+      return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+    }
+    if (diff < 86400) {
+      const hours = Math.floor(diff / 3600);
+      return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+    }
+    const days = Math.floor(diff / 86400);
+    return `${days} day${days === 1 ? '' : 's'} ago`;
+  }
+
+  const formatCaption = (text) => {
+    if (!text) return '';
+
+    return text.split('\n').map((line, i, arr) => (
+      <React.Fragment key={i}>
+        {line}
+        {i < arr.length - 1 && <br />}
+      </React.Fragment>
+    ));
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
-      <div className="relative flex w-full h-full max-w-6xl max-h-[90vh] bg-background">
+    <Box
+      sx={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 1300,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Box
+        sx={{
+          position: 'relative',
+          display: 'flex',
+          width: '100%',
+          height: '100%',
+          maxWidth: '1200px',
+          maxHeight: '90vh',
+          bgcolor: theme.palette.background.paper,
+        }}
+      >
         {/* Close button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute right-2 top-2 z-10 bg-black/20 hover:bg-black/40 text-white rounded-full"
-          onClick={() => setIsOpen(false)}
+        <IconButton
+          onClick={onClose}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            zIndex: 10,
+            bgcolor: 'rgba(0, 0, 0, 0.2)',
+            color: 'white',
+            '&:hover': {
+              bgcolor: 'rgba(0, 0, 0, 0.4)',
+            },
+          }}
         >
-          <X className="h-5 w-5" />
-          <span className="sr-only">Close</span>
-        </Button>
+          <CloseIcon />
+        </IconButton>
 
         {/* Image section */}
-        <div className="flex-1 bg-black flex items-center justify-center h-full">
+        <Box
+          sx={{
+            flex: 1,
+            bgcolor: 'black',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+          }}
+        >
           <img
-            src="/placeholder.svg?height=800&width=1000"
-            alt="Lightbox image"
-            className="max-h-full max-w-full object-contain"
+            src={image || '/placeholder.svg'}
+            alt="Post image"
+            style={{
+              maxHeight: '100%',
+              maxWidth: '100%',
+              objectFit: 'contain',
+            }}
           />
-        </div>
+        </Box>
 
         {/* Comments and info section */}
-        <div className="w-full md:w-96 bg-background flex flex-col h-full">
+        <Box
+          sx={{
+            width: { xs: '100%', md: '380px' },
+            bgcolor: theme.palette.background.paper,
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+          }}
+        >
           {/* Post info */}
-          <div className="p-4 border-b">
-            <div className="flex items-center gap-2 mb-3">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
-                <AvatarFallback>JD</AvatarFallback>
+          <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+              <Avatar
+                src={user?.avatar || ''}
+                alt={user?.first_name || 'User'}
+                sx={{
+                  bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
+                }}
+              >
+                {user
+                  ? `${user.first_name?.charAt(0) || ''}${user.last_name?.charAt(0) || ''}`
+                  : 'U'}
               </Avatar>
-              <div>
-                <p className="text-sm font-medium">Jane Doe</p>
-                <p className="text-xs text-muted-foreground">Posted 2 hours ago</p>
-              </div>
-            </div>
-            <p className="text-sm">
-              Beautiful sunset at the beach today! 🌅 #nature #photography #sunset
-            </p>
-          </div>
+              <Box>
+                <Typography variant="subtitle2">
+                  {user
+                    ? `${user.first_name?.charAt(0).toUpperCase() + user.first_name?.slice(1)} ${
+                        user.last_name?.charAt(0).toUpperCase() + user.last_name?.slice(1)
+                      }`
+                    : 'Unknown User'}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {getRelativeTime(timestamp)}
+                </Typography>
+              </Box>
+            </Box>
+            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+              {formatCaption(caption)}
+            </Typography>
+          </Box>
 
           {/* Reactions */}
-          <div className="p-4 border-b">
-            <div className="flex justify-between mb-2">
-              <div className="flex items-center gap-1">
-                <div className="bg-blue-500 rounded-full p-1">
-                  <ThumbsUp className="h-3 w-3 text-white" />
-                </div>
-                <div className="bg-red-500 rounded-full p-1">
-                  <Heart className="h-3 w-3 text-white" />
-                </div>
-                <span className="text-sm text-muted-foreground">142</span>
-              </div>
-              <div className="text-sm text-muted-foreground">24 comments</div>
-            </div>
-            <div className="flex justify-between border-t pt-2">
-              <Button variant="ghost" size="sm" className="flex-1 gap-2">
-                <ThumbsUp className="h-4 w-4" />
-                Like
+          <Box sx={{ p: 0 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+
+                pt: 1,
+              }}
+            >
+              <Button
+                startIcon={<Typography sx={{ fontSize: 16 }}>😂</Typography>}
+                size="small"
+                sx={{
+                  flex: 1,
+                  color: theme.palette.text.secondary,
+                  borderBottom: `1px solid ${theme.palette.divider}`,
+                }}
+              >
+                Laugh
               </Button>
-              <Button variant="ghost" size="sm" className="flex-1 gap-2">
-                <MessageCircle className="h-4 w-4" />
+              <Button
+                startIcon={<ChatBubbleOutline />}
+                size="small"
+                sx={{
+                  flex: 1,
+                  color: theme.palette.text.secondary,
+                  borderBottom: `1px solid ${theme.palette.divider}`,
+                }}
+              >
                 Comment
               </Button>
-              <Button variant="ghost" size="sm" className="flex-1 gap-2">
-                <Share2 className="h-4 w-4" />
+              <Button
+                startIcon={<ShareIcon />}
+                size="small"
+                sx={{
+                  flex: 1,
+                  color: theme.palette.text.secondary,
+                  borderBottom: `1px solid ${theme.palette.divider}`,
+                }}
+              >
                 Share
               </Button>
-            </div>
-          </div>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box sx={{ bgcolor: theme.palette.primary.main, borderRadius: '50%', p: 0.5 }}>
+                  <Typography sx={{ fontSize: 10, color: 'white' }}>😂</Typography>
+                </Box>
+                <Typography variant="caption" color="text.secondary">
+                  {reactionCount}
+                </Typography>
+              </Box>
+              <Typography variant="caption" color="text.secondary">
+                {comments.length} comments
+              </Typography>
+            </Box>
+          </Box>
 
           {/* Comments section */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            <div className="flex gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
-                <AvatarFallback>JD</AvatarFallback>
-              </Avatar>
-              <div className="bg-muted rounded-2xl px-3 py-2 max-w-[85%]">
-                <p className="text-sm font-medium">John Smith</p>
-                <p className="text-sm">Wow, what an amazing view! Where was this taken?</p>
-              </div>
-            </div>
+          <Box
+            sx={{
+              flex: 1,
+              overflowY: 'auto',
+              p: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+            }}
+          >
+            {comments.map((comment, index) => (
+              <Box key={index} sx={{ display: 'flex', gap: 1 }}>
+                <Avatar
+                  src={comment.user?.avatar || ''}
+                  alt={comment.user?.first_name || 'User'}
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    bgcolor:
+                      theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
+                  }}
+                >
+                  {comment.user
+                    ? `${comment.user.first_name?.charAt(0) || ''}${
+                        comment.user.last_name?.charAt(0) || ''
+                      }`
+                    : 'U'}
+                </Avatar>
+                <Box
+                  sx={{
+                    bgcolor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.05)'
+                        : 'rgba(0, 0, 0, 0.05)',
+                    borderRadius: '16px',
+                    px: 1.5,
+                    py: 1,
+                    maxWidth: '85%',
+                  }}
+                >
+                  <Typography variant="subtitle2" sx={{ fontSize: '0.875rem' }}>
+                    {comment.user
+                      ? `${comment.user.first_name} ${comment.user.last_name}`
+                      : 'Unknown User'}
+                  </Typography>
+                  <Typography variant="body2">{comment.text}</Typography>
+                </Box>
+              </Box>
+            ))}
 
-            <div className="flex gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
-                <AvatarFallback>JD</AvatarFallback>
-              </Avatar>
-              <div className="bg-muted rounded-2xl px-3 py-2 max-w-[85%]">
-                <p className="text-sm font-medium">Jane Doe</p>
-                <p className="text-sm">Thanks! It was at Malibu Beach 😊</p>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
-                <AvatarFallback>AS</AvatarFallback>
-              </Avatar>
-              <div className="bg-muted rounded-2xl px-3 py-2 max-w-[85%]">
-                <p className="text-sm font-medium">Alex Smith</p>
-                <p className="text-sm">
-                  The colors are absolutely stunning! What camera did you use?
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
-                <AvatarFallback>JD</AvatarFallback>
-              </Avatar>
-              <div className="bg-muted rounded-2xl px-3 py-2 max-w-[85%]">
-                <p className="text-sm font-medium">Jane Doe</p>
-                <p className="text-sm">
-                  Just my iPhone 14 Pro! The camera on this phone is incredible.
-                </p>
-              </div>
-            </div>
-          </div>
+            {comments.length === 0 && (
+              <Box sx={{ textAlign: 'center', py: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  No comments yet. Be the first to comment!
+                </Typography>
+              </Box>
+            )}
+          </Box>
 
           {/* Comment input */}
-          <div className="p-4 border-t mt-auto">
-            <div className="flex items-center gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
-                <AvatarFallback>YO</AvatarFallback>
+          <Box sx={{ p: 2, borderTop: `1px solid ${theme.palette.divider}`, mt: 'auto' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Avatar
+                sx={{
+                  width: 32,
+                  height: 32,
+                  bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
+                }}
+              >
+                YO
               </Avatar>
-              <div className="relative flex-1">
-                <Input
+              <Paper
+                variant="outlined"
+                sx={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  borderRadius: '24px',
+                  pl: 2,
+                  pr: 1,
+                  py: 0.5,
+                  bgcolor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(255, 255, 255, 0.05)'
+                      : 'rgba(0, 0, 0, 0.05)',
+                }}
+              >
+                <InputBase
                   placeholder="Write a comment..."
-                  className="pr-10 rounded-full bg-muted border-none"
+                  sx={{ flex: 1, fontSize: '0.875rem' }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && onAddComment) {
+                      onAddComment(e.target.value);
+                      e.target.value = '';
+                    }
+                  }}
                 />
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-primary"
+                <IconButton
+                  size="small"
+                  color="primary"
+                  onClick={() => {
+                    const input = document.querySelector('input[placeholder="Write a comment..."]');
+                    if (input && onAddComment) {
+                      onAddComment(input.value);
+                      input.value = '';
+                    }
+                  }}
                 >
-                  <Send className="h-4 w-4" />
-                  <span className="sr-only">Send comment</span>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+                  <SendIcon fontSize="small" />
+                </IconButton>
+              </Paper>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 }

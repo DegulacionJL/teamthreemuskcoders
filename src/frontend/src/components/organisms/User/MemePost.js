@@ -3,8 +3,7 @@
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import React from 'react';
-import Lightbox from 'yet-another-react-lightbox';
-import 'yet-another-react-lightbox/styles.css';
+import { getComments } from 'services/comment.service';
 import { ChatBubbleOutline, Share } from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
@@ -27,16 +26,19 @@ import CommentFeature from 'components/organisms/CommentFeature';
 import { useTheme as useCustomTheme } from 'theme/ThemeContext';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import EditPostModal from '../EditPostModal';
+import LightBox from '../LightBox';
 import ReportPostConfirmationModal from '../ReportPostModal';
 import PostReactions from './PostReaction';
+
+// Import the API function for fetching comments
 
 function MemePost({
   id,
   caption,
   image,
   timestamp,
-  user, // Post author
-  loggedInUser, // Add new prop for logged-in user
+  user,
+  loggedInUser,
   onDelete,
   onReportPost,
   onUpdate,
@@ -60,6 +62,7 @@ function MemePost({
   const [likeCount, setLikeCount] = useState(0);
   const [showComments, setShowComments] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false); // State for lightbox
+  const [comments, setComments] = useState([]); // State to hold comments for the lightbox
 
   const isDarkMode = darkMode !== undefined ? darkMode : contextDarkMode;
 
@@ -139,6 +142,43 @@ function MemePost({
     localStorage.setItem(`post_like_count_${postId}`, count.toString());
   }, []);
 
+  const fetchComments = async () => {
+    setIsLoading(true);
+    try {
+      const response = await getComments(id); // Fetch comments from the backend
+      setComments(response.data);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleImageClick = async () => {
+    if (currentImage) {
+      await fetchComments(); // Fetch real comments for the lightbox
+      setIsLightboxOpen(true);
+    }
+  };
+
+  const handleAddComment = (text) => {
+    if (!text.trim()) return;
+
+    const newComment = {
+      user: loggedInUser || {
+        first_name: 'Current',
+        last_name: 'User',
+        avatar: '/placeholder.svg?height=40&width=40',
+      },
+      text: text,
+    };
+
+    setComments((prev) => [...prev, newComment]);
+
+    // In a real app, you would send this to your backend
+    console.log('New comment added:', newComment);
+  };
+
   function getRelativeTime(timestamp) {
     const now = new Date();
     const postedTime = new Date(timestamp);
@@ -179,13 +219,6 @@ function MemePost({
         {formattedText}
       </Typography>
     );
-  };
-
-  // Handle image click to open lightbox
-  const handleImageClick = () => {
-    if (currentImage) {
-      setIsLightboxOpen(true);
-    }
   };
 
   return (
@@ -245,12 +278,12 @@ function MemePost({
             onClick={(e) => (user?.id && onUserNameClick ? onUserNameClick(e, user.id) : null)}
             sx={{
               cursor: user?.id && onUserNameClick ? 'pointer' : 'default',
-              color: isDarkMode ? '#ffffff' : '#000000', // Adjust color based on dark mode
+              color: isDarkMode ? '#ffffff' : '#000000',
               '&:hover':
                 user?.id && onUserNameClick
                   ? {
                       textDecoration: 'underline',
-                      color: isDarkMode ? theme.palette.primary.main : theme.palette.primary.dark, // Adjust hover color
+                      color: isDarkMode ? theme.palette.primary.main : theme.palette.primary.dark,
                     }
                   : {},
             }}
@@ -291,19 +324,22 @@ function MemePost({
             maxHeight: 500,
             objectFit: 'contain',
             bgcolor: isDarkMode ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)',
-            cursor: 'pointer', // Indicate image is clickable
+            cursor: 'pointer',
           }}
         />
       )}
 
-      <Lightbox
-        open={isLightboxOpen}
-        close={() => setIsLightboxOpen(false)}
-        slides={[{ src: currentImage }]}
-        render={{
-          buttonPrev: currentImage ? undefined : () => null,
-          buttonNext: currentImage ? undefined : () => null,
-        }}
+      <LightBox
+        isOpen={isLightboxOpen}
+        onClose={() => setIsLightboxOpen(false)}
+        image={currentImage}
+        caption={currentCaption}
+        user={user}
+        timestamp={timestamp}
+        comments={comments || []}
+        reactionCount={likeCount}
+        onAddComment={handleAddComment}
+        darkMode={isDarkMode}
       />
 
       <CardActions disableSpacing sx={{ p: 0 }}>
@@ -388,7 +424,7 @@ MemePost.propTypes = {
   image: PropTypes.string,
   timestamp: PropTypes.string.isRequired,
   user: PropTypes.object.isRequired,
-  loggedInUser: PropTypes.object, // Add new prop
+  loggedInUser: PropTypes.object,
   onDelete: PropTypes.func.isRequired,
   onReportPost: PropTypes.func.isRequired,
   onUpdate: PropTypes.func.isRequired,
