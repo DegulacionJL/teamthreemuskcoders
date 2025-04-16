@@ -2,10 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Notification extends Model
 {
@@ -14,22 +12,47 @@ class Notification extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var array
      */
     protected $fillable = [
         'recipient_id',
-        'content',
         'sender_id',
         'type',
+        'content',
+        'notifiable_id',
+        'notifiable_type',
         'read_at',
     ];
 
-    public function recipient(): BelongsTo
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'read_at' => 'datetime',
+    ];
+
+    /**
+     * Get the user who sent the notification.
+     */
+    public function sender()
+    {
+        return $this->belongsTo(User::class, 'sender_id');
+    }
+
+    /**
+     * Get the user who received the notification.
+     */
+    public function recipient()
     {
         return $this->belongsTo(User::class, 'recipient_id');
     }
 
-    public function notifiable(): MorphTo
+    /**
+     * Get the notifiable entity.
+     */
+    public function notifiable()
     {
         return $this->morphTo();
     }
