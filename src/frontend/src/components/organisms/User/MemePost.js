@@ -1,18 +1,13 @@
 'use client';
 
+import { useAuth } from 'hooks/useAuth';
 import { useComments } from 'hooks/useComments';
 import PropTypes from 'prop-types';
-import { useCallback, useEffect, useState } from 'react';
-import React from 'react';
-import Lightbox from 'yet-another-react-lightbox';
-import 'yet-another-react-lightbox/styles.css';
-import { ChatBubbleOutline, Share } from '@mui/icons-material';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { useAuth } from 'hooks/useAuth';
 import React, { useCallback, useEffect, useState } from 'react';
 import { getComments } from 'services/comment.service';
+import 'yet-another-react-lightbox/styles.css';
 import { ChatBubbleOutline, MoreVert, Share } from '@mui/icons-material';
-
+import MoreVertIcon from '@mui/icons-material';
 import {
   Avatar,
   Box,
@@ -34,6 +29,7 @@ import CommentFeature from 'components/organisms/CommentFeature';
 import { useTheme as useCustomTheme } from 'theme/ThemeContext';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import EditPostModal from '../EditPostModal';
+import LightBox from '../LightBox';
 import ReportPostConfirmationModal from '../ReportPostModal';
 import PostReactions from './PostReaction';
 
@@ -211,7 +207,7 @@ const MemePost = ({
       </Typography>
     );
   };
-  
+
   const handleImageClick = async () => {
     if (currentImage) {
       await fetchComments();
