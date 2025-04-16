@@ -1,9 +1,33 @@
+'use client';
+
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getLikes, likePost, unlikePost } from 'services/meme.service';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import { Box, Button, CircularProgress, Fade, Popper, Typography } from '@mui/material';
-import AnimatedEmoji from '../../atoms/animation/AnimatedEmoji';
+
+// Placeholder for AnimatedEmoji component if not available
+const AnimatedEmoji = ({ emoji, size, onClick }) => (
+  <Box
+    sx={{
+      fontSize: size,
+      cursor: 'pointer',
+      transition: 'transform 0.2s',
+      '&:hover': {
+        transform: 'scale(1.2)',
+      },
+    }}
+    onClick={onClick}
+  >
+    {emoji}
+  </Box>
+);
+
+AnimatedEmoji.propTypes = {
+  emoji: PropTypes.string.isRequired,
+  size: PropTypes.number,
+  onClick: PropTypes.func,
+};
 
 const PostReactions = ({ postId, isDarkMode, onReactionChange, initialReactionType }) => {
   const [showReactions, setShowReactions] = useState(false);

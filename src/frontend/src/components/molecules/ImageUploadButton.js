@@ -1,42 +1,37 @@
+'use client';
+
 import PropTypes from 'prop-types';
-import React from 'react';
-import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import { PhotoCamera } from '@mui/icons-material';
 import { Button, IconButton } from '@mui/material';
 
 const ImageUploadButton = ({
   onChange,
-  id,
-  buttonVariant = 'icon',
-  buttonText = 'Add Image',
+  id = 'image-upload',
+  buttonVariant = 'button',
+  buttonText = 'Upload Image',
   buttonProps = {},
 }) => {
+  if (buttonVariant === 'icon') {
+    return (
+      <IconButton color="primary" aria-label="upload image" component="label" {...buttonProps}>
+        <PhotoCamera />
+        <input type="file" hidden id={id} accept="image/*" onChange={onChange} />
+      </IconButton>
+    );
+  }
+
   return (
-    <>
-      <input accept="image/*" style={{ display: 'none' }} id={id} type="file" onChange={onChange} />
-      <label htmlFor={id}>
-        {buttonVariant === 'icon' ? (
-          <IconButton component="span" color="primary" {...buttonProps}>
-            <AddPhotoAlternateIcon />
-          </IconButton>
-        ) : (
-          <Button
-            component="span"
-            variant="outlined"
-            startIcon={<AddPhotoAlternateIcon />}
-            {...buttonProps}
-          >
-            {buttonText}
-          </Button>
-        )}
-      </label>
-    </>
+    <Button variant="outlined" component="label" startIcon={<PhotoCamera />} {...buttonProps}>
+      {buttonText}
+      <input type="file" hidden id={id} accept="image/*" onChange={onChange} />
+    </Button>
   );
 };
 
 ImageUploadButton.propTypes = {
   onChange: PropTypes.func.isRequired,
-  id: PropTypes.string.isRequired,
-  buttonVariant: PropTypes.oneOf(['icon', 'button']),
+  id: PropTypes.string,
+  buttonVariant: PropTypes.oneOf(['button', 'icon']),
   buttonText: PropTypes.string,
   buttonProps: PropTypes.object,
 };

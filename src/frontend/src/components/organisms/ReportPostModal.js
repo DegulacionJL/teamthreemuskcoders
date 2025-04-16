@@ -1,5 +1,7 @@
+'use client';
+
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Button,
   CircularProgress,
@@ -39,7 +41,7 @@ const ReportPostConfirmationModal = ({ open, onClose, onConfirm, title, content 
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={isReportPost}>
-          cancel
+          Cancel
         </Button>
         <Button onClick={handleConfirm} color="error" variant="contained" disabled={isReportPost}>
           {isReportPost ? (

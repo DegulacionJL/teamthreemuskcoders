@@ -1,49 +1,32 @@
-// MemeFeed.js
-import PropTypes from 'prop-types';
+'use client';
+
 import { useEffect, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useNavigate } from 'react-router-dom';
 import {
   createMemePost,
   deletePost,
-  getLeaderboard, // Import the new service
+  getLeaderboard,
   getMemePosts,
   reportPost,
   updateImage,
   updatePost,
 } from 'services/meme.service';
-import { LocalFireDepartment, Star, ThumbUp, TrendingUp, Whatshot } from '@mui/icons-material';
-import PhotoCamera from '@mui/icons-material/PhotoCamera';
-import {
-  Avatar,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  CircularProgress,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Paper,
-  Tab,
-  Tabs,
-  TextField,
-  Typography,
-  useTheme,
-} from '@mui/material';
-import MemeCreator from '../../../components/organisms/Image editor/meme-creator';
+import { Box, CircularProgress, Typography } from '@mui/material';
+import { useTheme } from '@mui/material';
 import { useTheme as useCustomTheme } from '../../../theme/ThemeContext';
+import CreatePostCard from './CreatePostCard';
+// Import components
+import LeftSidebar from './LeftContent';
 import MemePost from './MemePost';
+import RightSidebar from './RightContent';
 
 function MemeFeed() {
   const theme = useTheme();
   const { darkMode } = useCustomTheme();
   const navigate = useNavigate();
+
+  // State
   const [caption, setCaption] = useState('');
   const [image, setImage] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
@@ -55,7 +38,7 @@ function MemeFeed() {
   const [tabValue, setTabValue] = useState(0);
   const [showMemeCreator, setShowMemeCreator] = useState(false);
   const [error, setError] = useState(null);
-  const [leaderboard, setLeaderboard] = useState([]); // State for dynamic leaderboard
+  const [leaderboard, setLeaderboard] = useState([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState(null);
 
@@ -63,6 +46,7 @@ function MemeFeed() {
   const [selectedPostId, setSelectedPostId] = useState(null);
   const open = Boolean(anchorEl);
 
+  // Menu handlers
   const handleMenuOpen = (event, postId) => {
     setAnchorEl(event.currentTarget);
     setSelectedPostId(postId);
@@ -73,12 +57,13 @@ function MemeFeed() {
     setSelectedPostId(null);
   };
 
+  // Post handlers
   const handleDelete = async (postId) => {
     try {
       await deletePost(postId);
       setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
       handleMenuClose();
-      fetchLeaderboard(getPeriodFromTab(tabValue)); // Refresh leaderboard after deletion
+      fetchLeaderboard(getPeriodFromTab(tabValue));
     } catch (error) {
       console.error('Error deleting post:', error);
       setError('Failed to delete post. Please try again.');
@@ -90,7 +75,7 @@ function MemeFeed() {
       await reportPost(postId);
       setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
       handleMenuClose();
-      fetchLeaderboard(getPeriodFromTab(tabValue)); // Refresh leaderboard after reporting
+      fetchLeaderboard(getPeriodFromTab(tabValue));
     } catch (error) {
       console.error('Failed to report Post: ', error);
       setError('Failed to report Post. Please try again.');
@@ -127,7 +112,7 @@ function MemeFeed() {
       setPage(1);
       setPosts([]);
       await fetchPosts(1);
-      fetchLeaderboard(getPeriodFromTab(tabValue)); // Refresh leaderboard after new post
+      fetchLeaderboard(getPeriodFromTab(tabValue));
 
       setCaption('');
       setImage(null);
@@ -161,13 +146,14 @@ function MemeFeed() {
       setPage(1);
       setPosts([]);
       await fetchPosts(1);
-      fetchLeaderboard(getPeriodFromTab(tabValue)); // Refresh leaderboard after update
+      fetchLeaderboard(getPeriodFromTab(tabValue));
     } catch (error) {
       console.error('Error updating post:', error);
       setError('Failed to update post. Please try again.');
     }
   };
 
+  // Data fetching
   const fetchPosts = async (pageNumber) => {
     setLoading(true);
     setError(null);
@@ -243,7 +229,6 @@ function MemeFeed() {
     }
   };
 
-  // Fetch leaderboard data based on the period
   const fetchLeaderboard = async (period) => {
     setLeaderboardLoading(true);
     setLeaderboardError(null);
@@ -261,7 +246,7 @@ function MemeFeed() {
 
   useEffect(() => {
     fetchPosts(1);
-    fetchLeaderboard('daily'); // Initial fetch for "Daily" tab
+    fetchLeaderboard('daily');
   }, []);
 
   const loadMorePosts = () => {
@@ -297,7 +282,7 @@ function MemeFeed() {
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
     const period = getPeriodFromTab(newValue);
-    fetchLeaderboard(period); // Fetch leaderboard for the selected period
+    fetchLeaderboard(period);
   };
 
   const handleMemeCreatorSave = (editedImage, memeCaption) => {
@@ -313,21 +298,6 @@ function MemeFeed() {
     event.stopPropagation();
     navigate(`/users/${userId}`);
   };
-
-  const categories = [
-    { id: 1, name: 'Popular Memes', icon: <LocalFireDepartment color="primary" />, active: true },
-    { id: 2, name: 'Trending Now', icon: <TrendingUp />, active: false },
-    { id: 3, name: 'New Arrivals', icon: <Star />, active: false },
-    { id: 4, name: 'Top Picks', icon: <ThumbUp />, active: false },
-  ];
-
-  const trendingTags = [
-    { id: 1, label: '#MemeMonday', color: 'primary' },
-    { id: 2, label: '#GabingLagum', color: 'primary' },
-    { id: 3, label: '#MlbbFunnyMoments', color: 'primary' },
-    { id: 4, label: '#ProgrammerHumor', color: 'secondary' },
-    { id: 5, label: '#DadJokes', color: 'success' },
-  ];
 
   return (
     <Box
@@ -348,110 +318,8 @@ function MemeFeed() {
         pt: 2,
       }}
     >
-      {/* Left container */}
-      <Box
-        sx={{
-          width: '100%',
-          maxWidth: '20%',
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-          pt: 2,
-          display: { xs: 'none', md: 'block' },
-        }}
-      >
-        <Card sx={{ mb: 3 }}>
-          <CardHeader
-            title="Meme Categories"
-            sx={{
-              bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
-              color: '#ffffff',
-              py: 1.5,
-            }}
-          />
-          <List disablePadding>
-            {categories.map((category) => (
-              <ListItemButton
-                key={category.id}
-                selected={category.active}
-                sx={{
-                  borderLeft: category.active ? 4 : 0,
-                  borderColor: theme.palette.primary.main,
-                  pl: category.active ? 2 : 3,
-                }}
-              >
-                <ListItemIcon sx={{ minWidth: 40 }}>{category.icon}</ListItemIcon>
-                <ListItemText
-                  primary={category.name}
-                  primaryTypographyProps={{
-                    fontWeight: category.active ? 'medium' : 'regular',
-                  }}
-                />
-              </ListItemButton>
-            ))}
-          </List>
-        </Card>
-
-        <Card>
-          <CardHeader
-            title="Daily Challenge"
-            sx={{
-              bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
-              color: '#ffffff',
-              py: 1.5,
-            }}
-          />
-          <CardContent>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                mb: 2,
-                bgcolor: theme.palette.mode === 'dark' ? '#2a2a3a' : theme.palette.secondary.light,
-                color: theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.secondary.dark,
-                borderRadius: 2,
-              }}
-            >
-              <Typography variant="subtitle1" fontWeight="medium">
-                Caption This!
-              </Typography>
-              <Typography variant="body2" sx={{ mb: 1 }}>
-                Create the funniest caption
-              </Typography>
-              <Box
-                sx={{
-                  height: 120,
-                  bgcolor:
-                    theme.palette.mode === 'dark' ? '#1e1e2e' : theme.palette.background.paper,
-                  borderRadius: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  mb: 1,
-                }}
-              >
-                <PhotoCamera sx={{ fontSize: 40, color: theme.palette.text.disabled }} />
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  size="small"
-                  sx={{
-                    bgcolor: '#ffb300',
-                    color: '#000000',
-                    '&:hover': {
-                      bgcolor: '#ffa000',
-                    },
-                  }}
-                >
-                  Participate
-                </Button>
-              </Box>
-            </Paper>
-          </CardContent>
-        </Card>
-      </Box>
+      {/* Left sidebar */}
+      <LeftSidebar />
 
       {/* Center Content (Create Post + Posts) */}
       <Box
@@ -464,189 +332,18 @@ function MemeFeed() {
           mt: 2,
         }}
       >
-        <Card sx={{ width: '100%', mb: 3, maxWidth: '80%' }}>
-          <CardContent>
-            {showMemeCreator ? (
-              <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Avatar
-                    src={currentUser?.avatar || ''}
-                    sx={{ mr: 2 }}
-                    alt={`${currentUser?.first_name} ${currentUser?.last_name}`}
-                  >
-                    {currentUser
-                      ? `${currentUser.first_name?.charAt(0).toUpperCase() || ''}${
-                          currentUser.last_name?.charAt(0).toUpperCase() || ''
-                        }`
-                      : 'JD'}
-                  </Avatar>
-                  <Typography variant="h6">
-                    {currentUser
-                      ? `${
-                          currentUser.first_name?.charAt(0).toUpperCase() +
-                          currentUser.first_name?.slice(1)
-                        } ${
-                          currentUser.last_name?.charAt(0).toUpperCase() +
-                          currentUser.last_name?.slice(1)
-                        }`
-                      : 'John Degz'}
-                  </Typography>
-                </Box>
-
-                <MemeCreator
-                  onSave={handleMemeCreatorSave}
-                  onCancel={() => setShowMemeCreator(false)}
-                  inlineMode={true}
-                />
-
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => setShowMemeCreator(false)}
-                    sx={{ mr: 2, borderRadius: 4 }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handlePost}
-                    disabled={!image}
-                    sx={{
-                      borderRadius: 4,
-                      bgcolor: '#8a4fff',
-                      '&:hover': {
-                        bgcolor: '#7a3fef',
-                      },
-                    }}
-                  >
-                    POST
-                  </Button>
-                </Box>
-              </Box>
-            ) : (
-              <>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Avatar
-                    src={currentUser?.avatar || ''}
-                    sx={{ mr: 2 }}
-                    alt={`${currentUser?.first_name} ${currentUser?.last_name}`}
-                  >
-                    {currentUser
-                      ? `${currentUser.first_name?.charAt(0).toUpperCase() || ''}${
-                          currentUser.last_name?.charAt(0).toUpperCase() || ''
-                        }`
-                      : 'JD'}
-                  </Avatar>
-                  <Typography variant="h6">
-                    {currentUser
-                      ? `${
-                          currentUser.first_name?.charAt(0).toUpperCase() +
-                          currentUser.first_name?.slice(1)
-                        } ${
-                          currentUser.last_name?.charAt(0).toUpperCase() +
-                          currentUser.last_name?.slice(1)
-                        }`
-                      : 'John Degz'}
-                  </Typography>
-                </Box>
-
-                <TextField
-                  placeholder="Write something funny..."
-                  variant="outlined"
-                  multiline
-                  rows={3}
-                  value={caption}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const fixedValue = value.replace(/^( +) /, (match) =>
-                      '\u00A0'.repeat(match.length)
-                    );
-                    setCaption(fixedValue);
-                  }}
-                  sx={{
-                    width: '100%',
-                    mb: 2,
-                    '& .MuiOutlinedInput-root': {
-                      bgcolor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(255,255,255,0.05)'
-                          : 'rgba(0,0,0,0.02)',
-                      borderRadius: 1,
-                      '& textarea': {
-                        whiteSpace: 'pre-wrap',
-                        fontFamily: 'monospace',
-                      },
-                    },
-                  }}
-                />
-
-                {imagePreview && (
-                  <Box sx={{ mt: 2, mb: 2, textAlign: 'center' }}>
-                    <img
-                      src={imagePreview || '/placeholder.svg'}
-                      alt="Preview"
-                      style={{
-                        maxWidth: '100%',
-                        borderRadius: '8px',
-                        display: 'block',
-                        margin: 'auto',
-                      }}
-                    />
-                  </Box>
-                )}
-
-                <Box
-                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                >
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button
-                      variant="outlined"
-                      startIcon={<PhotoCamera />}
-                      component="label"
-                      sx={{ borderRadius: 4 }}
-                    >
-                      Upload
-                      <input
-                        type="file"
-                        hidden
-                        accept="image/*"
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            setImage(e.target.files[0]);
-                            setImagePreview(URL.createObjectURL(e.target.files[0]));
-                          }
-                        }}
-                      />
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      onClick={() => setShowMemeCreator(true)}
-                      sx={{ borderRadius: 4 }}
-                    >
-                      Create Meme
-                    </Button>
-                  </Box>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handlePost}
-                    disabled={!caption && !image}
-                    sx={{
-                      borderRadius: 4,
-                      bgcolor: '#8a4fff',
-                      '&:hover': {
-                        bgcolor: '#7a3fef',
-                      },
-                    }}
-                  >
-                    POST
-                  </Button>
-                </Box>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <CreatePostCard
+          currentUser={currentUser}
+          caption={caption}
+          setCaption={setCaption}
+          imagePreview={imagePreview}
+          setImagePreview={setImagePreview}
+          setImage={setImage}
+          showMemeCreator={showMemeCreator}
+          setShowMemeCreator={setShowMemeCreator}
+          handlePost={handlePost}
+          handleMemeCreatorSave={handleMemeCreatorSave}
+        />
 
         {error && (
           <Box
@@ -670,7 +367,7 @@ function MemeFeed() {
             next={loadMorePosts}
             hasMore={hasMore}
             loader={
-              <Box sx={{ TELEGRAMdisplay: 'flex', justifyContent: 'center', my: 4 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
                 <CircularProgress color="primary" />
               </Box>
             }
@@ -691,7 +388,7 @@ function MemeFeed() {
                 caption={post.caption}
                 image={post.image ? post.image.image_path : null}
                 timestamp={post.created_at}
-                user={post.user}
+                postUsers={post.user}
                 loggedInUser={currentUser}
                 onDelete={handleDelete}
                 onReportPost={handleReportPost}
@@ -703,217 +400,24 @@ function MemeFeed() {
                 isMenuOpen={open && selectedPostId === post.id}
                 darkMode={darkMode}
                 onUserNameClick={handleUserNameClick}
+                postUserId={post.user_id}
               />
             ))}
           </InfiniteScroll>
         </Box>
       </Box>
 
-      {/* Right container */}
-      <Box
-        sx={{
-          width: '100%',
-          maxWidth: '25%',
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-          pt: 2,
-          overflowY: 'auto',
-          display: { xs: 'none', md: 'block' },
-        }}
-      >
-        <Card sx={{ mb: 3 }}>
-          <CardHeader
-            title="Suggested Users"
-            sx={{
-              bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
-              color: '#ffffff',
-              py: 1.5,
-            }}
-          />
-          <List disablePadding>
-            {[1, 2, 3].map((index) => (
-              <ListItem
-                key={index}
-                secondaryAction={
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    size="small"
-                    sx={{
-                      borderRadius: 4,
-                      color: '#8a4fff',
-                      borderColor: '#8a4fff',
-                      '&:hover': {
-                        borderColor: '#7a3fef',
-                        bgcolor: 'rgba(138, 79, 255, 0.08)',
-                      },
-                    }}
-                  >
-                    Follow
-                  </Button>
-                }
-                divider
-              >
-                <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : '#e0e0ff' }}>
-                    U{index}
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={
-                    <Typography
-                      sx={{
-                        cursor: 'pointer',
-                        '&:hover': {
-                          textDecoration: 'underline',
-                          color: theme.palette.primary.main,
-                        },
-                      }}
-                      onClick={(e) => handleUserNameClick(e, index)}
-                    >
-                      {`User ${index}`}
-                    </Typography>
-                  }
-                  secondary={`@user${index}`}
-                />
-              </ListItem>
-            ))}
-          </List>
-        </Card>
-
-        <Card sx={{ mb: 3 }}>
-          <CardHeader
-            title="Trending Memes"
-            sx={{
-              bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
-              color: '#ffffff',
-              py: 1.5,
-            }}
-          />
-          <CardContent>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {trendingTags.map((tag) => (
-                <Chip
-                  key={tag.id}
-                  label={tag.label}
-                  color={tag.color}
-                  variant="filled"
-                  clickable
-                  sx={{
-                    bgcolor:
-                      tag.color === 'primary'
-                        ? '#4a3b6b'
-                        : tag.color === 'secondary'
-                        ? '#5d4037'
-                        : '#2e7d32',
-                    color: '#ffffff',
-                    '&:hover': {
-                      bgcolor:
-                        tag.color === 'primary'
-                          ? '#5a4b7b'
-                          : tag.color === 'secondary'
-                          ? '#6d5047'
-                          : '#3e8d42',
-                    },
-                  }}
-                />
-              ))}
-            </Box>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader
-            title="Leaderboard"
-            sx={{
-              bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
-              color: '#ffffff',
-              py: 1.5,
-            }}
-          />
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs value={tabValue} onChange={handleTabChange} variant="fullWidth">
-              <Tab label="Daily" />
-              <Tab label="Weekly" />
-              <Tab label="Monthly" />
-            </Tabs>
-          </Box>
-          {leaderboardLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-              <CircularProgress size={24} />
-            </Box>
-          ) : leaderboardError ? (
-            <Box sx={{ p: 2, textAlign: 'center' }}>
-              <Typography color="error">{leaderboardError}</Typography>
-            </Box>
-          ) : leaderboard.length === 0 ? (
-            <Box sx={{ p: 2, textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
-                No data available for this period.
-              </Typography>
-            </Box>
-          ) : (
-            <List disablePadding>
-              {leaderboard.map((user) => (
-                <ListItem key={user.id} divider>
-                  <ListItemIcon sx={{ minWidth: 40 }}>
-                    <Avatar
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        bgcolor:
-                          user.rank === 1 ? '#ffb300' : user.rank === 2 ? 'grey.500' : '#CD7F32',
-                        color: user.rank === 1 ? '#000000' : '#ffffff',
-                      }}
-                    >
-                      {user.rank}
-                    </Avatar>
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={
-                      <Typography
-                        sx={{
-                          cursor: 'pointer',
-                          '&:hover': {
-                            textDecoration: 'underline',
-                            color: theme.palette.primary.main,
-                          },
-                        }}
-                        onClick={(e) => handleUserNameClick(e, user.id)}
-                      >
-                        {user.name}
-                      </Typography>
-                    }
-                    secondary={`${user.points.toLocaleString()} Haha Reactions`}
-                  />
-                  {user.rank === 1 && (
-                    <Chip
-                      icon={<Whatshot />}
-                      label="King"
-                      size="small"
-                      sx={{
-                        bgcolor: '#ffb300',
-                        color: '#000000',
-                      }}
-                    />
-                  )}
-                </ListItem>
-              ))}
-            </List>
-          )}
-        </Card>
-      </Box>
+      {/* Right sidebar */}
+      <RightSidebar
+        leaderboard={leaderboard}
+        leaderboardLoading={leaderboardLoading}
+        leaderboardError={leaderboardError}
+        tabValue={tabValue}
+        handleTabChange={handleTabChange}
+        handleUserNameClick={handleUserNameClick}
+      />
     </Box>
   );
 }
-
-MemeFeed.propTypes = {
-  currentUser: PropTypes.shape({
-    avatar: PropTypes.string,
-    first_name: PropTypes.string,
-    last_name: PropTypes.string,
-  }),
-};
 
 export default MemeFeed;

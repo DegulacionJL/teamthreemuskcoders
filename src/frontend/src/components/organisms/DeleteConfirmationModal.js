@@ -1,5 +1,7 @@
+'use client';
+
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Button,
   CircularProgress,

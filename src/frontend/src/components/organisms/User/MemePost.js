@@ -1,3 +1,5 @@
+'use client';
+
 import { useComments } from 'hooks/useComments';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
@@ -6,6 +8,11 @@ import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 import { ChatBubbleOutline, Share } from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { useAuth } from 'hooks/useAuth';
+import React, { useCallback, useEffect, useState } from 'react';
+import { getComments } from 'services/comment.service';
+import { ChatBubbleOutline, MoreVert, Share } from '@mui/icons-material';
+
 import {
   Avatar,
   Box,
@@ -20,8 +27,8 @@ import {
   Menu,
   MenuItem,
   Typography,
-  useTheme,
 } from '@mui/material';
+import { useTheme } from '@mui/material';
 import CommentFeature from 'components/organisms/CommentFeature';
 // Import the useComments hook
 import { useTheme as useCustomTheme } from 'theme/ThemeContext';
@@ -30,12 +37,12 @@ import EditPostModal from '../EditPostModal';
 import ReportPostConfirmationModal from '../ReportPostModal';
 import PostReactions from './PostReaction';
 
-function MemePost({
+const MemePost = ({
   id,
   caption,
   image,
   timestamp,
-  user,
+  postUsers,
   loggedInUser,
   onDelete,
   onReportPost,
@@ -43,13 +50,17 @@ function MemePost({
   onMenuOpen,
   onMenuClose,
   menuAnchor,
+  selectedPostId,
   isMenuOpen,
   darkMode,
   onUserNameClick,
-}) {
+  postUserId,
+}) => {
   const theme = useTheme();
   const { darkMode: contextDarkMode } = useCustomTheme();
+  const { user } = useAuth({ middleware: 'auth' });
 
+  // State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentCaption, setCurrentCaption] = useState(caption);
   const [currentImage, setCurrentImage] = useState(image);
@@ -63,6 +74,7 @@ function MemePost({
 
   // Use the useComments hook to get the total comment count
   const { totalCommentsCount } = useComments(id);
+  const [comments, setComments] = useState([]);
 
   const isDarkMode = darkMode !== undefined ? darkMode : contextDarkMode;
 
@@ -87,7 +99,6 @@ function MemePost({
 
   const handleSave = useCallback(
     async (newCaption, newImage, removeImage = false) => {
-      setIsLoading(true);
       try {
         const updatedPost = await onUpdate(id, newCaption, newImage, removeImage);
         if (updatedPost && updatedPost.image) {
@@ -98,35 +109,24 @@ function MemePost({
         setCurrentCaption(newCaption);
       } catch (error) {
         console.error('Error updating post:', error);
-      } finally {
-        setIsLoading(false);
-        setIsEditModalOpen(false);
       }
     },
     [id, onUpdate]
   );
 
   const handleConfirmDelete = useCallback(async () => {
-    setIsLoading(true);
     try {
       await onDelete(id);
     } catch (error) {
       console.error('Error deleting post:', error);
-    } finally {
-      setIsLoading(false);
-      setIsPostDeleteModalOpen(false);
     }
   }, [id, onDelete]);
 
   const handleConfirmReportPost = useCallback(async () => {
-    setIsLoading(true);
     try {
       await onReportPost(id);
     } catch (error) {
       console.error('Error reporting this post: ', error);
-    } finally {
-      setIsLoading(false);
-      setIsReportPostModalOpen(false);
     }
   }, [id, onReportPost]);
 
@@ -141,6 +141,34 @@ function MemePost({
     }
     localStorage.setItem(`post_like_count_${postId}`, count.toString());
   }, []);
+
+  const fetchComments = async () => {
+    setIsLoading(true);
+    try {
+      const response = await getComments(id);
+      setComments(response.data);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddComment = (text) => {
+    if (!text.trim()) return;
+
+    const newComment = {
+      user: loggedInUser || {
+        first_name: 'Current',
+        last_name: 'User',
+        avatar: '/placeholder.svg?height=40&width=40',
+      },
+      text: text,
+    };
+
+    setComments((prev) => [...prev, newComment]);
+    console.log('New comment added:', newComment);
+  };
 
   function getRelativeTime(timestamp) {
     const now = new Date();
@@ -183,9 +211,10 @@ function MemePost({
       </Typography>
     );
   };
-
-  const handleImageClick = () => {
+  
+  const handleImageClick = async () => {
     if (currentImage) {
+      await fetchComments();
       setIsLightboxOpen(true);
     }
   };
@@ -226,30 +255,34 @@ function MemePost({
       <CardHeader
         avatar={
           <Avatar
-            src={user?.avatar || ''}
-            alt={`${user?.first_name} ${user?.last_name}`}
+            src={postUsers?.avatar || ''}
+            alt={`${postUsers?.first_name} ${postUsers?.last_name}`}
             sx={{
               bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
             }}
           >
-            {user ? `${user.first_name?.charAt(0) || ''}${user.last_name?.charAt(0) || ''}` : 'U'}
+            {postUsers
+              ? `${postUsers.first_name?.charAt(0) || ''}${postUsers.last_name?.charAt(0) || ''}`
+              : 'U'}
           </Avatar>
         }
         action={
           <IconButton onClick={(event) => onMenuOpen(event, id)}>
-            <MoreVertIcon />
+            <MoreVert />
           </IconButton>
         }
         title={
           <Typography
             variant="subtitle1"
             fontWeight="medium"
-            onClick={(e) => (user?.id && onUserNameClick ? onUserNameClick(e, user.id) : null)}
+            onClick={(e) =>
+              postUsers?.id && onUserNameClick ? onUserNameClick(e, postUsers.id) : null
+            }
             sx={{
-              cursor: user?.id && onUserNameClick ? 'pointer' : 'default',
+              cursor: postUsers?.id && onUserNameClick ? 'pointer' : 'default',
               color: isDarkMode ? '#ffffff' : '#000000',
               '&:hover':
-                user?.id && onUserNameClick
+                postUsers?.id && onUserNameClick
                   ? {
                       textDecoration: 'underline',
                       color: isDarkMode ? theme.palette.primary.main : theme.palette.primary.dark,
@@ -257,10 +290,10 @@ function MemePost({
                   : {},
             }}
           >
-            {user
-              ? `${user.first_name?.charAt(0).toUpperCase() + user.first_name?.slice(1)} ${
-                  user.last_name?.charAt(0).toUpperCase() + user.last_name?.slice(1)
-                }`
+            {postUsers
+              ? `${
+                  postUsers.first_name?.charAt(0).toUpperCase() + postUsers.first_name?.slice(1)
+                } ${postUsers.last_name?.charAt(0).toUpperCase() + postUsers.last_name?.slice(1)}`
               : 'Unknown User'}
           </Typography>
         }
@@ -272,11 +305,27 @@ function MemePost({
       />
 
       <Menu anchorEl={menuAnchor} open={isMenuOpen} onClose={onMenuClose}>
-        <MenuItem onClick={() => setIsEditModalOpen(true)}>Edit</MenuItem>
-        <MenuItem onClick={() => setIsReportPostModalOpen(true)}>Report</MenuItem>
-        <MenuItem onClick={() => setIsPostDeleteModalOpen(true)} sx={{ color: 'red' }}>
-          Delete
-        </MenuItem>
+        {postUserId && postUserId == user.id
+          ? [
+              <MenuItem key="edit" onClick={() => setIsEditModalOpen(true)}>
+                Edit
+              </MenuItem>,
+              <MenuItem
+                key="delete"
+                onClick={() => setIsPostDeleteModalOpen(true)}
+                sx={{ color: 'red' }}
+              >
+                Delete
+              </MenuItem>,
+              <MenuItem key="report" onClick={() => setIsReportPostModalOpen(true)}>
+                Report
+              </MenuItem>,
+            ]
+          : [
+              <MenuItem key="report" onClick={() => setIsReportPostModalOpen(true)}>
+                Report
+              </MenuItem>,
+            ]}
       </Menu>
 
       <CardContent sx={{ pt: 0, pb: 1 }}>
@@ -298,14 +347,17 @@ function MemePost({
         />
       )}
 
-      <Lightbox
-        open={isLightboxOpen}
-        close={() => setIsLightboxOpen(false)}
-        slides={[{ src: currentImage }]}
-        render={{
-          buttonPrev: currentImage ? undefined : () => null,
-          buttonNext: currentImage ? undefined : () => null,
-        }}
+      <LightBox
+        isOpen={isLightboxOpen}
+        onClose={() => setIsLightboxOpen(false)}
+        image={currentImage}
+        caption={currentCaption}
+        user={postUsers}
+        timestamp={timestamp}
+        comments={comments || []}
+        reactionCount={likeCount}
+        onAddComment={handleAddComment}
+        darkMode={isDarkMode}
       />
 
       <CardActions disableSpacing sx={{ p: 0 }}>
@@ -383,24 +435,6 @@ function MemePost({
       />
     </Card>
   );
-}
-
-MemePost.propTypes = {
-  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  caption: PropTypes.string,
-  image: PropTypes.string,
-  timestamp: PropTypes.string.isRequired,
-  user: PropTypes.object.isRequired,
-  loggedInUser: PropTypes.object,
-  onDelete: PropTypes.func.isRequired,
-  onReportPost: PropTypes.func.isRequired,
-  onUpdate: PropTypes.func.isRequired,
-  onMenuOpen: PropTypes.func.isRequired,
-  onMenuClose: PropTypes.func.isRequired,
-  menuAnchor: PropTypes.object,
-  isMenuOpen: PropTypes.bool.isRequired,
-  darkMode: PropTypes.bool,
-  onUserNameClick: PropTypes.func,
 };
 
 export default MemePost;

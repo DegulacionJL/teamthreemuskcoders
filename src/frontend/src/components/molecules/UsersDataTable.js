@@ -7,9 +7,9 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableContainer from '@mui/material/TableContainer';
-import TableBody from 'components/atoms/DataTable/TableBody';
 import TableHead from 'components/atoms/DataTable/TableHead';
 import TableToolbar from 'components/atoms/DataTable/TableToolbar';
+import UsersTableBody from 'components/atoms/UsersDataTable/UsersTableBody';
 
 function UsersDataTable(props) {
   const {
@@ -53,7 +53,7 @@ function UsersDataTable(props) {
               headCells={header}
               actions={actions}
             />
-            <TableBody
+            <UsersTableBody
               header={header}
               rows={data}
               handleDelete={handleDelete}

@@ -1,5 +1,7 @@
+'use client';
+
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -10,8 +12,6 @@ import {
   DialogTitle,
   TextField,
 } from '@mui/material';
-import ImagePreview from '../atoms/ImagePreview';
-import ImageUploadButton from '../molecules/ImageUploadButton';
 
 const EditPostModal = ({ open, onClose, caption, image, onSave }) => {
   const [editedCaption, setEditedCaption] = useState('');
@@ -70,7 +70,6 @@ const EditPostModal = ({ open, onClose, caption, image, onSave }) => {
       maxWidth="sm"
       fullWidth
       disableEscapeKeyDown={isSubmitting} // Prevent closing while submitting
-      disableBackdropClick={isSubmitting}
     >
       <DialogTitle>Edit Post</DialogTitle>
       <DialogContent>
@@ -89,17 +88,33 @@ const EditPostModal = ({ open, onClose, caption, image, onSave }) => {
 
         {imagePreview ? (
           <Box sx={{ mt: 2, textAlign: 'center' }}>
-            <ImagePreview src={imagePreview} onRemove={handleRemoveImage} maxHeight="200px" />
+            <img
+              src={imagePreview || '/placeholder.svg'}
+              alt="Preview"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '200px',
+                borderRadius: '8px',
+                display: 'block',
+                margin: 'auto',
+              }}
+            />
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={handleRemoveImage}
+              sx={{ mt: 1 }}
+              disabled={isSubmitting}
+            >
+              Remove Image
+            </Button>
           </Box>
         ) : (
           <Box sx={{ mt: 2 }}>
-            <ImageUploadButton
-              onChange={handleImageChange}
-              id="edit-post-image-upload"
-              buttonVariant="button"
-              buttonText="Add Image"
-              buttonProps={{ disabled: isSubmitting }}
-            />
+            <Button variant="outlined" component="label" disabled={isSubmitting}>
+              Add Image
+              <input type="file" hidden accept="image/*" onChange={handleImageChange} />
+            </Button>
           </Box>
         )}
       </DialogContent>
