@@ -1,8 +1,12 @@
+'use client';
+
 import PropTypes from 'prop-types';
 import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 import MenuIcon from '@mui/icons-material/Menu';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
@@ -12,26 +16,29 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
+import { purple } from '@mui/material/colors';
 import Button from 'components/atoms/Button';
 import LanguageSelect from 'components/atoms/LanguageSelect';
 import MenuLinks from 'components/atoms/MenuLinks';
 import AvatarNavDropdown from 'components/molecules/AvatarNavDropdown';
 import NotificationIcon from 'components/molecules/NotificationIcon';
+import { useTheme } from '../../../theme/ThemeContext';
 
 function Navbar(props) {
   const { user = null } = props;
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [anchorMobileNav, setAnchorMobileNav] = useState(null);
+  const { darkMode, toggleDarkMode } = useTheme();
 
-  const menus = [
-    { label: t('menu.about'), url: '/about' },
-    { label: t('menu.inquiry'), url: '/inquiry' },
-    { label: t('menu.faq'), url: '/faq' },
-    { label: t('menu.styleguide'), url: '/styleguide' },
-  ];
+  const menus = [];
 
-  const appName = process.env.REACT_APP_SITE_TITLE;
+  if (user) {
+    menus.push({ label: t('menu.memefeed'), url: '/memefeed' });
+    menus.push({ label: t('menu.userlist'), url: '/userList' });
+  }
+
+  const appName = process.env.REACT_APP_SITE_TITLE || 'MemeMa 😂';
 
   const handleOpenNavMenu = (event) => setAnchorMobileNav(event.currentTarget);
   const handleCloseNavMenu = (url) => {
@@ -47,15 +54,32 @@ function Navbar(props) {
   return (
     <AppBar
       position="static"
-      color="transparent"
       elevation={0}
-      sx={{ borderBottom: (theme) => `1px solid ${theme.palette.divider}` }}
+      sx={{
+        borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
+        backgroundColor: darkMode ? '#121824' : purple[700],
+        transition: 'background-color 0.3s ease',
+      }}
     >
       <Container maxWidth="lg">
         <Toolbar sx={{ flexWrap: 'wrap' }} disableGutters>
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
             <Link to="/">
-              <img src="/static/images/sprobe-icon.png" alt={appName} height={48} />
+              <Typography
+                variant="h5"
+                noWrap
+                sx={{
+                  fontWeight: 700,
+                  color: '#ffb300',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  height: 48,
+                }}
+              >
+                {appName}
+              </Typography>
             </Link>
           </Box>
 
@@ -84,7 +108,19 @@ function Navbar(props) {
                 justifyContent: 'center',
               }}
             >
-              <img src="/static/images/sprobe-icon.png" alt={appName} height={48} />
+              <Typography
+                variant="h5"
+                noWrap
+                sx={{
+                  fontWeight: 700,
+                  color: '#ffb300',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                {appName}
+              </Typography>
             </Box>
 
             <Menu
@@ -129,6 +165,10 @@ function Navbar(props) {
               )}
             </Menu>
           </Box>
+
+          <IconButton color="inherit" onClick={toggleDarkMode} sx={{ mr: 1 }}>
+            {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
 
           <LanguageSelect sx={{ ml: 1 }} />
 

@@ -1,3 +1,5 @@
+'use client';
+
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
 import { Fragment, useEffect, useState } from 'react';
@@ -30,31 +32,45 @@ const NotificationIcon = (props) => {
   const handleClickNotification = async (notification) => {
     const { id, type, content, read_at } = notification;
 
+    toast.info(content);
     // mark the notification as seen if not yet seen
     if (read_at === null) {
       await markNotificationSeen(id);
       // update rendered list view
-      let updatedList = [...notifications];
-      const index = updatedList.findIndex((row) => parseInt(row.id) === parseInt(id));
+      const updatedList = [...notifications];
+      const index = updatedList.findIndex((row) => Number.parseInt(row.id) === Number.parseInt(id));
       updatedList[index].read_at = dayjs().format('YYYY-MM-DDTHH:mm:ssZ[Z]');
       setNotifications(updatedList);
       // update unread count
       setUnread((prev) => prev - 1);
     }
 
-    // FOR DEMO PURPOSES
-    alert(JSON.stringify({ type, content }));
-
-    // ADD YOUR LOGIC HERE ON HOW YOU WILL HANDLE CLICKING A NOTIFICATION ITEM e.g redirect
+    // Handle different notification types
+    switch (type) {
+      case 'comment_reply':
+        // Here you would typically navigate to the comment thread
+        // For demo purposes, we'll just show an alert
+        alert(`Notification: ${notification.content}. Comment ID: ${notification.notifiable_id}`);
+        break;
+      // Add other cases as needed
+      default:
+        alert(JSON.stringify(notification));
+        break;
+    }
   };
 
   const fetchNotifications = async () => {
-    setLoading(true);
-    const { data, meta, unread } = await searchNotifications(query).catch(() => setLoading(false));
-    setNotifications(() => [...notifications, ...data]);
-    setUnread(unread);
-    setMeta(meta);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const { data, meta, unread } = await searchNotifications(query);
+      setNotifications((prev) => [...prev, ...data]);
+      setUnread(unread);
+      setMeta(meta);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleOnScroll = (e) => {
@@ -79,15 +95,27 @@ const NotificationIcon = (props) => {
   }, [query]);
 
   useEffect(() => {
-    if (user !== null || user !== undefined) {
-      // subscribe to private channel & listen to specific event from backend \App\Events\
-      window.Echo.private(`user-notification.${user.id}`).listen('NotificationCreated', (e) => {
-        const { notification } = e;
-        handleNewNotification(notification);
-      });
-      // clean up connection to avoid duplicate broadcast
-      return () =>
-        window.Echo.private(`user-notification.${user.id}`).stopListening('NotificationCreated');
+    // Fix the condition: use AND instead of OR
+    // Also check if window.Echo exists before using it
+    if (user && window.Echo) {
+      try {
+        // subscribe to private channel & listen to specific event from backend \App\Events\
+        window.Echo.private(`user-notification.${user.id}`).listen('NotificationCreated', (e) => {
+          const { notification } = e;
+          handleNewNotification(notification);
+        });
+
+        // clean up connection to avoid duplicate broadcast
+        return () => {
+          if (window.Echo) {
+            window.Echo.private(`user-notification.${user.id}`).stopListening(
+              'NotificationCreated'
+            );
+          }
+        };
+      } catch (error) {
+        console.error('Error setting up Echo listener:', error);
+      }
     }
   }, [user]);
 
@@ -142,7 +170,7 @@ const NotificationIcon = (props) => {
               </Box>
             )}
 
-            {notifications.length < 1 && (
+            {notifications.length < 1 && !loading && (
               <BodyText disableGutter align="center" sx={{ p: 2 }}>
                 {t('labels.noNotifications')}
               </BodyText>
@@ -155,7 +183,7 @@ const NotificationIcon = (props) => {
 };
 
 NotificationIcon.propTypes = {
-  user: PropTypes.object.isRequired,
+  user: PropTypes.object,
   darkMode: PropTypes.bool,
 };
 

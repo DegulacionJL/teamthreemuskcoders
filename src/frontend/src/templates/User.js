@@ -1,17 +1,19 @@
 import { useEffect } from 'react';
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { logout } from 'services/auth';
 import { setProfile } from 'store/slices/profileSlice';
 import { Box } from '@mui/material';
-import Footer from 'components/organisms/User/Footer';
 import Navbar from 'components/organisms/User/Navbar';
 import api from 'utils/api';
 
 export default function User() {
+  const [open, setOpen] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector((state) => state.profile.user);
+  const toggleDrawer = () => setOpen(!open);
 
   const handleLogout = async () => {
     await logout();
@@ -39,21 +41,27 @@ export default function User() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-      <Navbar open={open} onLogout={() => handleLogout()} user={user} />
+      <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100vh' }}>
+        <Navbar open={open} onToggle={toggleDrawer} onLogout={handleLogout} user={user} />
 
-      <Box
-        component="main"
-        sx={{
-          backgroundColor: (theme) =>
-            theme.palette.mode === 'light' ? theme.palette.grey[100] : theme.palette.grey[900],
-          pb: 8,
-          minHeight: 'calc(100vh - 313px)',
-        }}
-      >
-        <Outlet />
+        <Box sx={{ display: 'flex', flexGrow: 1 }}>
+          {/* Main content (Outlet will load here) */}
+          <Box
+            component="main"
+            sx={{
+              backgroundColor: (theme) =>
+                theme.palette.mode === 'light' ? theme.palette.grey[100] : theme.palette.grey[900],
+              pb: 8,
+              minHeight: 'calc(100vh - 64px)', // Adjusted for navbar height
+              flexGrow: 1, // Ensures it takes up remaining space
+            }}
+          >
+            <Outlet />
+          </Box>
+        </Box>
       </Box>
 
-      <Footer />
+      {/* <Footer /> */}
     </Box>
   );
 }

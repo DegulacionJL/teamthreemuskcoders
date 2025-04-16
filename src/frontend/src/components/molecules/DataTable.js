@@ -1,3 +1,5 @@
+'use client';
+
 import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
 import Pagination from '@mui/material/Pagination';
@@ -5,6 +7,7 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableContainer from '@mui/material/TableContainer';
+import AdminTableBody from 'components/atoms/DataTable/AdminTableBody';
 import TableBody from 'components/atoms/DataTable/TableBody';
 import TableHead from 'components/atoms/DataTable/TableHead';
 import TableToolbar from 'components/atoms/DataTable/TableToolbar';
@@ -23,8 +26,11 @@ function DataTable(props) {
     handleDelete,
     handleEdit,
     handleAdd,
+    handleFollow,
     toolbar,
     actions,
+    alignSearchRight,
+    user,
   } = props;
 
   return (
@@ -42,12 +48,16 @@ function DataTable(props) {
               headCells={header}
               actions={actions}
             />
-            <TableBody
+            <AdminTableBody
               header={header}
               rows={data}
               handleDelete={handleDelete}
               handleEdit={handleEdit}
+              handleAdd={handleAdd}
+              handleFollow={handleFollow}
               actions={actions}
+              user={user}
+              role={user?.role}
             />
           </Table>
         </TableContainer>
@@ -75,6 +85,9 @@ DataTable.propTypes = {
   handleAdd: PropTypes.func,
   toolbar: PropTypes.bool,
   actions: PropTypes.bool,
+  alignSearchRight: PropTypes.bool,
+  handleFollow: PropTypes.func,
+  user: PropTypes.object,
 };
 
 DataTable.defaultProps = {

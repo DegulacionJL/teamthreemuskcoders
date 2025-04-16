@@ -157,7 +157,6 @@ class UserService
         // perform update
         $user->update($params);
         $user->assignRole($role);
-        $user->role = count($user->roles) > 0 ? $user->roles[0]->name : null;
 
         return $user;
     }

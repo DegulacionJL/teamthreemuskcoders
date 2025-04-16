@@ -26,7 +26,7 @@ function Footer() {
           <Grid item xs={12} sm={4}>
             <Box sx={{ mb: 2 }}>
               <img
-                src="/static/images/sprobe-logo.png"
+                src="/static/images/memema_test.png"
                 alt={process.env.REACT_APP_SITE_TITLE}
                 width="100"
               />

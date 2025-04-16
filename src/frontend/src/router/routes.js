@@ -1,4 +1,5 @@
 import admin from './admin';
+import user from './user';
 
 const routes = [
   // Dont Remove. Handle 404 Pages
@@ -67,7 +68,31 @@ const routes = [
     component: 'pages/guest/PrivacyPolicy',
     auth: false,
   },
+  {
+    path: '/calculate',
+    component: 'pages/guest/Calculate',
+    auth: false,
+  },
+
+  {
+    path: '/logout',
+    component: 'pages/guest/Logout',
+    auth: true, // Logout should only be accessible to authenticated users
+  },
+  {
+    path: '/users',
+    component: 'pages/authenticated/Users',
+    auth: true,
+  },
+
+  {
+    path: '/users/:userId',
+    component: 'pages/UserTimeline',
+    auth: true,
+  },
+
   ...admin,
+  ...user,
 ];
 
 // Don't include styleguide in production routes

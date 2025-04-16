@@ -1,3 +1,6 @@
+'use client';
+
+import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Outlet } from 'react-router-dom';
@@ -7,8 +10,8 @@ import Footer from 'components/organisms/Admin/Footer';
 import Navbar from 'components/organisms/Admin/Navbar';
 import Sidebar from 'components/organisms/Admin/Sidebar';
 
-export default function Admin() {
-  const [open, setOpen] = useState(false);
+function Admin({ children }) {
+  const [open, setOpen] = useState(true);
   const user = useSelector((state) => state.profile.user);
   const toggleDrawer = () => setOpen(!open);
 
@@ -35,9 +38,8 @@ export default function Admin() {
         }}
       >
         <Toolbar />
-
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-          <Outlet />
+          {children || <Outlet />}
 
           <Footer />
         </Container>
@@ -45,3 +47,10 @@ export default function Admin() {
     </Box>
   );
 }
+
+// ✅ Define PropTypes outside the component
+Admin.propTypes = {
+  children: PropTypes.node, // Allows any valid React child (components, strings, numbers, etc.)
+};
+
+export default Admin;

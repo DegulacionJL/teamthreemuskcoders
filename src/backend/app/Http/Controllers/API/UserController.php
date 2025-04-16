@@ -14,6 +14,7 @@ use App\Http\Requests\API\Users\SearchUserRequest;
 use App\Http\Requests\API\Users\UpdateUserRequest;
 use App\Http\Requests\API\Users\RegisterUserRequest;
 use App\Http\Requests\API\Users\ActivateAccountRequest;
+use App\http\Requests\API\Users\UserProfileResource;
 
 /**
  * @group User Management
@@ -62,6 +63,12 @@ class UserController extends Controller
 
             $results = $this->userService->search($conditions);
             $this->response = array_merge($results, $this->response);
+        }
+        catch(RoleDoesNotExist $e){
+            $this->response = [
+                'error' => $e->getMessage(),
+                'code' => 400,
+            ];
         } catch (Exception $e) { // @codeCoverageIgnoreStart
             $this->response = [
                 'error' => $e->getMessage(),
@@ -154,6 +161,7 @@ class UserController extends Controller
             ];
 
             $user = $this->userService->update($formData);
+            $user->syncRoles([$formData['role']]);
             $this->response['data'] = new UserResource($user);
         } catch (Exception $e) { // @codeCoverageIgnoreStart
             $this->response = [
@@ -274,4 +282,6 @@ class UserController extends Controller
 
         return response()->json($this->response, $this->response['code']);
     }
+
+   
 }

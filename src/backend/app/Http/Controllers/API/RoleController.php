@@ -23,6 +23,7 @@ class RoleController extends Controller
         $this->roleService = $roleService;
 
         $this->middleware(['auth:api', 'role:System Admin']);
+       
     }
 
     public function index(SearchRequest $request)

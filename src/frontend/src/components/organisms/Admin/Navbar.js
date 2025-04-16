@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import { IconButton, Toolbar, Typography, styled } from '@mui/material';
 import MuiAppBar from '@mui/material/AppBar';
+import { purple } from '@mui/material/colors';
 import LanguageSelect from 'components/atoms/LanguageSelect';
 import AvatarNavDropdown from 'components/molecules/AvatarNavDropdown';
 import NotificationIcon from 'components/molecules/NotificationIcon';
@@ -15,6 +16,7 @@ const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
 })(({ theme, open }) => ({
   zIndex: theme.zIndex.drawer + 1,
+  backgroundColor: purple[700],
   transition: theme.transitions.create(['width', 'margin'], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
