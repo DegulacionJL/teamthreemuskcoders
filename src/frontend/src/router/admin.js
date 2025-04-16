@@ -17,19 +17,27 @@ const admin = [
     auth: true,
     layout: 'admin',
   },
+
+  {
+    path: '/admin/reports',
+    component: 'pages/authenticated/admin/ReportManagement',
+    auth: true,
+    layout: 'admin',
+  },
+  {
+    path: '/admin/activity_feed',
+    component: 'pages/authenticated/admin/ActivityFeed',
+    auth: true,
+    layout: 'admin',
+  },
+
   {
     path: '/admin/integrations',
     component: 'pages/authenticated/admin/Integrations',
     auth: true,
     layout: 'admin',
   },
-  // DEMO PURPOSES ONLY. REMOVE ON ACTUAL PROJECT
-  {
-    path: '/admin/broadcast',
-    component: 'pages/authenticated/admin/Broadcast',
-    auth: true,
-    layout: 'admin',
-  },
+
   // Add the admin about route
   {
     path: '/admin/about',

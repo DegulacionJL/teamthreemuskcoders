@@ -692,6 +692,7 @@ function MemeFeed() {
                 image={post.image ? post.image.image_path : null}
                 timestamp={post.created_at}
                 user={post.user}
+                loggedInUser={currentUser}
                 onDelete={handleDelete}
                 onReportPost={handleReportPost}
                 onUpdate={handleUpdatePost}

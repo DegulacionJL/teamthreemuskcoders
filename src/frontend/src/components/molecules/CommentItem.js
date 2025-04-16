@@ -25,6 +25,7 @@ const CommentItem = ({
   replyHasMore,
   replyPage,
   onReactionChange,
+  currentUser,
 }) => {
   const isMaxDepthReached = depth >= maxDepth;
   const hasMoreReplies = !!replyHasMore[comment.id];
@@ -35,7 +36,7 @@ const CommentItem = ({
   const handleLoadMore = () => onLoadMoreReplies && onLoadMoreReplies(comment.id);
   const handleBack = () => onBackReplies && currentReplyPage > 1 && onBackReplies(comment.id);
 
-  // Function to handle author click (removed unused 'e' parameter)
+  // Function to handle author click
   const handleAuthorClick = () => {
     if (comment.user?.id) {
       navigate(`/users/${comment.user.id}`);
@@ -155,6 +156,7 @@ const CommentItem = ({
                 replyHasMore={replyHasMore}
                 replyPage={replyPage}
                 onReactionChange={onReactionChange}
+                currentUser={currentUser}
               />
             ))}
             {(hasMoreReplies || currentReplyPage > 1) && (
@@ -166,10 +168,14 @@ const CommentItem = ({
           </Box>
         )}
       </Box>
-      <CommentActions
-        onEdit={() => onEditClick(comment)}
-        onDelete={() => onDeleteClick(comment.id)}
-      />
+      <Box sx={{ width: '40px', flexShrink: 0, display: 'flex', justifyContent: 'flex-end' }}>
+        {currentUser && comment.user?.id === currentUser.id && (
+          <CommentActions
+            onEdit={() => onEditClick(comment)}
+            onDelete={() => onDeleteClick(comment.id)}
+          />
+        )}
+      </Box>
     </Box>
   );
 };
@@ -191,6 +197,7 @@ CommentItem.propTypes = {
   replyHasMore: PropTypes.object,
   replyPage: PropTypes.object,
   onReactionChange: PropTypes.func.isRequired,
+  currentUser: PropTypes.object,
 };
 
 export default CommentItem;

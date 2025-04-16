@@ -78,6 +78,8 @@ export default function AddEditModal(props) {
   const handleFormSubmit = async (data) => {
     setLoading(true);
 
+    console.log(data);
+
     try {
       const response = user ? await updateUser(user.id, data) : await createUser(data);
       reset();
@@ -141,6 +143,7 @@ export default function AddEditModal(props) {
             </Grid>
             <Grid item md={12}>
               <Controller
+                {...register('role')}
                 name="role"
                 control={control}
                 render={({ field }) => (

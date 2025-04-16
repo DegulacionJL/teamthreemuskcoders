@@ -18,6 +18,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\UserListController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\UserTimelineController;
+use App\Http\Controllers\AdminDashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,7 +44,7 @@ Route::prefix('posts')
         Route::get('/', [PostController::class, 'index']);
         Route::post('/', [PostController::class, 'createMemePost'])->middleware('auth:api');
         Route::put('/{post}', [PostController::class, 'updatePost'])->middleware('auth:api');
-        Route::delete('/{post}', [PostController::class, 'deletePost'])->middleware('auth:api');
+        Route::delete('/{post}', [PostController::class, 'deletePost']);
         Route::post('/{post}/image', [PostController::class, 'updatePostImage'])->middleware('auth:api');
         Route::get('/leaderboard', [PostController::class, 'getLeaderboard'])->middleware('auth:api'); // New endpoint
     });
@@ -137,6 +138,12 @@ Route::get('permissions', [PermissionController::class, 'index']);
 
 Route::get('notifications', [NotificationController::class, 'index']);
 Route::put('notifications/{id}/seen', [NotificationController::class, 'seen']);
+
+// Admin Dashboard Route
+Route::prefix('admin')->middleware(['auth:api'])->group(function () {
+    Route::get('/dashboard', [AdminDashboardController::class, 'getStats']);
+});
+
 // DEMO PURPOSES ONLY. REMOVE ON ACTUAL PROJECT
 Route::post('notifications/test', [NotificationController::class, 'create']);
 

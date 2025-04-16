@@ -7,6 +7,7 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableContainer from '@mui/material/TableContainer';
+import AdminTableBody from 'components/atoms/DataTable/AdminTableBody';
 import TableBody from 'components/atoms/DataTable/TableBody';
 import TableHead from 'components/atoms/DataTable/TableHead';
 import TableToolbar from 'components/atoms/DataTable/TableToolbar';
@@ -34,13 +35,7 @@ function DataTable(props) {
 
   return (
     <Box sx={{ width: '100%' }}>
-      {toolbar && (
-        <TableToolbar
-          handleSearch={handleSearch}
-          handleAdd={handleAdd}
-          alignSearchRight={alignSearchRight}
-        />
-      )}
+      {toolbar && <TableToolbar handleSearch={handleSearch} handleAdd={handleAdd} />}
 
       <Paper sx={{ width: '100%', mb: 2 }}>
         <TableContainer>
@@ -53,7 +48,7 @@ function DataTable(props) {
               headCells={header}
               actions={actions}
             />
-            <TableBody
+            <AdminTableBody
               header={header}
               rows={data}
               handleDelete={handleDelete}
@@ -62,6 +57,7 @@ function DataTable(props) {
               handleFollow={handleFollow}
               actions={actions}
               user={user}
+              role={user?.role}
             />
           </Table>
         </TableContainer>
@@ -86,7 +82,7 @@ DataTable.propTypes = {
   handleSearch: PropTypes.func,
   handleDelete: PropTypes.func,
   handleEdit: PropTypes.func,
-  handleAdd: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]),
+  handleAdd: PropTypes.func,
   toolbar: PropTypes.bool,
   actions: PropTypes.bool,
   alignSearchRight: PropTypes.bool,
