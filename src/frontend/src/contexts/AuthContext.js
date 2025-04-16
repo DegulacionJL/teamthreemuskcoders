@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import api from '../utils/api';
 
@@ -125,6 +126,11 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+};
+
+// Define PropTypes for AuthProvider
+AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
 export default AuthContext;

@@ -201,9 +201,8 @@ const en = {
       roles: 'Roles',
       broadcast: 'Broadcast',
       calculate: 'calculate',
-      memefeed: 'meme feed',
-      userlist: 'Userlist',
-      profile: 'Profile',
+      memefeed: 'Meme Feed',
+      userlist: 'Find Friends',
     },
     table: {
       no_data: 'No data.',

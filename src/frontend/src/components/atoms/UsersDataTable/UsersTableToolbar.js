@@ -11,7 +11,7 @@ import Button from 'components/atoms/Button';
 import { useTheme as useCustomTheme } from '../../../theme/ThemeContext';
 
 function TableToolbar(props) {
-  const { handleSearch, handleAdd } = props;
+  const { handleSearch, handleAdd, user } = props;
   const { t } = useTranslation();
   const searchEl = useRef(null);
   const [submitted, setSubmitted] = useState(false);
@@ -30,7 +30,7 @@ function TableToolbar(props) {
   };
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, width: '100%' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2, width: '100%' }}>
       <Box
         sx={{
           display: 'flex',
@@ -46,27 +46,11 @@ function TableToolbar(props) {
         <InputBase
           inputRef={searchEl}
           placeholder={t('labels.enter_keyword')}
-          startAdornment={<SearchIcon sx={{ color: '#555', mr: 1, fontSize: 22 }} />}
           sx={{
-            width: '100%',
-            maxWidth: '320px',
-            height: '42px',
-            pl: 2,
-            pr: 2,
-            borderRadius: '8px',
-            backgroundColor: '#f1f5f9', // Light gray background
-            transition: '0.2s ease-in-out',
-            '&:hover': {
-              backgroundColor: '#e2e8f0', // Slightly darker gray on hover
-            },
-            '& .MuiInputBase-input': {
-              fontSize: '15px',
-              fontWeight: 400,
-              color: '#333',
-            },
+            pl: 1,
+            color: darkMode ? '#ffffff' : '#000000', // Adjust text color
           }}
         />
-
         <Box>
           {submitted && (
             <IconButton onClick={handleClear}>
@@ -79,35 +63,26 @@ function TableToolbar(props) {
         </Box>
       </Box>
 
-      <Button
-        onClick={() => handleAdd()}
-        startIcon={<AddIcon sx={{ fontSize: 22 }} />}
-        sx={{
-          backgroundColor: '#512DA8', // biyolet
-          color: 'white',
-          fontSize: '14px',
-          fontWeight: 500,
-          textTransform: 'none',
-          borderRadius: '8px',
-          padding: '8px 16px',
-          transition: '0.2s ease-in-out',
-          '&:hover': {
-            backgroundColor: '#1565c0', // Darker blue on hover
-          },
-          '&:active': {
-            backgroundColor: '#0d47a1', // Even darker blue when clicked
-          },
-        }}
-      >
-        {t('labels.add_new')}
-      </Button>
+      {user?.role === 'user' && handleAdd && (
+        <Button onClick={handleAdd} startIcon={<AddIcon />}>
+          {t('labels.add_new')}
+        </Button>
+      )}
     </Box>
   );
 }
 
+TableToolbar.defaultProps = {
+  user: { role: '' },
+};
+
 TableToolbar.propTypes = {
   handleSearch: PropTypes.func,
-  handleAdd: PropTypes.func,
+  handleFollow: PropTypes.func,
+  handleAdd: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]),
+  user: PropTypes.shape({
+    role: PropTypes.string.isRequired,
+  }).isRequired,
 };
 
 export default TableToolbar;

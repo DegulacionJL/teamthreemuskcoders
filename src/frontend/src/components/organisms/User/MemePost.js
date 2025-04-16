@@ -245,11 +245,12 @@ function MemePost({
             onClick={(e) => (user?.id && onUserNameClick ? onUserNameClick(e, user.id) : null)}
             sx={{
               cursor: user?.id && onUserNameClick ? 'pointer' : 'default',
+              color: isDarkMode ? '#ffffff' : '#000000', // Adjust color based on dark mode
               '&:hover':
                 user?.id && onUserNameClick
                   ? {
                       textDecoration: 'underline',
-                      color: theme.palette.primary.main,
+                      color: isDarkMode ? theme.palette.primary.main : theme.palette.primary.dark, // Adjust hover color
                     }
                   : {},
             }}
