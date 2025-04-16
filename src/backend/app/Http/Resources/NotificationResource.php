@@ -14,28 +14,21 @@ class NotificationResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $content = $this->content;
-    $senderName = $this->sender ? $this->sender->full_name : 'Someone';
-
-    // Customize content based on type
-    switch($this->type) {
-        case 'comment_reply':
-            $content = "{$senderName} replied to your comment";
-            break;
-        // Add other cases as needed
-    }
-
         return [
             'id' => $this->id,
-        'content' => $content,
-        'sender_id' => $this->sender_id,
-        'recipient' => $this->recipient->full_name,
-        'data' => $this->notifiable,
-        'type' => $this->type,
-        'read_at' => $this->read_at,
-        'created_at' => $this->created_at,
-        'notifiable_id' => $this->notifiable_id,
-        'notifiable_type' => $this->notifiable_type,
+            'content' => $this->content, // Content is pre-formatted in CommentService.php
+            'sender' => $this->sender ? [
+                'id' => $this->sender->id,
+                'full_name' => $this->sender->first_name . ' ' . $this->sender->last_name,
+                'avatar' => $this->sender->avatar,
+            ] : null,
+            'recipient' => $this->recipient ? $this->recipient->first_name . ' ' . $this->recipient->last_name : null,
+            'data' => $this->notifiable,
+            'type' => $this->type,
+            'read_at' => $this->read_at ? $this->read_at->toDateTimeString() : null,
+            'created_at' => $this->created_at->toDateTimeString(),
+            'notifiable_id' => $this->notifiable_id,
+            'notifiable_type' => $this->notifiable_type,
         ];
     }
 }
