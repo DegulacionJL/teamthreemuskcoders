@@ -1,3 +1,4 @@
+import { useComments } from 'hooks/useComments';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import React from 'react';
@@ -22,7 +23,7 @@ import {
   useTheme,
 } from '@mui/material';
 import CommentFeature from 'components/organisms/CommentFeature';
-import { useComments } from 'hooks/useComments'; // Import the useComments hook
+// Import the useComments hook
 import { useTheme as useCustomTheme } from 'theme/ThemeContext';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import EditPostModal from '../EditPostModal';
