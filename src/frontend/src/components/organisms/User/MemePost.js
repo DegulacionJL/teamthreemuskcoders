@@ -7,7 +7,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { getComments } from 'services/comment.service';
 import 'yet-another-react-lightbox/styles.css';
 import { ChatBubbleOutline, MoreVert, Share } from '@mui/icons-material';
-import MoreVertIcon from '@mui/icons-material';
 import {
   Avatar,
   Box,
@@ -46,7 +45,6 @@ const MemePost = ({
   onMenuOpen,
   onMenuClose,
   menuAnchor,
-  selectedPostId,
   isMenuOpen,
   darkMode,
   onUserNameClick,
@@ -431,6 +429,31 @@ const MemePost = ({
       />
     </Card>
   );
+};
+
+MemePost.propTypes = {
+  id: PropTypes.number.isRequired,
+  caption: PropTypes.string,
+  image: PropTypes.string,
+  timestamp: PropTypes.string,
+  postUsers: PropTypes.shape({
+    id: PropTypes.number,
+    avatar: PropTypes.string,
+    first_name: PropTypes.string,
+    last_name: PropTypes.string,
+  }),
+  loggedInUser: PropTypes.object,
+  onDelete: PropTypes.func,
+  onReportPost: PropTypes.func,
+  onUpdate: PropTypes.func,
+  onMenuOpen: PropTypes.func,
+  onMenuClose: PropTypes.func,
+  menuAnchor: PropTypes.any,
+  selectedPostId: PropTypes.number,
+  isMenuOpen: PropTypes.bool,
+  darkMode: PropTypes.bool,
+  onUserNameClick: PropTypes.func,
+  postUserId: PropTypes.number,
 };
 
 export default MemePost;
