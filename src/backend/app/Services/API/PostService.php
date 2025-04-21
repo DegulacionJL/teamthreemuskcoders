@@ -13,7 +13,6 @@ use Exception;
 
 class PostService
 {
-
     protected $post;
 
     public function __construct(Post $post)
@@ -61,45 +60,45 @@ class PostService
     }
 
     public function updatePostImage(Post $post, $imageFile)
-{
-    $userId = auth()->id();
-    if ($post->user_id !== $userId) {
-        throw new Exception("Unauthorized. You can only edit your own posts.");
-    }
+    {
+        $userId = auth()->id();
+        if ($post->user_id !== $userId) {
+            throw new Exception("Unauthorized. You can only edit your own posts.");
+        }
 
-    // Ensure $imageFile is a valid uploaded file
-    if (!$imageFile || !$imageFile->isValid()) {
-        return response()->json([
-            'id' => $post->id,
-            'caption' => $post->caption,
-            'image' => [
-                'image_path' => $imageFile->image_path . '?t=' . time(),
-            ],
+        // Ensure $imageFile is a valid uploaded file
+        if (!$imageFile || !$imageFile->isValid()) {
+            return response()->json([
+                'id' => $post->id,
+                'caption' => $post->caption,
+                'image' => [
+                    'image_path' => $imageFile->image_path . '?t=' . time(),
+                ],
+            ]);
+        }
+
+        // Check if post already has an associated image
+        $image = $post->image ?? new Image([
+            'post_id' => $post->id,
+            'user_id' => $userId,
         ]);
+
+        // Delete the old image if it exists
+        if ($image->image_path) {
+            Storage::disk('public')->delete(str_replace(env('STORAGE_DISK_URL') . '/', '', $image->image_path));
+        }
+
+        // Store the new image in 'storage/app/public/images'
+        $imagePath = $imageFile->store('images', 'public');
+
+        // Save the image path in the database (use full URL)
+        $image->image_path = env('STORAGE_DISK_URL') . '/' . $imagePath;
+        $image->save();
+
+        return $post->load('image');
     }
 
-    // Check if post already has an associated image
-    $image = $post->image ?? new Image([
-        'post_id' => $post->id,
-        'user_id' => $userId,
-    ]);
-
-    // Delete the old image if it exists
-    if ($image->image_path) {
-        Storage::disk('public')->delete(str_replace(env('STORAGE_DISK_URL') . '/', '', $image->image_path));
-    }
-
-    // Store the new image in 'storage/app/public/images'
-    $imagePath = $imageFile->store('images', 'public');
-
-    // Save the image path in the database (use full URL)
-    $image->image_path = env('STORAGE_DISK_URL') . '/' . $imagePath;
-    $image->save();
-
-    return $post->load('image');
-}
-
-public function getPosts($page = 1)
+    public function getPosts($page = 1)
     {
         $currentUser = Auth::user();
         
@@ -212,10 +211,71 @@ public function getPosts($page = 1)
             'like_count' => $likeCount,
             'liked'=>false
         ];
-
     }
 
-    public function getLeaderboard($period = 'daily')
+    // For the "Top Meme" section (previously getLeaderboard)
+    public function getTopPost($period = 'daily')
+    {
+        try {
+            // Determine the time range based on the period
+            $startDate = now();
+            if ($period === 'daily') {
+                $startDate = now()->subDay(); // Last 24 hours
+            } elseif ($period === 'weekly') {
+                $startDate = now()->subWeek(); // Last 7 days
+            } elseif ($period === 'monthly') {
+                $startDate = now()->subMonth(); // Last 30 days
+            } else {
+                throw new Exception('Invalid period specified. Use "daily", "weekly", or "monthly".');
+            }
+
+            // Fetch the single post with the most likes within the time range
+            $topPost = Post::select('posts.id', 'posts.caption', 'posts.user_id')
+                ->with(['user' => function ($query) {
+                    $query->select('id', 'first_name', 'last_name', 'avatar'); // Include avatar
+                }, 'image'])
+                ->leftJoin('likes', 'posts.id', '=', 'likes.post_id')
+                ->where('likes.created_at', '>=', $startDate)
+                ->groupBy('posts.id', 'posts.caption', 'posts.user_id')
+                ->selectRaw('COUNT(likes.id) as laugh_votes')
+                ->orderByDesc('laugh_votes')
+                ->first();
+
+            // Log the query result for debugging
+            Log::info("Top Post query for period {$period}: ", [
+                'startDate' => $startDate,
+                'topPost' => $topPost ? $topPost->toArray() : null,
+            ]);
+
+            // Format the response
+            $result = $topPost ? [
+                'post' => [
+                    'id' => $topPost->id,
+                    'caption' => $topPost->caption,
+                    'image' => $topPost->image ? asset('storage/images/' . basename($topPost->image->image_path)) : null,
+                    'author' => $topPost->user ? trim($topPost->user->first_name . ' ' . $topPost->user->last_name) : 'Unknown',
+                    'author_avatar' => $topPost->user && $topPost->user->avatar ? asset('storage/avatars/' . basename($topPost->user->avatar)) : null, // Add avatar URL
+                    'laugh_votes' => (int) $topPost->laugh_votes, // Ensure integer type
+                    'is_king' => true
+                ]
+            ] : null;
+
+            return [
+                'top_post' => $result ? $result['post'] : null,
+                'period' => $period,
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error in getTopPost: ' . $e->getMessage());
+            return [
+                'top_post' => null,
+                'period' => $period,
+                'error' => 'Failed to fetch top post'
+            ];
+        }
+    }
+
+    // Restored Leaderboard functionality for top users
+    public function getUserLeaderboard($period = 'daily')
     {
         try {
             // Determine the time range based on the period
@@ -241,6 +301,12 @@ public function getPosts($page = 1)
                 ->take(3) // Get top 3 users
                 ->get();
 
+            // Log the query result for debugging
+            Log::info("User Leaderboard query for period {$period}: ", [
+                'startDate' => $startDate,
+                'leaderboard' => $leaderboard->toArray(),
+            ]);
+
             // Format the leaderboard data
             $result = $leaderboard->map(function ($item, $index) {
                 return [
@@ -256,11 +322,11 @@ public function getPosts($page = 1)
                 'period' => $period,
             ];
         } catch (\Exception $e) {
-            Log::error('Error in getLeaderboard: ' . $e->getMessage());
+            Log::error('Error in getUserLeaderboard: ' . $e->getMessage());
             return [
                 'leaderboard' => [],
                 'period' => $period,
-                'error' => 'Failed to fetch leaderboard',
+                'error' => 'Failed to fetch leaderboard'
             ];
         }
     }

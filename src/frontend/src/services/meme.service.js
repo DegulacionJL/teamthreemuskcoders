@@ -49,6 +49,7 @@ const updateImage = async function (post, updatedData) {
 
   return await req;
 };
+
 const deletePost = async function (post) {
   const req = api.delete(`/posts/${post}`).then(({ data }) => data);
   return await req;
@@ -89,12 +90,24 @@ const unlikePost = async function (postId) {
   return await req;
 };
 
+// For the Leaderboard (top users)
 const getLeaderboard = async (period = 'daily') => {
   try {
     const response = await api.get(`/posts/leaderboard?period=${period}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
+    throw error;
+  }
+};
+
+// For the Top Meme section (top post)
+const getTopPost = async (period = 'daily') => {
+  try {
+    const response = await api.get(`/posts/top-post?period=${period}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching top post:', error);
     throw error;
   }
 };
@@ -136,4 +149,5 @@ export {
   getLikes,
   reportPost,
   getLeaderboard,
+  getTopPost,
 };

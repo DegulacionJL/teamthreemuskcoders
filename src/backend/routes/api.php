@@ -46,7 +46,8 @@ Route::prefix('posts')
         Route::put('/{post}', [PostController::class, 'updatePost'])->middleware('auth:api');
         Route::delete('/{post}', [PostController::class, 'deletePost']);
         Route::post('/{post}/image', [PostController::class, 'updatePostImage'])->middleware('auth:api');
-        Route::get('/leaderboard', [PostController::class, 'getLeaderboard'])->middleware('auth:api'); // New endpoint
+        Route::get('/leaderboard', [PostController::class, 'getUserLeaderboard'])->middleware('auth:api'); // Updated for Leaderboard
+        Route::get('/top-post', [PostController::class, 'getTopPost'])->middleware('auth:api'); // New endpoint for Top Meme
     });
 
     Route::prefix('likes')->group(function() {
