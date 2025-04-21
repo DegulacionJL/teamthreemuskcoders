@@ -36,12 +36,12 @@ const LeftContent = () => {
     monthly: null,
   });
 
-  // const categories = [
-  //   { id: 1, name: 'Popular Memes', icon: <LocalFireDepartment color="primary" />, active: true },
-  //   { id: 2, name: 'Trending Now', icon: <TrendingUp />, active: false },
-  //   { id: 3, name: 'New Arrivals', icon: <Star />, active: false },
-  //   { id: 4, name: 'Top Picks', icon: <ThumbUp />, active: false },
-  // ];
+  const categories = [
+    { id: 1, name: 'Popular Memes', icon: <LocalFireDepartment color="primary" />, active: true },
+    { id: 2, name: 'Trending Now', icon: <TrendingUp />, active: false },
+    { id: 3, name: 'New Arrivals', icon: <Star />, active: false },
+    { id: 4, name: 'Top Picks', icon: <ThumbUp />, active: false },
+  ];
 
   useEffect(() => {
     const fetchTopPosts = async () => {
@@ -161,7 +161,7 @@ const LeftContent = () => {
         display: { xs: 'none', md: 'block' },
       }}
     >
-      {/* <Card sx={{ mb: 3 }}>
+      <Card sx={{ mb: 3 }}>
         <CardHeader
           title="Meme Categories"
           sx={{
@@ -191,7 +191,7 @@ const LeftContent = () => {
             </ListItemButton>
           ))}
         </List>
-      </Card> */}
+      </Card>
 
       <Card>
         <CardHeader

@@ -187,7 +187,7 @@ class PostController extends Controller
     }
 
     // Endpoint for the Top Meme section (top post)
-    public function getTopPost(PostRequest $request)
+    public function getTopPost(Request $request)
     {
         try {
             $period = $request->query('period', 'daily'); // Default to 'daily'
