@@ -24,6 +24,7 @@ import AvatarNavDropdown from 'components/molecules/AvatarNavDropdown';
 import NotificationIcon from 'components/molecules/NotificationIcon';
 import { useTheme } from '../../../theme/ThemeContext';
 
+// New Navbar
 function Navbar(props) {
   const { user = null } = props;
   const { t } = useTranslation();
