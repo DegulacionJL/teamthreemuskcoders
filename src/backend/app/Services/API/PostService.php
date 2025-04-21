@@ -213,7 +213,7 @@ class PostService
         ];
     }
 
-    // For the "Top Meme" section (previously getLeaderboard)
+    // For the "Top Meme" section
     public function getTopPost($period = 'daily')
     {
         try {
@@ -232,7 +232,7 @@ class PostService
             // Fetch the single post with the most likes within the time range
             $topPost = Post::select('posts.id', 'posts.caption', 'posts.user_id')
                 ->with(['user' => function ($query) {
-                    $query->select('id', 'first_name', 'last_name', 'avatar'); // Include avatar
+                    $query->select('id', 'first_name', 'last_name', 'avatar');
                 }, 'image'])
                 ->leftJoin('likes', 'posts.id', '=', 'likes.post_id')
                 ->where('likes.created_at', '>=', $startDate)
@@ -254,8 +254,8 @@ class PostService
                     'caption' => $topPost->caption,
                     'image' => $topPost->image ? asset('storage/images/' . basename($topPost->image->image_path)) : null,
                     'author' => $topPost->user ? trim($topPost->user->first_name . ' ' . $topPost->user->last_name) : 'Unknown',
-                    'author_avatar' => $topPost->user && $topPost->user->avatar ? asset('storage/avatars/' . basename($topPost->user->avatar)) : null, // Add avatar URL
-                    'laugh_votes' => (int) $topPost->laugh_votes, // Ensure integer type
+                    'author_avatar' => $topPost->user && $topPost->user->avatar ? asset('storage/avatars/' . basename($topPost->user->avatar)) : null,
+                    'laugh_votes' => (int) $topPost->laugh_votes,
                     'is_king' => true
                 ]
             ] : null;
@@ -274,28 +274,36 @@ class PostService
         }
     }
 
-    // Restored Leaderboard functionality for top users
+    // Updated Leaderboard functionality for top users
     public function getUserLeaderboard($period = 'daily')
     {
         try {
             // Determine the time range based on the period
             $startDate = now();
+            $endDate = now();
+
             if ($period === 'daily') {
-                $startDate = now()->subDay();
+                // Only count likes from the current day (midnight to 23:59:59)
+                $startDate = now()->startOfDay();
+                $endDate = now()->endOfDay();
             } elseif ($period === 'weekly') {
-                $startDate = now()->subWeek();
+                // Only count likes from the current week (Monday to Sunday)
+                $startDate = now()->startOfWeek(); // Monday
+                $endDate = now()->endOfWeek(); // Sunday
             } elseif ($period === 'monthly') {
-                $startDate = now()->subMonth();
+                // Only count likes from the current month
+                $startDate = now()->startOfMonth();
+                $endDate = now()->endOfMonth();
             } else {
                 throw new Exception('Invalid period specified. Use "daily", "weekly", or "monthly".');
             }
 
-            // Fetch users with the most likes on their posts within the time range
+            // Fetch users with the most likes on their posts within the specific time range
             $leaderboard = Like::select('posts.user_id')
                 ->selectRaw('users.first_name, users.last_name, COUNT(*) as total_likes')
                 ->join('posts', 'likes.post_id', '=', 'posts.id')
                 ->join('users', 'posts.user_id', '=', 'users.id')
-                ->where('likes.created_at', '>=', $startDate)
+                ->whereBetween('likes.created_at', [$startDate, $endDate])
                 ->groupBy('posts.user_id', 'users.first_name', 'users.last_name')
                 ->orderByDesc('total_likes')
                 ->take(3) // Get top 3 users
@@ -304,6 +312,7 @@ class PostService
             // Log the query result for debugging
             Log::info("User Leaderboard query for period {$period}: ", [
                 'startDate' => $startDate,
+                'endDate' => $endDate,
                 'leaderboard' => $leaderboard->toArray(),
             ]);
 

@@ -1,15 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { getTopPost } from 'services/meme.service';
 import {
+  EmojiEvents,
   LocalFireDepartment,
   PhotoCamera,
   Star,
   ThumbUp,
   TrendingUp,
-  EmojiEvents,
 } from '@mui/icons-material';
 import {
+  Avatar,
   Box,
   Card,
   CardContent,
@@ -19,13 +21,11 @@ import {
   ListItemIcon,
   ListItemText,
   Paper,
-  Typography,
-  Tabs,
   Tab,
-  Avatar,
+  Tabs,
+  Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material';
-import { getTopPost } from 'services/meme.service';
 
 const LeftContent = () => {
   const theme = useTheme();
