@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Resources\SuggestedUserResource;
 
 class FollowController extends Controller
 {
@@ -80,5 +81,15 @@ class FollowController extends Controller
                 'message' => 'Failed to check following status: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function suggestedUsers(): JsonResponse{
+        $users = $this->followService->getSuggestedUsers(auth()->id());
+        return response()->json(SuggestedUserResource::collection($users));
+    }
+
+    public function trendingTags(): JsonResponse{
+        $tags = $this->followService->getTrendingTags();
+        return response()->json($tags);
     }
 }

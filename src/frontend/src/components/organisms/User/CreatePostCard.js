@@ -1,5 +1,3 @@
-'use client';
-
 import PropTypes from 'prop-types';
 import { PhotoCamera } from '@mui/icons-material';
 import { Avatar, Box, Button, Card, CardContent, TextField, Typography } from '@mui/material';
@@ -35,7 +33,7 @@ const CreatePostCard = ({
                   ? `${currentUser.first_name?.charAt(0).toUpperCase() || ''}${
                       currentUser.last_name?.charAt(0).toUpperCase() || ''
                     }`
-                  : 'JD'}
+                  : ''}
               </Avatar>
               <Typography variant="h6">
                 {currentUser
@@ -46,7 +44,7 @@ const CreatePostCard = ({
                       currentUser.last_name?.charAt(0).toUpperCase() +
                       currentUser.last_name?.slice(1)
                     }`
-                  : 'John Degz'}
+                  : ''}
               </Typography>
             </Box>
 
@@ -93,7 +91,7 @@ const CreatePostCard = ({
                   ? `${currentUser.first_name?.charAt(0).toUpperCase() || ''}${
                       currentUser.last_name?.charAt(0).toUpperCase() || ''
                     }`
-                  : 'JD'}
+                  : ''}
               </Avatar>
               <Typography variant="h6">
                 {currentUser
@@ -104,7 +102,7 @@ const CreatePostCard = ({
                       currentUser.last_name?.charAt(0).toUpperCase() +
                       currentUser.last_name?.slice(1)
                     }`
-                  : 'John Degz'}
+                  : 'Loading...'}
               </Typography>
             </Box>
 

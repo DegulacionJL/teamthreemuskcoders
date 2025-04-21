@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +6,8 @@ import {
   deletePost,
   getLeaderboard,
   getMemePosts,
+  getSuggestedUsers,
+  getTrendingTags,
   reportPost,
   updateImage,
   updatePost,
@@ -16,10 +16,9 @@ import { Box, CircularProgress, Typography } from '@mui/material';
 import { useTheme } from '@mui/material';
 import { useTheme as useCustomTheme } from '../../../theme/ThemeContext';
 import CreatePostCard from './CreatePostCard';
-// Import components
-import LeftSidebar from './LeftContent';
+import LeftContent from './LeftContent';
 import MemePost from './MemePost';
-import RightSidebar from './RightContent';
+import RightContent from './RightContent';
 
 function MemeFeed() {
   const theme = useTheme();
@@ -41,6 +40,14 @@ function MemeFeed() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState(null);
+  // New state for suggested users
+  const [suggestedUsers, setSuggestedUsers] = useState([]);
+  const [suggestedUsersLoading, setSuggestedUsersLoading] = useState(false);
+  const [suggestedUsersError, setSuggestedUsersError] = useState(null);
+  // New state for trending tags
+  const [trendingTags, setTrendingTags] = useState([]);
+  const [trendingTagsLoading, setTrendingTagsLoading] = useState(false);
+  const [trendingTagsError, setTrendingTagsError] = useState(null);
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedPostId, setSelectedPostId] = useState(null);
@@ -234,7 +241,7 @@ function MemeFeed() {
     setLeaderboardError(null);
     try {
       const response = await getLeaderboard(period);
-      setLeaderboard(response.leaderboard || []);
+      setLeaderboard(response || []);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
       setLeaderboardError('Failed to load leaderboard.');
@@ -244,9 +251,41 @@ function MemeFeed() {
     }
   };
 
+  const fetchSuggestedUsers = async () => {
+    setSuggestedUsersLoading(true);
+    setSuggestedUsersError(null);
+    try {
+      const response = await getSuggestedUsers();
+      setSuggestedUsers(response || []);
+    } catch (error) {
+      console.error('Error fetching suggested users:', error);
+      setSuggestedUsersError('Failed to load suggested users.');
+      setSuggestedUsers([]);
+    } finally {
+      setSuggestedUsersLoading(false);
+    }
+  };
+
+  const fetchTrendingTags = async () => {
+    setTrendingTagsLoading(true);
+    setTrendingTagsError(null);
+    try {
+      const response = await getTrendingTags();
+      setTrendingTags(response || []);
+    } catch (error) {
+      console.error('Error fetching trending tags:', error);
+      setTrendingTagsError('Failed to load trending tags.');
+      setTrendingTags([]);
+    } finally {
+      setTrendingTagsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchPosts(1);
     fetchLeaderboard('daily');
+    fetchSuggestedUsers();
+    fetchTrendingTags();
   }, []);
 
   const loadMorePosts = () => {
@@ -319,7 +358,7 @@ function MemeFeed() {
       }}
     >
       {/* Left sidebar */}
-      <LeftSidebar />
+      <LeftContent />
 
       {/* Center Content (Create Post + Posts) */}
       <Box
@@ -408,10 +447,16 @@ function MemeFeed() {
       </Box>
 
       {/* Right sidebar */}
-      <RightSidebar
-        leaderboard={leaderboard}
+      <RightContent
+        leaderboard={Array.isArray(leaderboard) ? leaderboard : []}
         leaderboardLoading={leaderboardLoading}
         leaderboardError={leaderboardError}
+        suggestedUsers={suggestedUsers}
+        suggestedUsersLoading={suggestedUsersLoading}
+        suggestedUsersError={suggestedUsersError}
+        trendingTags={trendingTags}
+        trendingTagsLoading={trendingTagsLoading}
+        trendingTagsError={trendingTagsError}
         tabValue={tabValue}
         handleTabChange={handleTabChange}
         handleUserNameClick={handleUserNameClick}

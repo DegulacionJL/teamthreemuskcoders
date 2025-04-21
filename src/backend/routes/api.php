@@ -100,6 +100,8 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/follow/{id}', [FollowController::class, 'follow']);
     Route::post('/follow/{id}/unfollow', [FollowController::class, 'unfollow']);
     Route::get('/is-following/{id}', [FollowController::class, 'isFollowing']);
+    Route::get('/suggested-users', [FollowController::class, 'suggestedUsers']);
+    Route::get('/trending-tags', [FollowController::class, 'trendingTags']);
 });
 
 Route::post('/inquiries', [InquiryController::class, 'create']);
