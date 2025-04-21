@@ -125,6 +125,26 @@ const getLikes = async (postId) => {
   }
 };
 
+const getSuggestedUsers = async () => {
+  try {
+    const response = await api.get('/suggested-users');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching suggested users:', error);
+    throw error;
+  }
+};
+
+const getTrendingTags = async () => {
+  try {
+    const response = await api.get('/trending-tags');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching trending tags:', error);
+    throw error;
+  }
+};
+
 export {
   createMemePost,
   getMemePosts,
@@ -136,4 +156,6 @@ export {
   getLikes,
   reportPost,
   getLeaderboard,
+  getSuggestedUsers,
+  getTrendingTags,
 };

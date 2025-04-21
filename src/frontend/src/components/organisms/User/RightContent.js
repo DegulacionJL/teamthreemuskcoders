@@ -25,19 +25,17 @@ const RightContent = ({
   leaderboard,
   leaderboardLoading,
   leaderboardError,
+  suggestedUsers,
+  suggestedUsersLoading,
+  suggestedUsersError,
+  trendingTags,
+  trendingTagsLoading,
+  trendingTagsError,
   tabValue,
   handleTabChange,
   handleUserNameClick,
 }) => {
   const theme = useTheme();
-
-  const trendingTags = [
-    { id: 1, label: '#MemeMonday', color: 'primary' },
-    { id: 2, label: '#GabingLagum', color: 'primary' },
-    { id: 3, label: '#MlbbFunnyMoments', color: 'primary' },
-    { id: 4, label: '#ProgrammerHumor', color: 'secondary' },
-    { id: 5, label: '#DadJokes', color: 'success' },
-  ];
 
   return (
     <Box
@@ -45,13 +43,12 @@ const RightContent = ({
         width: '100%',
         maxWidth: '25%',
         position: 'sticky',
-        top: '16px', // Add some space from the top
-        maxHeight: 'calc(100vh - 32px)', // Set max height to viewport height minus margins
-        overflowY: 'auto', // Enable scrolling within the sidebar
+        top: '16px',
+        maxHeight: 'calc(100vh - 32px)',
+        overflowY: 'auto',
         pt: 2,
-        pb: 2, // Add padding at the bottom
+        pb: 2,
         display: { xs: 'none', md: 'block' },
-        // Custom scrollbar styling
         '&::-webkit-scrollbar': {
           width: '6px',
         },
@@ -67,6 +64,7 @@ const RightContent = ({
         },
       }}
     >
+      {/* Suggested Users */}
       <Card sx={{ mb: 3 }}>
         <CardHeader
           title="Suggested Users"
@@ -76,57 +74,77 @@ const RightContent = ({
             py: 1.5,
           }}
         />
-        <List disablePadding>
-          {[1, 2, 3].map((index) => (
-            <ListItem
-              key={index}
-              secondaryAction={
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  size="small"
-                  sx={{
-                    borderRadius: 4,
-                    color: '#8a4fff',
-                    borderColor: '#8a4fff',
-                    '&:hover': {
-                      borderColor: '#7a3fef',
-                      bgcolor: 'rgba(138, 79, 255, 0.08)',
-                    },
-                  }}
-                >
-                  Follow
-                </Button>
-              }
-              divider
-            >
-              <ListItemAvatar>
-                <Avatar sx={{ bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : '#e0e0ff' }}>
-                  U{index}
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={
-                  <Typography
+        {suggestedUsersLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : suggestedUsersError ? (
+          <Box sx={{ p: 2, textAlign: 'center' }}>
+            <Typography color="error">{suggestedUsersError}</Typography>
+          </Box>
+        ) : suggestedUsers.length === 0 ? (
+          <Box sx={{ p: 2, textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              No suggested users available.
+            </Typography>
+          </Box>
+        ) : (
+          <List disablePadding>
+            {suggestedUsers.map((user) => (
+              <ListItem
+                key={user.id}
+                secondaryAction={
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    size="small"
                     sx={{
-                      cursor: 'pointer',
+                      borderRadius: 4,
+                      color: '#8a4fff',
+                      borderColor: '#8a4fff',
                       '&:hover': {
-                        textDecoration: 'underline',
-                        color: theme.palette.primary.main,
+                        borderColor: '#7a3fef',
+                        bgcolor: 'rgba(138, 79, 255, 0.08)',
                       },
                     }}
-                    onClick={(e) => handleUserNameClick(e, index)}
                   >
-                    {`User ${index}`}
-                  </Typography>
+                    Follow
+                  </Button>
                 }
-                secondary={`@user${index}`}
-              />
-            </ListItem>
-          ))}
-        </List>
+                divider
+              >
+                <ListItemAvatar>
+                  <Avatar
+                    src={user.avatar}
+                    sx={{ bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : '#e0e0ff' }}
+                  >
+                    {user.displayName ? user.displayName[0] : user.username[0]}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={
+                    <Typography
+                      sx={{
+                        cursor: 'pointer',
+                        '&:hover': {
+                          textDecoration: 'underline',
+                          color: theme.palette.primary.main,
+                        },
+                      }}
+                      onClick={(e) => handleUserNameClick(e, user.id)}
+                    >
+                      {user.displayName || user.username}
+                    </Typography>
+                  }
+                  secondary={`@${user.username}`}
+                />
+              </ListItem>
+            ))}
+          </List>
+        )}
       </Card>
 
+      {/* Trending Memes */}
       <Card sx={{ mb: 3 }}>
         <CardHeader
           title="Trending Memes"
@@ -137,37 +155,58 @@ const RightContent = ({
           }}
         />
         <CardContent>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {trendingTags.map((tag) => (
-              <Chip
-                key={tag.id}
-                label={tag.label}
-                color={tag.color}
-                variant="filled"
-                clickable
-                sx={{
-                  bgcolor:
-                    tag.color === 'primary'
-                      ? '#4a3b6b'
-                      : tag.color === 'secondary'
-                      ? '#5d4037'
-                      : '#2e7d32',
-                  color: '#ffffff',
-                  '&:hover': {
+          {trendingTagsLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : trendingTagsError ? (
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              <Typography color="error">{trendingTagsError}</Typography>
+            </Box>
+          ) : trendingTags.length === 0 ? (
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary">
+                No trending tags available.
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {trendingTags.map((tag) => (
+                <Chip
+                  key={tag.id}
+                  label={tag.label}
+                  color={tag.color || 'primary'}
+                  variant="filled"
+                  clickable
+                  sx={{
                     bgcolor:
                       tag.color === 'primary'
-                        ? '#5a4b7b'
+                        ? '#4a3b6b'
                         : tag.color === 'secondary'
-                        ? '#6d5047'
-                        : '#3e8d42',
-                  },
-                }}
-              />
-            ))}
-          </Box>
+                        ? '#5d4037'
+                        : tag.color === 'success'
+                        ? '#2e7d32'
+                        : '#4a3b6b',
+                    color: '#ffffff',
+                    '&:hover': {
+                      bgcolor:
+                        tag.color === 'primary'
+                          ? '#5a4b7b'
+                          : tag.color === 'secondary'
+                          ? '#6d5047'
+                          : tag.color === 'success'
+                          ? '#3e8d42'
+                          : '#5a4b7b',
+                    },
+                  }}
+                />
+              ))}
+            </Box>
+          )}
         </CardContent>
       </Card>
 
+      {/* Leaderboard */}
       <Card>
         <CardHeader
           title="Leaderboard"
@@ -200,51 +239,60 @@ const RightContent = ({
           </Box>
         ) : (
           <List disablePadding>
-            {leaderboard.map((user) => (
-              <ListItem key={user.id} divider>
-                <ListItemAvatar>
-                  <Avatar
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      bgcolor:
-                        user.rank === 1 ? '#ffb300' : user.rank === 2 ? 'grey.500' : '#CD7F32',
-                      color: user.rank === 1 ? '#000000' : '#ffffff',
-                    }}
-                  >
-                    {user.rank}
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={
-                    <Typography
+            {suggestedUsers.map((user) => {
+              if (!user) return null; // Skip null or undefined users
+
+              return (
+                <ListItem
+                  key={user.id}
+                  secondaryAction={
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      size="small"
                       sx={{
-                        cursor: 'pointer',
+                        borderRadius: 4,
+                        color: '#8a4fff',
+                        borderColor: '#8a4fff',
                         '&:hover': {
-                          textDecoration: 'underline',
-                          color: theme.palette.primary.main,
+                          borderColor: '#7a3fef',
+                          bgcolor: 'rgba(138, 79, 255, 0.08)',
                         },
                       }}
-                      onClick={(e) => handleUserNameClick(e, user.id)}
                     >
-                      {user.name}
-                    </Typography>
+                      Follow
+                    </Button>
                   }
-                  secondary={`${user.points.toLocaleString()} Haha Reactions`}
-                />
-                {user.rank === 1 && (
-                  <Chip
-                    icon={<Whatshot />}
-                    label="King"
-                    size="small"
-                    sx={{
-                      bgcolor: '#ffb300',
-                      color: '#000000',
-                    }}
+                  divider
+                >
+                  <ListItemAvatar>
+                    <Avatar
+                      src={user.avatar}
+                      sx={{ bgcolor: theme.mode === 'dark' ? '#4a3b6b' : '#e0e0ff' }}
+                    >
+                      {user?.displayName?.[0] || user?.username?.[0] || 'U'}
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={
+                      <Typography
+                        sx={{
+                          cursor: 'pointer',
+                          '&:hover': {
+                            textDecoration: 'underline',
+                            color: theme.palette.primary.main,
+                          },
+                        }}
+                        onClick={(e) => handleUserNameClick(e, user.id)}
+                      >
+                        {user?.displayName || user?.username || 'Unknown User'}
+                      </Typography>
+                    }
+                    secondary={user?.username ? `@${user.username}` : null}
                   />
-                )}
-              </ListItem>
-            ))}
+                </ListItem>
+              );
+            })}
           </List>
         )}
       </Card>
@@ -256,14 +304,32 @@ RightContent.propTypes = {
   leaderboard: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number,
-      first_name: PropTypes.string,
-      last_name: PropTypes.string,
-      avatar: PropTypes.string,
-      // add more fields if needed
+      name: PropTypes.string,
+      points: PropTypes.number,
+      rank: PropTypes.number,
     })
   ).isRequired,
   leaderboardLoading: PropTypes.bool.isRequired,
-  leaderboardError: PropTypes.bool.isRequired,
+  leaderboardError: PropTypes.string,
+  suggestedUsers: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      username: PropTypes.string,
+      displayName: PropTypes.string,
+      avatar: PropTypes.string,
+    })
+  ).isRequired,
+  suggestedUsersLoading: PropTypes.bool.isRequired,
+  suggestedUsersError: PropTypes.string,
+  trendingTags: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      label: PropTypes.string,
+      color: PropTypes.string,
+    })
+  ).isRequired,
+  trendingTagsLoading: PropTypes.bool.isRequired,
+  trendingTagsError: PropTypes.string,
   tabValue: PropTypes.number.isRequired,
   handleTabChange: PropTypes.func.isRequired,
   handleUserNameClick: PropTypes.func.isRequired,
