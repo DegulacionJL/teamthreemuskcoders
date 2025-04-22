@@ -26,6 +26,7 @@ const CommentSection = ({
   replyPage,
   onReactionChange,
   user: propUser,
+  onReportClick,
 }) => {
   const [newCommentText, setNewCommentText] = useState('');
   const [newCommentImage, setNewCommentImage] = useState(null);
@@ -47,22 +48,16 @@ const CommentSection = ({
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && e.shiftKey) {
-      // Allow Shift+Enter to add a new line
       e.preventDefault();
-      const cursorPosition = e.target.selectionStart; // Get the current cursor position
+      const cursorPosition = e.target.selectionStart;
       const newText =
-        newCommentText.slice(0, cursorPosition) + '\n' + newCommentText.slice(cursorPosition); // Insert a new line at the cursor position
+        newCommentText.slice(0, cursorPosition) + '\n' + newCommentText.slice(cursorPosition);
       setNewCommentText(newText);
-
-      // Move the cursor to the correct position after the new line
       setTimeout(() => {
         e.target.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
-
-        // Scroll the TextField to ensure the cursor is visible
-        e.target.scrollTop = e.target.scrollHeight; // Scroll to the bottom of the TextField
+        e.target.scrollTop = e.target.scrollHeight;
       }, 0);
     } else if (e.key === 'Enter') {
-      // Prevent Enter from submitting the form (we'll use the Post button)
       e.preventDefault();
       handleAddComment();
     }
@@ -106,6 +101,7 @@ const CommentSection = ({
         replyPage={replyPage}
         onReactionChange={onReactionChange}
         currentUser={currentUser}
+        onReportClick={onReportClick}
       />
     );
   }
@@ -131,8 +127,8 @@ const CommentSection = ({
             onChange={(e) => setNewCommentText(e.target.value)}
             onKeyDown={handleKeyDown}
             sx={{ mb: 1 }}
-            multiline // Enable multiline input
-            rows={2} // Set initial rows
+            multiline
+            rows={2}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -201,6 +197,7 @@ const CommentSection = ({
         replyPage={replyPage}
         onReactionChange={onReactionChange}
         currentUser={currentUser}
+        onReportClick={onReportClick}
       />
     </Box>
   );
@@ -223,6 +220,7 @@ CommentSection.propTypes = {
   replyPage: PropTypes.object.isRequired,
   onReactionChange: PropTypes.func.isRequired,
   user: PropTypes.object,
+  onReportClick: PropTypes.func.isRequired,
 };
 
 export default CommentSection;

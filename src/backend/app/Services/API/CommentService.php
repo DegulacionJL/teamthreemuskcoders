@@ -5,6 +5,7 @@ namespace App\Services\API;
 use App\Models\Comment;
 use App\Models\Post;
 use App\Models\CommentLike;
+use App\Models\Report;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
@@ -296,5 +297,50 @@ class CommentService
         'user_has_liked' => $userId ? $comment->likes()->where('user_id', $userId)->exists() : false
     ];
 }
+
+    /**
+     * Report a comment.
+     *
+     * @param array $data
+     * @return Report
+     * @throws Exception
+     */
+    public function reportComment($data)
+    {
+        if (!Auth::check()) {
+            throw new Exception("Unauthorized. Please log in.");
+        }
+
+        $comment = Comment::where('id', $data['comment_id'])
+            ->where('post_id', $data['post_id'])
+            ->first();
+
+        if (!$comment) {
+            throw new Exception("Comment not found for this post.");
+        }
+
+        if ($comment->user_id === Auth::id()) {
+            throw new Exception("You cannot report your own comment.");
+        }
+
+        $existingReport = Report::where('user_id', Auth::id())
+            ->where('reportable_id', $data['comment_id'])
+            ->where('reportable_type', Comment::class)
+            ->first();
+
+        if ($existingReport) {
+            throw new Exception("You have already reported this comment.");
+        }
+
+        $report = Report::create([
+            'user_id' => Auth::id(),
+            'reportable_id' => $data['comment_id'],
+            'reportable_type' => Comment::class,
+            'reason' => $data['reason'],
+            'status' => 'pending',
+        ]);
+
+        return $report;
+    }
 
 }

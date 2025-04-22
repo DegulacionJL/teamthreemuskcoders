@@ -19,6 +19,7 @@ const CommentsList = ({
   replyPage,
   onReactionChange,
   currentUser,
+  onReportClick,
 }) => {
   return (
     <Box sx={{ mt: 2, ml: 2 }}>
@@ -41,6 +42,7 @@ const CommentsList = ({
             replyPage={replyPage}
             onReactionChange={onReactionChange}
             currentUser={currentUser}
+            onReportClick={onReportClick}
           />
         ))
       ) : (
@@ -68,6 +70,7 @@ CommentsList.propTypes = {
   replyPage: PropTypes.object.isRequired,
   onReactionChange: PropTypes.func.isRequired,
   currentUser: PropTypes.object,
+  onReportClick: PropTypes.func.isRequired,
 };
 
 export default CommentsList;

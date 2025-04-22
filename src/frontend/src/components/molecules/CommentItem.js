@@ -28,6 +28,7 @@ const CommentItem = ({
   replyPage,
   onReactionChange,
   currentUser,
+  onReportClick, // New prop for reporting
 }) => {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const isMaxDepthReached = depth >= maxDepth;
@@ -118,7 +119,6 @@ const CommentItem = ({
         {comment.text && formatCommentText(comment.text)}
         {comment.image && (
           <Box sx={{ mt: 1 }}>
-            {/* Wrap ImagePreview in a clickable Box to ensure clickability */}
             <Box
               onClick={handleImageClick}
               sx={{
@@ -145,7 +145,7 @@ const CommentItem = ({
                 buttonNext: () => null,
               }}
               styles={{
-                root: { zIndex: 2000 }, // Ensure lightbox appears above other elements
+                root: { zIndex: 2000 },
               }}
             />
           </Box>
@@ -195,6 +195,7 @@ const CommentItem = ({
                 replyPage={replyPage}
                 onReactionChange={onReactionChange}
                 currentUser={currentUser}
+                onReportClick={onReportClick}
               />
             ))}
             {(hasMoreReplies || currentReplyPage > 1) && (
@@ -207,10 +208,12 @@ const CommentItem = ({
         )}
       </Box>
       <Box sx={{ width: '40px', flexShrink: 0, display: 'flex', justifyContent: 'flex-end' }}>
-        {currentUser && comment.user?.id === currentUser.id && (
+        {currentUser && (
           <CommentActions
-            onEdit={() => onEditClick(comment)}
-            onDelete={() => onDeleteClick(comment.id)}
+            onEdit={comment.user?.id === currentUser.id ? () => onEditClick(comment) : null}
+            onDelete={comment.user?.id === currentUser.id ? () => onDeleteClick(comment.id) : null}
+            onReport={() => onReportClick(comment.id)}
+            isOwner={comment.user?.id === currentUser.id}
           />
         )}
       </Box>
@@ -236,6 +239,7 @@ CommentItem.propTypes = {
   replyPage: PropTypes.object,
   onReactionChange: PropTypes.func.isRequired,
   currentUser: PropTypes.object,
+  onReportClick: PropTypes.func.isRequired,
 };
 
 export default CommentItem;

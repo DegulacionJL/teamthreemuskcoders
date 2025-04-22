@@ -120,12 +120,13 @@ Route::post('/mul', [calculateController::class, 'multiplication']);
 Route::post('/div', [calculateController::class, 'division']);
 
 
-// comments route
+// Routes for functionality of Comments
 Route::prefix('posts/{postId}/comments')->group(function () {
     Route::get('/', [CommentController::class, 'index']); // ✅ Get comments
     Route::post('/', [CommentController::class, 'store'])->middleware('auth:api'); // ✅ Add comment
     Route::put('/{commentId}', [CommentController::class, 'update'])->middleware('auth:api'); // ✅ Update comment
     Route::delete('/{commentId}', [CommentController::class, 'destroy'])->middleware('auth:api');
+    Route::post('/{commentId}/report', [CommentController::class, 'report'])->middleware('auth:api');
 });
 
 // likes route

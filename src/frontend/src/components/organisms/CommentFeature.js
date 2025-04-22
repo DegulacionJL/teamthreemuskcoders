@@ -1,6 +1,7 @@
 import { useComments } from 'hooks/useComments';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useState } from 'react';
+import * as commentService from 'services/comment.service';
 import CloseIcon from '@mui/icons-material/Close';
 import {
   Box,
@@ -12,6 +13,7 @@ import {
   DialogTitle,
   IconButton,
   TextField,
+  Typography,
 } from '@mui/material';
 import ImagePreview from 'components/atoms/ImagePreview';
 import ImageUploadButton from 'components/molecules/ImageUploadButton';
@@ -57,7 +59,45 @@ const CommentFeature = ({ postId, user }) => {
     handleCommentReactionChange,
   } = useComments(postId);
 
-  // Find the comment being deleted to display its text (optional enhancement)
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportCommentId, setReportCommentId] = useState(null);
+  const [reportReason, setReportReason] = useState('');
+  const [reportError, setReportError] = useState(null);
+  const [isReporting, setIsReporting] = useState(false);
+
+  const handleReportClick = (commentId) => {
+    setReportCommentId(commentId);
+    setIsReportModalOpen(true);
+  };
+
+  const handleReportSubmit = async () => {
+    if (!reportReason.trim()) {
+      setReportError('Please provide a reason for reporting.');
+      return;
+    }
+
+    setIsReporting(true);
+    setReportError(null);
+
+    try {
+      await commentService.reportComment(postId, reportCommentId, reportReason);
+      setIsReportModalOpen(false);
+      setReportReason('');
+      setReportCommentId(null);
+    } catch (error) {
+      setReportError('Failed to submit report. Please try again.');
+    } finally {
+      setIsReporting(false);
+    }
+  };
+
+  const handleReportCancel = () => {
+    setIsReportModalOpen(false);
+    setReportReason('');
+    setReportCommentId(null);
+    setReportError(null);
+  };
+
   const deletingComment = comments.find((c) => c.id === commentToDelete) || {};
 
   return (
@@ -104,6 +144,7 @@ const CommentFeature = ({ postId, user }) => {
             replyPage={replyPage}
             onReactionChange={handleCommentReactionChange}
             user={user}
+            onReportClick={handleReportClick}
           />
           {hasMore && (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
@@ -167,7 +208,6 @@ const CommentFeature = ({ postId, user }) => {
               />
             </Box>
           )}
-          {/* Only show upload button if no new image is staged */}
           {!updateCommentImagePreview && !commentImage && (
             <Box sx={{ mb: 2 }}>
               <ImageUploadButton
@@ -192,6 +232,54 @@ const CommentFeature = ({ postId, user }) => {
               </>
             ) : (
               'Update'
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={isReportModalOpen} onClose={handleReportCancel} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          Report Comment
+          <IconButton
+            aria-label="close"
+            onClick={handleReportCancel}
+            sx={{ position: 'absolute', right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            Are you sure you want to report this comment? Please provide a reason.
+          </Typography>
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            value={reportReason}
+            onChange={(e) => setReportReason(e.target.value)}
+            placeholder="Enter your reason for reporting..."
+            error={!!reportError}
+            helperText={reportError}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleReportCancel} disabled={isReporting}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleReportSubmit}
+            variant="contained"
+            color="warning"
+            disabled={isReporting}
+          >
+            {isReporting ? (
+              <>
+                <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
+                Reporting...
+              </>
+            ) : (
+              'Report'
             )}
           </Button>
         </DialogActions>

@@ -8,6 +8,7 @@ use App\Http\Requests\CommentRequest;
 use App\Http\Resources\CommentResource;
 use App\Services\API\CommentService;
 use Illuminate\Http\JsonResponse;
+use App\Http\Requests\ReportRequest;
 
 /**
  * @group Comment Management
@@ -218,4 +219,38 @@ public function getCommentLikes($commentId): JsonResponse
 
     return response()->json($this->response, $this->response['code']);
 }
+
+    /**
+     * Report Comment
+     *
+     * Reports a comment with a reason.
+     *
+     * @authenticated
+     * @param App\Http\Requests\ReportRequest $request
+     * @param int $postId
+     * @param int $commentId
+     * @return JsonResponse
+     */
+    public function report(ReportRequest $request, $postId, $commentId): JsonResponse
+    {
+        $request->validated();
+
+        try {
+            $data = [
+                'reason' => $request->input('reason'),
+                'post_id' => $postId,
+                'comment_id' => $commentId,
+            ];
+
+            $report = $this->commentService->reportComment($data);
+            $this->response['message'] = 'Comment reported successfully.';
+        } catch (Exception $e) {
+            $this->response = [
+                'error' => $e->getMessage(),
+                'code' => 500,
+            ];
+        }
+
+        return response()->json($this->response, $this->response['code']);
+    }
 }

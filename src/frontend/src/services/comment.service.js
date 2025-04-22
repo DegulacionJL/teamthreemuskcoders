@@ -93,6 +93,12 @@ const getCommentLikes = async (commentId) => {
     });
   return await req;
 };
+const reportComment = async (postId, commentId, reason) => {
+  const req = api
+    .post(`/posts/${postId}/comments/${commentId}/report`, { reason })
+    .then(({ data }) => data);
+  return await req;
+};
 
 export {
   getComments,
@@ -102,4 +108,5 @@ export {
   likeComment,
   unlikeComment,
   getCommentLikes,
+  reportComment,
 };

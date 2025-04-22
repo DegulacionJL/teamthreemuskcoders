@@ -7,7 +7,6 @@ import {
   LocalFireDepartment,
   PhotoCamera,
   Star,
-  ThumbUp,
   TrendingUp,
 } from '@mui/icons-material';
 import {
@@ -36,13 +35,6 @@ const LeftContent = () => {
     monthly: null,
   });
 
-  // const categories = [
-  //   { id: 1, name: 'Popular Memes', icon: <LocalFireDepartment color="primary" />, active: true },
-  //   { id: 2, name: 'Trending Now', icon: <TrendingUp />, active: false },
-  //   { id: 3, name: 'New Arrivals', icon: <Star />, active: false },
-  //   { id: 4, name: 'Top Picks', icon: <ThumbUp />, active: false },
-  // ];
-
   useEffect(() => {
     const fetchTopPosts = async () => {
       try {
@@ -50,7 +42,7 @@ const LeftContent = () => {
         const results = await Promise.all(
           periods.map(async (period) => {
             const data = await getTopPost(period);
-            console.log(`Top Post data for ${period}:`, data); // Log the API response
+            console.log(`Top Post data for ${period}:`, data);
             return { period, post: data.top_post };
           })
         );
@@ -78,13 +70,14 @@ const LeftContent = () => {
       return (
         <Box
           sx={{
-            height: 120,
-            bgcolor: theme.palette.mode === 'dark' ? '#1e1e2e' : theme.palette.background.paper,
-            borderRadius: 1,
+            height: 150,
+            bgcolor: theme.palette.mode === 'dark' ? '#1e1e2e' : theme.palette.grey[200],
+            borderRadius: 2,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             mb: 1,
+            transition: 'all 0.3s ease',
           }}
         >
           <Typography variant="body2" color="text.disabled">
@@ -95,19 +88,38 @@ const LeftContent = () => {
     }
 
     return (
-      <Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+      <Box sx={{ transition: 'all 0.3s ease' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
           <Avatar
-            src={post.author_avatar} // Use the avatar URL from the API
-            sx={{ mr: 1, bgcolor: theme.palette.primary.main }}
+            src={post.author_avatar}
+            sx={{
+              mr: 1.5,
+              bgcolor: theme.palette.primary.main,
+              width: 40,
+              height: 40,
+            }}
           >
-            {!post.author_avatar && (post.author ? post.author[0] : 'U')}{' '}
-            {/* Fallback to initial if no avatar */}
+            {!post.author_avatar && (post.author ? post.author[0] : 'U')}
           </Avatar>
-          <Typography variant="subtitle2" fontWeight="medium">
-            {post.author || 'Unknown'}
-          </Typography>
-          {post.is_king && <EmojiEvents sx={{ ml: 1, color: '#ffb300', fontSize: 20 }} />}
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="subtitle2" fontWeight="medium" sx={{ lineHeight: 1.2 }}>
+              {post.author || 'Unknown'}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {`Top Meme ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Creator`}
+            </Typography>
+          </Box>
+          {post.is_king && (
+            <EmojiEvents
+              sx={{
+                color: '#ffb300',
+                fontSize: 24,
+                bgcolor: theme.palette.background.paper,
+                borderRadius: '50%',
+                p: 0.5,
+              }}
+            />
+          )}
         </Box>
         {post.image ? (
           <Box
@@ -116,35 +128,53 @@ const LeftContent = () => {
             alt={post.caption}
             sx={{
               width: '100%',
-              height: 120,
+              height: 160,
               objectFit: 'cover',
-              borderRadius: 1,
-              mb: 1,
+              borderRadius: 2,
+              mb: 1.5,
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? '0 4px 12px rgba(0,0,0,0.3)'
+                  : '0 4px 12px rgba(0,0,0,0.1)',
+              transition: 'transform 0.3s ease',
+              '&:hover': {
+                transform: 'scale(1.02)',
+              },
             }}
           />
         ) : (
           <Box
             sx={{
-              height: 120,
-              bgcolor: theme.palette.mode === 'dark' ? '#1e1e2e' : theme.palette.background.paper,
-              borderRadius: 1,
+              height: 160,
+              bgcolor: theme.palette.mode === 'dark' ? '#1e1e2e' : theme.palette.grey[200],
+              borderRadius: 2,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              mb: 1,
+              mb: 1.5,
             }}
           >
             <PhotoCamera sx={{ fontSize: 40, color: theme.palette.text.disabled }} />
           </Box>
         )}
-        <Typography variant="body2" sx={{ mb: 1 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            mb: 1,
+            fontStyle: post.caption ? 'normal' : 'italic',
+            color: post.caption ? 'text.primary' : 'text.disabled',
+          }}
+        >
           {post.caption || 'No caption available'}
         </Typography>
-        <Typography variant="caption" color="text.secondary">
-          {post.laugh_votes !== undefined
-            ? `${post.laugh_votes} Laugh Votes`
-            : 'No laugh votes available'}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography sx={{ fontSize: 16 }}>😂</Typography>
+          <Typography variant="caption" color="text.secondary">
+            {post.laugh_votes !== undefined
+              ? `${post.laugh_votes} Laugh Votes`
+              : 'No laugh votes available'}
+          </Typography>
+        </Box>
       </Box>
     );
   };
@@ -153,57 +183,72 @@ const LeftContent = () => {
     <Box
       sx={{
         width: '100%',
-        maxWidth: '20%',
+        maxWidth: '22%',
         position: 'sticky',
-        top: 0,
-        height: '100vh',
+        top: 16,
+        height: 'calc(100vh - 32px)',
         pt: 2,
+        pb: 2,
         display: { xs: 'none', md: 'block' },
+        overflowY: 'auto',
+        '&::-webkit-scrollbar': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          backgroundColor: theme.palette.mode === 'dark' ? '#555' : '#ccc',
+          borderRadius: '3px',
+        },
       }}
     >
-      {/* <Card sx={{ mb: 3 }}>
+      <Card
+        sx={{
+          borderRadius: 3,
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? '0 4px 20px rgba(0,0,0,0.3)'
+              : '0 4px 20px rgba(0,0,0,0.08)',
+          transition: 'all 0.3s ease',
+          bgcolor: theme.palette.mode === 'dark' ? '#2a2a3a' : '#ffffff', // White background for light mode
+        }}
+      >
         <CardHeader
-          title="Meme Categories"
+          title="Top Meme Creators"
           sx={{
             bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
             color: '#ffffff',
             py: 1.5,
+            borderTopLeftRadius: 12,
+            borderTopRightRadius: 12,
+            textAlign: 'center',
+            '& .MuiCardHeader-title': {
+              fontSize: '1.1rem',
+              fontWeight: 500,
+            },
           }}
         />
-        <List disablePadding>
-          {categories.map((category) => (
-            <ListItemButton
-              key={category.id}
-              selected={category.active}
-              sx={{
-                borderLeft: category.active ? 4 : 0,
-                borderColor: theme.palette.primary.main,
-                pl: category.active ? 2 : 3,
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 40 }}>{category.icon}</ListItemIcon>
-              <ListItemText
-                primary={category.name}
-                primaryTypographyProps={{
-                  fontWeight: category.active ? 'medium' : 'regular',
-                }}
-              />
-            </ListItemButton>
-          ))}
-        </List>
-      </Card> */}
-
-      <Card>
-        <CardHeader
-          title="Top Meme"
-          sx={{
-            bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
-            color: '#ffffff',
-            py: 1.5,
-          }}
-        />
-        <CardContent>
-          <Tabs value={activeTab} onChange={handleTabChange} variant="fullWidth" sx={{ mb: 2 }}>
+        <CardContent sx={{ p: 0, pb: 0 }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            variant="fullWidth"
+            sx={{
+              mb: 0,
+              borderBottom: `1px solid ${theme.palette.divider}`,
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontWeight: 500,
+                fontSize: '0.9rem',
+                py: 1.5,
+              },
+              '& .Mui-selected': {
+                color: theme.palette.primary.main,
+              },
+              '& .MuiTabs-indicator': {
+                backgroundColor: theme.palette.primary.main,
+                height: 3,
+              },
+            }}
+          >
             <Tab label="Daily" value="daily" />
             <Tab label="Weekly" value="weekly" />
             <Tab label="Monthly" value="monthly" />
@@ -211,10 +256,14 @@ const LeftContent = () => {
           <Paper
             elevation={0}
             sx={{
-              p: 2,
-              bgcolor: theme.palette.mode === 'dark' ? '#2a2a3a' : theme.palette.secondary.light,
-              color: theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.secondary.dark,
-              borderRadius: 2,
+              p: 2.5,
+              pb: 1.5,
+              bgcolor: theme.palette.mode === 'dark' ? '#2a2a3a' : '#ffffff', // White background for light mode
+              color: theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.primary,
+              borderBottomLeftRadius: 12,
+              borderBottomRightRadius: 12,
+              borderTopLeftRadius: 0,
+              borderTopRightRadius: 0,
             }}
           >
             {renderTopPost(topPosts[activeTab])}

@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -14,8 +15,10 @@ class CreateReportsTable extends Migration
     {
         Schema::create('reports', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->morphs('reportable'); // Adds `reportable_id` and `reportable_type`
-            $table->text('reason')->nullable(); // Optional reason for the report
+            $table->text('reason')->nullable(); // Reason for the report
+            $table->string('status')->default('pending'); // Status of the report
             $table->timestamps();
         });
     }
