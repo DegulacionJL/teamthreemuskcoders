@@ -561,7 +561,7 @@ const UserTimeline = () => {
                       }}
                       onClick={() => navigate('/create-post')}
                     >
-                      What's on your mind?
+                      What&apos;s on your mind?
                     </Button>
                   </Box>
                 </Paper>

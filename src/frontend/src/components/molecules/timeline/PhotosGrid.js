@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 import {
   ArrowBack as ArrowBackIcon,
   ArrowForward as ArrowForwardIcon,
@@ -12,13 +13,11 @@ import {
   DialogContent,
   Grid,
   IconButton,
-  Paper,
   Typography,
 } from '@mui/material';
-import { toast } from 'react-toastify';
 import api from 'utils/api';
 
-const PhotosGrid = ({ userId, isCurrentUser }) => {
+const PhotosGrid = ({ userId }) => {
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -60,11 +59,6 @@ const PhotosGrid = ({ userId, isCurrentUser }) => {
 
   return (
     <Box>
-      {/* <Paper sx={{ p: 3, borderRadius: 2, mb: 3 }}> */}
-      {/* <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-          Photos
-        </Typography> */}
-
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
           <CircularProgress />
@@ -111,7 +105,6 @@ const PhotosGrid = ({ userId, isCurrentUser }) => {
           </Typography>
         </Box>
       )}
-      {/* </Paper> */}
 
       {/* Photo Viewer Dialog */}
       <Dialog open={viewerOpen} onClose={() => setViewerOpen(false)} maxWidth="md" fullWidth>
@@ -193,7 +186,6 @@ const PhotosGrid = ({ userId, isCurrentUser }) => {
 
 PhotosGrid.propTypes = {
   userId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
-  isCurrentUser: PropTypes.bool.isRequired,
 };
 
 export default PhotosGrid;
