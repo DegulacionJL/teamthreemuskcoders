@@ -48,7 +48,7 @@ function Users() {
       id: 'first_name',
       label: (
         <>
-          <Person sx={{ verticalAlign: 'middle', color: '#512DA8' }} /> {t('First Name')}
+          <Person sx={{ verticalAlign: 'middle', color: '#ff7043' }} /> {t('First Name')}
         </>
       ),
     },
@@ -56,7 +56,7 @@ function Users() {
       id: 'last_name',
       label: (
         <>
-          <Person sx={{ verticalAlign: 'middle', color: '#512DA8' }} /> {t('Last Name')}
+          <Person sx={{ verticalAlign: 'middle', color: '#ff7043' }} /> {t('Last Name')}
         </>
       ),
     },
@@ -64,7 +64,7 @@ function Users() {
       id: 'email',
       label: (
         <>
-          <Email sx={{ verticalAlign: 'middle', color: '#512DA8' }} /> {t('Email Address')}
+          <Email sx={{ verticalAlign: 'middle', color: '#42a5f5' }} /> {t('Email Address')}
         </>
       ),
     },
@@ -72,7 +72,7 @@ function Users() {
       id: 'role',
       label: (
         <>
-          <Work sx={{ verticalAlign: 'middle', color: '#512DA8' }} /> {t('Role')}
+          <Work sx={{ verticalAlign: 'middle', color: '#66bb6a' }} /> {t('Role')}
         </>
       ),
     },
@@ -80,7 +80,7 @@ function Users() {
       id: 'status.name',
       label: (
         <>
-          <VerifiedUser sx={{ verticalAlign: 'middle', color: '#512DA8' }} /> {t('Status')}
+          <VerifiedUser sx={{ verticalAlign: 'middle', color: '#ffca28' }} /> {t('Status')}
         </>
       ),
     },
@@ -90,7 +90,7 @@ function Users() {
     <Box
       sx={{
         p: 3,
-        backgroundColor: '#e3f2fd',
+        backgroundColor: '#121212', // Dark background for the whole container
         minHeight: '100vh',
         display: 'flex',
         justifyContent: 'center',
@@ -103,13 +103,18 @@ function Users() {
           maxWidth: 1200,
           p: 3,
           borderRadius: 3,
-          backgroundColor: 'white',
+          backgroundColor: '#333', // Dark background for the Paper component
           boxShadow: 3,
         }}
       >
         <Typography
           variant="h5"
-          sx={{ mb: 3, fontWeight: 'bold', color: '#1c54b2', fontFamily: 'Poppins, sans-serif' }}
+          sx={{
+            mb: 3,
+            fontWeight: 'bold',
+            color: '#81d4fa', // Lighter text for header
+            fontFamily: 'Poppins, sans-serif',
+          }}
         >
           {t('Manage Users')}
         </Typography>
@@ -148,10 +153,10 @@ function Users() {
               color: 'white',
             },
             '& .MuiTableRow-root:hover': {
-              backgroundColor: '#bbdefb',
+              backgroundColor: '#424242', // Dark hover effect
             },
             '& .MuiTableCell-root': {
-              color: '#333',
+              color: '#e0e0e0', // Light color for table text
               fontFamily: 'Poppins, sans-serif',
             },
           }}

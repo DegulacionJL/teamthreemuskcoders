@@ -142,7 +142,7 @@ const ReportManagement = () => {
 
   return (
     <Container
-      sx={{ padding: '20px', backgroundColor: 'white', borderRadius: '8px', boxShadow: 3 }}
+      sx={{ padding: '20px', backgroundColor: 'black', borderRadius: '8px', boxShadow: 3 }}
     >
       <Typography variant="h4" gutterBottom>
         Report Management
@@ -162,7 +162,7 @@ const ReportManagement = () => {
 
       <TableContainer component={Paper} sx={{ boxShadow: 3, borderRadius: '8px' }}>
         <Table>
-          <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+          <TableHead sx={{ backgroundColor: '#482880' }}>
             <TableRow>
               <TableCell align="center">Report ID</TableCell>
               <TableCell align="center">Reported By</TableCell>
