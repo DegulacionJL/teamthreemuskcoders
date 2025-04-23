@@ -1,4 +1,6 @@
+// UserTimeline.js
 import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import {
@@ -45,7 +47,7 @@ import {
   uploadUserAvatar,
 } from '../services/user.service';
 
-// Import your auth context
+// Import useSelector to access Redux store
 
 const UserTimeline = () => {
   const { userId } = useParams();
@@ -67,10 +69,15 @@ const UserTimeline = () => {
     birthday: '',
     website: '',
     relationship: '',
+    firstName: '', // Added to handle full name editing
+    lastName: '', // Added to handle full name editing
   });
 
   // Get actual authenticated user from your auth context
   const { user: currentUser, isAuthenticated } = useAuth();
+
+  // Access the user profile from Redux store
+  const reduxUser = useSelector((state) => state.profile.user);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -82,10 +89,21 @@ const UserTimeline = () => {
         setIsCurrentUser(isOwner);
 
         // Fetch user profile data
-        const profileData = await getUserProfile(userId);
+        let profileData = await getUserProfile(userId);
+
+        // If this is the current user and Redux has updated data, use it
+        if (isOwner && reduxUser) {
+          profileData = {
+            ...profileData,
+            avatar: reduxUser.avatar || profileData.avatar,
+            firstName: reduxUser.first_name || profileData.firstName,
+            lastName: reduxUser.last_name || profileData.lastName,
+          };
+        }
+
         setProfile(profileData);
 
-        // Initialize edit form data
+        // Initialize edit form data with firstName and lastName
         setProfileData({
           bio: profileData.bio || '',
           work: profileData.work || '',
@@ -94,6 +112,8 @@ const UserTimeline = () => {
           birthday: profileData.birthday || '',
           website: profileData.website || '',
           relationship: profileData.relationship || '',
+          firstName: profileData.firstName || '',
+          lastName: profileData.lastName || '',
         });
 
         // Fetch user posts
@@ -121,7 +141,7 @@ const UserTimeline = () => {
 
     // Scroll to the top of the page when userId changes (i.e., on navigation)
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [userId, currentUser, isAuthenticated]); // Dependency on userId ensures this runs on navigation
+  }, [userId, currentUser, isAuthenticated, reduxUser]); // Added reduxUser to dependencies
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -323,7 +343,7 @@ const UserTimeline = () => {
                 onChange={handleProfilePhotoUpload}
               />
               <label htmlFor="avatar-upload">
-                <IconButton
+                {/* <IconButton
                   component="span"
                   size="small"
                   sx={{
@@ -337,7 +357,7 @@ const UserTimeline = () => {
                   }}
                 >
                   <PhotoCameraIcon fontSize="small" />
-                </IconButton>
+                </IconButton> */}
               </label>
             </>
           )}
@@ -390,7 +410,7 @@ const UserTimeline = () => {
             )}
             {isCurrentUser && (
               <Button variant="outlined" startIcon={<EditIcon />} onClick={handleEditProfile}>
-                Edit Profile
+                Edit Bio
               </Button>
             )}
           </Box>
@@ -488,7 +508,7 @@ const UserTimeline = () => {
                 </Box>
               </Paper>
 
-              {/* Photos Card - Will be populated by the PhotosGrid component */}
+              {/* Photos Card */}
               <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
                 <Box
                   sx={{
@@ -513,7 +533,7 @@ const UserTimeline = () => {
                 <PhotosGrid userId={userId} isCurrentUser={isCurrentUser} preview={true} />
               </Paper>
 
-              {/* Friends Card - Will be populated by the FriendsList component */}
+              {/* Friends Card */}
               <Paper sx={{ p: 3, borderRadius: 2 }}>
                 <Box
                   sx={{
@@ -550,7 +570,7 @@ const UserTimeline = () => {
               {isCurrentUser && (
                 <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Avatar src={currentUser?.avatar} sx={{ mr: 2 }} />
+                    <Avatar src={profile?.avatar} sx={{ mr: 2 }} />
                     <Button
                       variant="outlined"
                       fullWidth
@@ -563,7 +583,7 @@ const UserTimeline = () => {
                       }}
                       onClick={() => navigate('/create-post')}
                     >
-                      {<p>What&#39;s on your mind?</p>}
+                      {<p>What's on your mind?</p>}
                     </Button>
                   </Box>
                 </Paper>
@@ -634,7 +654,7 @@ const UserTimeline = () => {
           <TextField
             margin="dense"
             name="location"
-            label="Adress"
+            label="Address"
             type="text"
             fullWidth
             value={profileData.location}
