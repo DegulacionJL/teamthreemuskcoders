@@ -2,9 +2,9 @@
 
 namespace App\Services\API;
 
-use DB;
-use Hash;
-use Mail;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Exception;
 use Carbon\Carbon;
 use App\Models\User;
@@ -249,5 +249,22 @@ class UserService
         }
 
         return $user;
+    }
+
+    public function getSuggestedUsers($currentUserId)
+    {
+        if (!$currentUserId) {
+            throw new \InvalidArgumentException('Invalid user ID');
+        }
+
+        return User::where('id', '!=', $currentUserId)
+            ->whereNotIn('id', function ($query) use ($currentUserId) {
+                $query->select('following_id')
+                      ->from('follows')
+                      ->where('follower_id', $currentUserId);
+            })
+            ->inRandomOrder()
+            ->limit(10)
+            ->get(['id', 'first_name', 'last_name', 'username', 'avatar']);
     }
 }

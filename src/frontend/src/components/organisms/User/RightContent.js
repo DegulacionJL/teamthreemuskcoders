@@ -1,6 +1,7 @@
-'use client';
-
 import PropTypes from 'prop-types';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getSuggestedUsers, getTrendingMemes } from 'services/user.service';
 import { Whatshot } from '@mui/icons-material';
 import {
   Avatar,
@@ -30,14 +31,51 @@ const RightContent = ({
   handleUserNameClick,
 }) => {
   const theme = useTheme();
+  const navigate = useNavigate();
 
-  const trendingTags = [
-    { id: 1, label: '#MemeMonday', color: 'primary' },
-    { id: 2, label: '#GabingLagum', color: 'primary' },
-    { id: 3, label: '#MlbbFunnyMoments', color: 'primary' },
-    { id: 4, label: '#ProgrammerHumor', color: 'secondary' },
-    { id: 5, label: '#DadJokes', color: 'success' },
-  ];
+  // State for Suggested Users
+  const [suggestedUsers, setSuggestedUsers] = useState([]);
+  const [loadingSuggestedUsers, setLoadingSuggestedUsers] = useState(true);
+
+  // State for Trending Hashtags
+  const [trendingHashtags, setTrendingHashtags] = useState([]);
+  const [loadingTrendingHashtags, setLoadingTrendingHashtags] = useState(true);
+
+  // Fetch Suggested Users
+  useEffect(() => {
+    const fetchSuggestedUsers = async () => {
+      try {
+        const users = await getSuggestedUsers();
+        setSuggestedUsers(users || []); // Fallback to an empty array
+      } catch (error) {
+        console.error('Error fetching suggested users:', error);
+      } finally {
+        setLoadingSuggestedUsers(false);
+      }
+    };
+
+    fetchSuggestedUsers();
+  }, []);
+
+  // Fetch Trending Hashtags
+  useEffect(() => {
+    const fetchTrendingHashtags = async () => {
+      try {
+        const hashtags = await getTrendingMemes();
+        setTrendingHashtags(hashtags || []); // Fallback to an empty array
+      } catch (error) {
+        console.error('Error fetching trending hashtags:', error);
+      } finally {
+        setLoadingTrendingHashtags(false);
+      }
+    };
+
+    fetchTrendingHashtags();
+  }, []);
+
+  const handleHashtagClick = (postId) => {
+    navigate(`/posts/${postId}`); // Redirect to the specific post
+  };
 
   return (
     <Box
@@ -45,13 +83,12 @@ const RightContent = ({
         width: '100%',
         maxWidth: '25%',
         position: 'sticky',
-        top: '16px', // Add some space from the top
-        maxHeight: 'calc(100vh - 32px)', // Set max height to viewport height minus margins
-        overflowY: 'auto', // Enable scrolling within the sidebar
+        top: '16px',
+        maxHeight: 'calc(100vh - 32px)',
+        overflowY: 'auto',
         pt: 2,
-        pb: 2, // Add padding at the bottom
+        pb: 2,
         display: { xs: 'none', md: 'block' },
-        // Custom scrollbar styling
         '&::-webkit-scrollbar': {
           width: '6px',
         },
@@ -67,6 +104,7 @@ const RightContent = ({
         },
       }}
     >
+      {/* Suggested Users Section */}
       <Card sx={{ mb: 3 }}>
         <CardHeader
           title="Suggested Users"
@@ -76,60 +114,76 @@ const RightContent = ({
             py: 1.5,
           }}
         />
-        <List disablePadding>
-          {[1, 2, 3].map((index) => (
-            <ListItem
-              key={index}
-              secondaryAction={
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  size="small"
-                  sx={{
-                    borderRadius: 4,
-                    color: '#8a4fff',
-                    borderColor: '#8a4fff',
-                    '&:hover': {
-                      borderColor: '#7a3fef',
-                      bgcolor: 'rgba(138, 79, 255, 0.08)',
-                    },
-                  }}
-                >
-                  Follow
-                </Button>
-              }
-              divider
-            >
-              <ListItemAvatar>
-                <Avatar sx={{ bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : '#e0e0ff' }}>
-                  U{index}
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={
-                  <Typography
+        {loadingSuggestedUsers ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : suggestedUsers.length === 0 ? (
+          <Box sx={{ p: 2, textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              No suggested users available.
+            </Typography>
+          </Box>
+        ) : (
+          <List disablePadding>
+            {suggestedUsers.map((user) => (
+              <ListItem
+                key={user.id}
+                secondaryAction={
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    size="small"
                     sx={{
-                      cursor: 'pointer',
+                      borderRadius: 4,
+                      color: '#8a4fff',
+                      borderColor: '#8a4fff',
                       '&:hover': {
-                        textDecoration: 'underline',
-                        color: theme.palette.primary.main,
+                        borderColor: '#7a3fef',
+                        bgcolor: 'rgba(138, 79, 255, 0.08)',
                       },
                     }}
-                    onClick={(e) => handleUserNameClick(e, index)}
                   >
-                    {`User ${index}`}
-                  </Typography>
+                    Follow
+                  </Button>
                 }
-                secondary={`@user${index}`}
-              />
-            </ListItem>
-          ))}
-        </List>
+                divider
+              >
+                <ListItemAvatar>
+                  <Avatar
+                    src={user.avatar}
+                    sx={{ bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : '#e0e0ff' }}
+                  >
+                    {user.first_name?.[0] || user.last_name?.[0] || 'U'}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={
+                    <Typography
+                      sx={{
+                        cursor: 'pointer',
+                        '&:hover': {
+                          textDecoration: 'underline',
+                          color: theme.palette.primary.main,
+                        },
+                      }}
+                      onClick={(e) => handleUserNameClick(e, user.id)}
+                    >
+                      {`${user.first_name} ${user.last_name}`}
+                    </Typography>
+                  }
+                  secondary={`@${user.username}`}
+                />
+              </ListItem>
+            ))}
+          </List>
+        )}
       </Card>
 
+      {/* Trending Hashtags Section */}
       <Card sx={{ mb: 3 }}>
         <CardHeader
-          title="Trending Memes"
+          title="Trending Hashtags"
           sx={{
             bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
             color: '#ffffff',
@@ -137,37 +191,39 @@ const RightContent = ({
           }}
         />
         <CardContent>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {trendingTags.map((tag) => (
-              <Chip
-                key={tag.id}
-                label={tag.label}
-                color={tag.color}
-                variant="filled"
-                clickable
-                sx={{
-                  bgcolor:
-                    tag.color === 'primary'
-                      ? '#4a3b6b'
-                      : tag.color === 'secondary'
-                      ? '#5d4037'
-                      : '#2e7d32',
-                  color: '#ffffff',
-                  '&:hover': {
-                    bgcolor:
-                      tag.color === 'primary'
-                        ? '#5a4b7b'
-                        : tag.color === 'secondary'
-                        ? '#6d5047'
-                        : '#3e8d42',
-                  },
-                }}
-              />
-            ))}
-          </Box>
+          {loadingTrendingHashtags ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : trendingHashtags.length === 0 ? (
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary" textAlign="center">
+                No trending memes available.
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {trendingHashtags.map((hashtag) => (
+                <Chip
+                  key={hashtag.hashtag}
+                  label={hashtag.hashtag}
+                  clickable
+                  onClick={() => handleHashtagClick(hashtag.post_id)}
+                  sx={{
+                    bgcolor: 'primary.main',
+                    color: '#ffffff',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                  }}
+                />
+              ))}
+            </Box>
+          )}
         </CardContent>
       </Card>
 
+      {/* Leaderboard Section */}
       <Card>
         <CardHeader
           title="Leaderboard"
@@ -263,7 +319,7 @@ RightContent.propTypes = {
     })
   ).isRequired,
   leaderboardLoading: PropTypes.bool.isRequired,
-  leaderboardError: PropTypes.bool.isRequired,
+  leaderboardError: PropTypes.bool,
   tabValue: PropTypes.number.isRequired,
   handleTabChange: PropTypes.func.isRequired,
   handleUserNameClick: PropTypes.func.isRequired,

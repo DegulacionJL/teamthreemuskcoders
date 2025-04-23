@@ -131,6 +131,43 @@ const uploadCoverPhoto = async (userId, file) => {
   }
 };
 
+console.log('Token:', localStorage.getItem('access_token'));
+
+const getSuggestedUsers = async () => {
+  try {
+    const authToken = localStorage.getItem('access_token'); // Retrieve token from local storage
+    if (!authToken) throw new Error('Authentication token is missing');
+
+    const response = await api.get('/users/suggested', {
+      headers: {
+        Authorization: `Bearer ${authToken}`, // Pass token in the Authorization header
+      },
+    });
+
+    return response.data.data;
+  } catch (error) {
+    console.error('Error fetching suggested users:', error);
+    throw error;
+  }
+};
+const getTrendingMemes = async () => {
+  try {
+    const authToken = localStorage.getItem('access_token'); // Retrieve token from local storage
+    if (!authToken) throw new Error('Authentication token is missing');
+
+    const response = await api.get('/posts/trending-memes', {
+      headers: {
+        Authorization: `Bearer ${authToken}`, // Pass token in the Authorization header
+      },
+    });
+
+    return response.data.data;
+  } catch (error) {
+    console.error('Error fetching trending hashtags:', error);
+    throw error;
+  }
+};
+
 export {
   searchUsers,
   createUser,
@@ -143,4 +180,6 @@ export {
   updateUserProfile,
   uploadUserAvatar,
   uploadCoverPhoto,
+  getSuggestedUsers,
+  getTrendingMemes,
 };

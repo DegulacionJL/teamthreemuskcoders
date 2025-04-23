@@ -8,8 +8,8 @@ import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from 'components/atoms/DataTable/TableHead';
-import TableToolbar from 'components/atoms/DataTable/TableToolbar';
 import UsersTableBody from 'components/atoms/UsersDataTable/UsersTableBody';
+import UsersTableToolbar from 'components/atoms/UsersDataTable/UsersTableToolbar';
 
 function UsersDataTable(props) {
   const {
@@ -35,7 +35,7 @@ function UsersDataTable(props) {
   return (
     <Box sx={{ width: '100%' }}>
       {toolbar && (
-        <TableToolbar
+        <UsersTableToolbar
           handleSearch={handleSearch}
           handleAdd={handleAdd}
           alignSearchRight={alignSearchRight}

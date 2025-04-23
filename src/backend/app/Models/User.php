@@ -70,10 +70,8 @@ class User extends Authenticatable
     }
 
     /**
-     * Retrieves all activation tokens of the user
-     *
-     * @return App\Models\ActivationToken[]
-     */
+ * @return HasMany<ActivationToken>
+ */
     public function activationTokens()
     {
         return $this->hasMany(ActivationToken::class);
@@ -85,6 +83,11 @@ class User extends Authenticatable
      *
      * @return App\Models\UserStatus
      */
+    public function posts()
+{
+    return $this->hasMany(Post::class);
+}
+     
     public function status()
     {
         return $this->belongsTo(UserStatus::class, 'user_status_id');
