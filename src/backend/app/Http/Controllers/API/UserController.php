@@ -15,6 +15,10 @@ use App\Http\Requests\API\Users\UpdateUserRequest;
 use App\Http\Requests\API\Users\RegisterUserRequest;
 use App\Http\Requests\API\Users\ActivateAccountRequest;
 use App\http\Requests\API\Users\UserProfileResource;
+use App\Models\User;
+use Spatie\Permission\Exceptions\RoleDoesNotExist;
+
+use Illuminate\Support\Facades\Log;
 
 /**
  * @group User Management
@@ -36,7 +40,14 @@ class UserController extends Controller
         $this->userService = $userService;
 
         // enable api middleware
-        $this->middleware(['auth:api', 'role:System Admin'], ['except' => ['register', 'activate']]);
+        // $this->middleware('auth:api'); // Basic authentication for all
+
+        $this->middleware('role:System Admin')->except([
+            'register',
+            'activate',
+            'getSuggestedUsers', // ✅ Add this here
+        ]);
+        
     }
 
     /**
@@ -283,5 +294,33 @@ class UserController extends Controller
         return response()->json($this->response, $this->response['code']);
     }
 
-   
+    public function getSuggestedUsers()
+{
+    try {
+        // Ensure the user is authenticated
+        if (!auth()->check()) {
+            return response()->json([
+                'error' => 'User not authenticated',
+                'code' => 401,
+            ], 401);
+        }
+
+        $suggestedUsers = $this->userService->getSuggestedUsers(auth()->id());
+
+        return response()->json([
+            'data' => $suggestedUsers,
+            'code' => 200,
+        ], 200);
+    } catch (Exception $e) {
+        Log::error('Error in getSuggestedUsers: ' . $e->getMessage());
+
+        return response()->json([
+            'error' => 'Failed to fetch suggested users: ' . $e->getMessage(),
+            'code' => 500,
+        ], 500);
+    }
 }
+    }
+
+   
+

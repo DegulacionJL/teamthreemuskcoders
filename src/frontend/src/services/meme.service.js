@@ -138,6 +138,11 @@ const getLikes = async (postId) => {
   }
 };
 
+const getPostById = async (postId) => {
+  const response = await api.get(`/posts/${postId}`); // Replace with your backend endpoint
+  return response.data;
+};
+
 export {
   createMemePost,
   getMemePosts,
@@ -150,4 +155,5 @@ export {
   reportPost,
   getLeaderboard,
   getTopPost,
+  getPostById,
 };

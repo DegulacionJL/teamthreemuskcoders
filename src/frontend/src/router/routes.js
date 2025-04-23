@@ -91,6 +91,12 @@ const routes = [
     auth: true,
   },
 
+  {
+    path: '/posts/:postId',
+    component: 'pages/PostDetails', // Route for PostDetails
+    auth: true,
+  },
+
   ...admin,
   ...user,
 ];

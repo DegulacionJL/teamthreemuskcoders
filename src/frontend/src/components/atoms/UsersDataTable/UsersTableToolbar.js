@@ -10,7 +10,7 @@ import InputBase from '@mui/material/InputBase';
 import Button from 'components/atoms/Button';
 import { useTheme as useCustomTheme } from '../../../theme/ThemeContext';
 
-function TableToolbar(props) {
+function UsersTableToolbar(props) {
   const { handleSearch, handleAdd, user } = props;
   const { t } = useTranslation();
   const searchEl = useRef(null);
@@ -72,11 +72,11 @@ function TableToolbar(props) {
   );
 }
 
-TableToolbar.defaultProps = {
+UsersTableToolbar.defaultProps = {
   user: { role: '' },
 };
 
-TableToolbar.propTypes = {
+UsersTableToolbar.propTypes = {
   handleSearch: PropTypes.func,
   handleFollow: PropTypes.func,
   handleAdd: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]),
@@ -85,4 +85,4 @@ TableToolbar.propTypes = {
   }).isRequired,
 };
 
-export default TableToolbar;
+export default UsersTableToolbar;

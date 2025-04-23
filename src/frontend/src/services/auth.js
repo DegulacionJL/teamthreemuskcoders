@@ -13,6 +13,8 @@ const login = async ({ ...props }) => {
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('refresh_token', refresh_token);
 
+      api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+
       return await api.get('/profile').then(({ data }) => data.data);
     });
 };

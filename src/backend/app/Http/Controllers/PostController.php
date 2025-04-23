@@ -25,7 +25,7 @@ class PostController extends Controller
     {
         $this->response = ['code' => 200]; // Initialize response first
         $this->postService = $postService;
-        $this->middleware(['auth:api']);
+        $this->middleware('auth:api')->except(['index']);
     }
   
     public function createMemePost(PostRequest $request): JsonResponse
@@ -197,6 +197,52 @@ class PostController extends Controller
             return response()->json([
                 'error' => 'Failed to fetch top post',
                 'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getTrendingMemes()
+    {
+        try {
+            // Ensure user is authenticated (even though middleware should handle this)
+            if (!auth()->check()) {
+                return response()->json([
+                    'error' => 'User not authenticated',
+                    'code' => 401
+                ], 401);
+            }
+            
+            // Fetch the latest 5-8 hashtags from posts
+            $hashtags = Post::select('id', 'caption')
+                ->whereNotNull('caption')
+                ->orderBy('created_at', 'desc')
+                ->limit(8)
+                ->get()
+                ->flatMap(function ($post) {
+                    preg_match_all('/#\w+/', $post->caption, $matches);
+                    return collect($matches[0])->map(function ($hashtag) use ($post) {
+                        return [
+                            'hashtag' => $hashtag,
+                            'post_id' => $post->id,
+                        ];
+                    });
+                })
+                ->unique('hashtag')
+                ->take(8)
+                ->values();
+
+            return response()->json([
+                'data' => $hashtags,
+                'code' => 200
+            ], 200);
+            
+        } catch (Exception $e) {
+            // Log the exception for debugging
+            Log::error('Error in getTrendingMemes: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            
+            return response()->json([
+                'error' => 'Failed to fetch trending memes: ' . $e->getMessage(),
+                'code' => 500
             ], 500);
         }
     }

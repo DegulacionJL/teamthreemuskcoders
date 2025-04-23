@@ -48,6 +48,8 @@ Route::prefix('posts')
         Route::post('/{post}/image', [PostController::class, 'updatePostImage'])->middleware('auth:api');
         Route::get('/leaderboard', [PostController::class, 'getUserLeaderboard'])->middleware('auth:api'); // Updated for Leaderboard
         Route::get('/top-post', [PostController::class, 'getTopPost'])->middleware('auth:api'); // New endpoint for Top Meme
+        // FIXED: Removed role restriction or fixed role name (depends on your role naming)
+        Route::get('/trending-memes', [PostController::class, 'getTrendingMemes'])->middleware('auth:api');
     });
 
     Route::prefix('likes')->group(function() {
@@ -84,7 +86,15 @@ Route::prefix('users')
         Route::put('{id}/profile', [UserController::class, 'updateProfile']);
         Route::post('{id}/avatar', [UserController::class, 'uploadAvatar']);
         Route::post('{id}/cover-photo', [UserController::class, 'uploadCoverPhoto']);
+
+        // FIXED: Removed role restriction or fixed role name
+        // Route::get('/suggested', [UserController::class, 'getSuggestedUsers'])->middleware('auth:api');
         });
+
+        Route::middleware('auth:sanctum')->get('/user/suggested', [UserController::class, 'getSuggestedUsers']);
+
+        
+
     Route::prefix('userlist')
     ->group(function () {
         Route::get('/', [UserListController::class, 'index'])->middleware('auth:api');
