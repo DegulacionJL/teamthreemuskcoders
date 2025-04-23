@@ -201,26 +201,35 @@ class CommentService
      * @throws Exception
      */
     public function deleteComment($commentId, $postId)
-    {
-        $comment = Comment::where('id', $commentId)
-            ->where('post_id', $postId)
-            ->first();
+{
+    $comment = Comment::where('id', $commentId)
+        ->where('post_id', $postId)
+        ->first();
 
-        if (!$comment) {
-            throw new Exception("Comment not found for this post.");
-        }
-
-        if ($comment->user_id !== Auth::id()) {
-            throw new Exception("Unauthorized. You can only delete your own comments.");
-        }
-
-        // Delete the image if it exists
-        if ($comment->image && Storage::disk('public')->exists($comment->image)) {
-            Storage::disk('public')->delete($comment->image);
-        }
-
-        $comment->delete();
+    if (!$comment) {
+        throw new Exception("Comment not found for this post.");
     }
+
+    if ($comment->user_id !== Auth::id()) {
+        throw new Exception("Unauthorized. You can only delete your own comments.");
+    }
+
+    // Delete the image if it exists
+    if ($comment->image && Storage::disk('public')->exists($comment->image)) {
+        Storage::disk('public')->delete($comment->image);
+    }
+
+    // Find and delete images from any replies
+    $replies = Comment::where('parent_id', $commentId)->get();
+    foreach ($replies as $reply) {
+        if ($reply->image && Storage::disk('public')->exists($reply->image)) {
+            Storage::disk('public')->delete($reply->image);
+        }
+    }
+
+    // This will cascade delete all replies due to foreign key constraints
+    $comment->delete();
+}
 
     /**
      * Like a comment.

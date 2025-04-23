@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import {
@@ -45,8 +46,6 @@ import {
   uploadUserAvatar,
 } from '../services/user.service';
 
-// Import your auth context
-
 const UserTimeline = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
@@ -67,25 +66,34 @@ const UserTimeline = () => {
     birthday: '',
     website: '',
     relationship: '',
+    firstName: '',
+    lastName: '',
   });
 
-  // Get actual authenticated user from your auth context
   const { user: currentUser, isAuthenticated } = useAuth();
+  const reduxUser = useSelector((state) => state.profile.user);
 
   useEffect(() => {
     const fetchUserData = async () => {
       setLoading(true);
       try {
-        // Check if this is the current user's profile
         const parsedUserId = Number.parseInt(userId);
         const isOwner = isAuthenticated && currentUser && currentUser.id === parsedUserId;
         setIsCurrentUser(isOwner);
 
-        // Fetch user profile data
-        const profileData = await getUserProfile(userId);
+        let profileData = await getUserProfile(userId);
+
+        if (isOwner && reduxUser) {
+          profileData = {
+            ...profileData,
+            avatar: reduxUser.avatar || profileData.avatar,
+            firstName: reduxUser.first_name || profileData.firstName,
+            lastName: reduxUser.last_name || profileData.lastName,
+          };
+        }
+
         setProfile(profileData);
 
-        // Initialize edit form data
         setProfileData({
           bio: profileData.bio || '',
           work: profileData.work || '',
@@ -94,13 +102,13 @@ const UserTimeline = () => {
           birthday: profileData.birthday || '',
           website: profileData.website || '',
           relationship: profileData.relationship || '',
+          firstName: profileData.firstName || '',
+          lastName: profileData.lastName || '',
         });
 
-        // Fetch user posts
         const postsData = await getUserPosts(userId);
         setPosts(postsData.posts || []);
 
-        // Check if current user is following this user
         if (isAuthenticated && !isOwner) {
           try {
             const followStatus = await isFollowing(userId);
@@ -118,10 +126,8 @@ const UserTimeline = () => {
     };
 
     fetchUserData();
-
-    // Scroll to the top of the page when userId changes (i.e., on navigation)
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [userId, currentUser, isAuthenticated]); // Dependency on userId ensures this runs on navigation
+  }, [userId, currentUser, isAuthenticated, reduxUser]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -154,17 +160,11 @@ const UserTimeline = () => {
     if (!file) return;
 
     try {
-      const formData = new FormData();
-      formData.append('coverPhoto', file);
-
       const result = await uploadCoverPhoto(userId, file);
-
-      // Update the profile state with the new cover photo
       setProfile({
         ...profile,
         coverPhoto: result.coverPhoto,
       });
-
       toast.success('Cover photo updated successfully');
     } catch (error) {
       console.error('Error uploading cover photo:', error);
@@ -178,13 +178,10 @@ const UserTimeline = () => {
 
     try {
       const result = await uploadUserAvatar(userId, file);
-
-      // Update the profile state with the new avatar
       setProfile({
         ...profile,
         avatar: result.avatar,
       });
-
       toast.success('Profile photo updated successfully');
     } catch (error) {
       console.error('Error uploading profile photo:', error);
@@ -246,7 +243,10 @@ const UserTimeline = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
+    <Container
+      maxWidth="lg"
+      sx={{ mt: 4, mb: 8, bgcolor: theme.palette.background.default, minHeight: '100vh' }}
+    >
       {/* Cover Photo */}
       <Paper
         sx={{
@@ -390,7 +390,7 @@ const UserTimeline = () => {
             )}
             {isCurrentUser && (
               <Button variant="outlined" startIcon={<EditIcon />} onClick={handleEditProfile}>
-                Edit Profile
+                Edit Bio
               </Button>
             )}
           </Box>
@@ -488,7 +488,7 @@ const UserTimeline = () => {
                 </Box>
               </Paper>
 
-              {/* Photos Card - Will be populated by the PhotosGrid component */}
+              {/* Photos Card */}
               <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
                 <Box
                   sx={{
@@ -510,10 +510,10 @@ const UserTimeline = () => {
                     See All
                   </Typography>
                 </Box>
-                <PhotosGrid userId={userId} isCurrentUser={isCurrentUser} preview={true} />
+                <PhotosGrid userId={userId} isCurrentUser={isCurrentUser} />
               </Paper>
 
-              {/* Friends Card - Will be populated by the FriendsList component */}
+              {/* Friends Card */}
               <Paper sx={{ p: 3, borderRadius: 2 }}>
                 <Box
                   sx={{
@@ -543,14 +543,12 @@ const UserTimeline = () => {
 
         {/* Main Content */}
         <Grid item xs={12} md={!isMobile ? 8 : 12}>
-          {/* Tab Content */}
           {activeTab === 0 && (
             <Box>
-              {/* Create Post Card - only for current user */}
               {isCurrentUser && (
                 <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Avatar src={currentUser?.avatar} sx={{ mr: 2 }} />
+                    <Avatar src={profile?.avatar} sx={{ mr: 2 }} />
                     <Button
                       variant="outlined"
                       fullWidth
@@ -563,13 +561,12 @@ const UserTimeline = () => {
                       }}
                       onClick={() => navigate('/create-post')}
                     >
-                      {<p>What&#39;s on your mind?</p>}
+                      What&apos;s on your mind?
                     </Button>
                   </Box>
                 </Paper>
               )}
 
-              {/* Posts List */}
               {posts.length > 0 ? (
                 posts.map((post) => <PostCard key={post.id} post={post} />)
               ) : (
@@ -634,7 +631,7 @@ const UserTimeline = () => {
           <TextField
             margin="dense"
             name="location"
-            label="Adress"
+            label="Address"
             type="text"
             fullWidth
             value={profileData.location}

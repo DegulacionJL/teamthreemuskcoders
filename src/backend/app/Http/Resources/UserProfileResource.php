@@ -14,11 +14,23 @@ class UserProfileResource extends JsonResource
      */
     public function toArray($request)
     {
+        // Base URL for storage
+        $baseUrl = config('app.url') . '/api/storage/';
+
+        // Sanitize avatar URL to remove duplicate base URL
+        $avatar = $this['avatar'];
+        if ($avatar) {
+            // Remove any occurrence of the base URL prefix to avoid duplication
+            $avatar = str_replace($baseUrl, '', $avatar);
+            // Prepend the correct base URL
+            $avatar = $baseUrl . ltrim($avatar, '/');
+        }
+
         return [
             'id' => $this['id'],
             'firstName' => $this['firstName'],
             'lastName' => $this['lastName'],
-            'avatar' => $this['avatar'],
+            'avatar' => $avatar,
             'coverPhoto' => $this['coverPhoto'],
             'bio' => $this['bio'],
             'work' => $this['work'],

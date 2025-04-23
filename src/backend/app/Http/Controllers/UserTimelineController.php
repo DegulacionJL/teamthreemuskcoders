@@ -15,15 +15,13 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
-
 class UserTimelineController extends Controller
 {
     protected $userTimelineService;
-    // protected $response;
 
     public function __construct(UserTimelineService $userTimelineService)
     {
-        $this->response = ['code' => 200]; // Initialize response first
+        $this->response = ['code' => 200];
         $this->userTimelineService = $userTimelineService;
         $this->middleware('auth:api')->except(['getUserProfile', 'getUserPosts', 'getFriends', 'getPhotos']);
     }
@@ -71,7 +69,6 @@ class UserTimelineController extends Controller
      */
     public function updateProfile(UserProfileRequest $request, $userId): JsonResponse
     {
-        // Check if user is authorized to update this profile
         if (Auth::id() != $userId) {
             return response()->json(['error' => 'Unauthorized. You can only update your own profile.'], 403);
         }
@@ -94,7 +91,6 @@ class UserTimelineController extends Controller
      */
     public function uploadAvatar(Request $request, $userId): JsonResponse
     {
-        // Check if user is authorized to update this profile
         if (Auth::id() != $userId) {
             return response()->json(['error' => 'Unauthorized. You can only update your own profile.'], 403);
         }
@@ -120,7 +116,6 @@ class UserTimelineController extends Controller
      */
     public function uploadCoverPhoto(Request $request, $userId): JsonResponse
     {
-        // Check if user is authorized to update this profile
         if (Auth::id() != $userId) {
             return response()->json(['error' => 'Unauthorized. You can only update your own profile.'], 403);
         }

@@ -258,7 +258,6 @@ class UserTimelineService
                     'name' => trim($follower->first_name . ' ' . $follower->last_name),
                     'avatar' => $follower->avatar ? env('STORAGE_DISK_URL') . '/' . $follower->avatar : null,
                     'since' => $follow->created_at ? $follow->created_at->format('Y-m-d') : null
-
                 ];
             }
             
@@ -268,16 +267,15 @@ class UserTimelineService
                 ->with('following')
                 ->get();
                 
-                foreach ($following as $follow) {
-                    $followingUser = $follow->following;
-                    $followingData[] = [
-                        'id' => $followingUser->id,
-                        'name' => trim($followingUser->first_name . ' ' . $followingUser->last_name),
-                        'avatar' => $followingUser->avatar ? env('STORAGE_DISK_URL') . '/' . $followingUser->avatar : null,
-                        'since' => $follow->created_at ? $follow->created_at->format('Y-m-d') : null
-                    ];
-                }
-                
+            foreach ($following as $follow) {
+                $followingUser = $follow->following;
+                $followingData[] = [
+                    'id' => $followingUser->id,
+                    'name' => trim($followingUser->first_name . ' ' . $followingUser->last_name),
+                    'avatar' => $followingUser->avatar ? env('STORAGE_DISK_URL') . '/' . $followingUser->avatar : null,
+                    'since' => $follow->created_at ? $follow->created_at->format('Y-m-d') : null
+                ];
+            }
             
             return [
                 'followers' => $followersData,
@@ -298,26 +296,21 @@ class UserTimelineService
     public function getUserPhotos($userId)
     {
         try {
-            // Get all images from user's posts
-            $postImagesData = [];
-            $postImages = Image::whereHas('post', function ($query) use ($userId) {
-                $query->where('user_id', $userId);
-            })
-            ->latest()
-            ->get();
-            
-            foreach ($postImages as $image) {
-                $postImagesData[] = [
-                    'id' => $image->id,
-                    'url' => $image->image_path,
-                    'post_id' => $image->post_id,
-                    'created_at' => $image->created_at->format('Y-m-d H:i:s')
-                ];
-            }
-            
-            return [
-                'photos' => $postImagesData
-            ];
+            $photos = Post::with('image')
+                ->where('user_id', $userId)
+                ->whereHas('image')
+                ->latest()
+                ->get()
+                ->map(function ($post) {
+                    return [
+                        'id' => $post->id,
+                        'image' => $post->image->image_path,
+                        'caption' => $post->caption,
+                        'created_at' => $post->created_at->toDateTimeString(),
+                    ];
+                });
+
+            return $photos->toArray();
         } catch (Exception $e) {
             Log::error('Error in getUserPhotos: ' . $e->getMessage());
             throw new Exception('Failed to fetch user photos: ' . $e->getMessage());
