@@ -31,6 +31,26 @@ import LightBox from '../LightBox';
 import ReportPostConfirmationModal from '../ReportPostModal';
 import PostReactions from './PostReaction';
 
+// MemePost.js
+
+// MemePost.js
+
+// MemePost.js
+
+// MemePost.js
+
+// MemePost.js
+
+// MemePost.js
+
+// MemePost.js
+
+// MemePost.js
+
+// MemePost.js
+
+// MemePost.js
+
 const MemePost = ({
   id,
   caption,
@@ -80,9 +100,8 @@ const MemePost = ({
     replyToComment,
     commentToDelete,
     isDeleteModalOpen,
-    replyPages,
     replyLoading,
-    hasFetchedComments, // Added to track if comments have been fetched
+    hasFetchedComments,
     setReplyToComment,
     setEditingCommentId,
     setEditingCommentText,
@@ -104,8 +123,6 @@ const MemePost = ({
     handleCancelUpdateComment,
     handleLoadMore,
     handleLoadMoreReplies,
-    handleLikeComment,
-    handleUnlikeComment,
     handleCommentReactionChange,
   } = useComments(id);
 
@@ -137,7 +154,7 @@ const MemePost = ({
         if (updatedPost && updatedPost.image) {
           setCurrentImage(updatedPost.image);
         } else if (removeImage) {
-          setCurrentImage(null);
+          longtempssetCurrentImage(null);
         }
         setCurrentCaption(newCaption);
       } catch (error) {
@@ -429,7 +446,6 @@ const MemePost = ({
           user={loggedInUser}
           comments={comments}
           isLoading={commentsLoading}
-          totalCommentsCount={totalCommentsCount}
           hasMore={hasMore}
           editingCommentId={editingCommentId}
           editingCommentText={editingCommentText}
@@ -440,20 +456,13 @@ const MemePost = ({
           replyToComment={replyToComment}
           commentToDelete={commentToDelete}
           isDeleteModalOpen={isDeleteModalOpen}
-          replyPages={replyPages}
           replyLoading={replyLoading}
-          hasFetchedComments={hasFetchedComments} // Pass hasFetchedComments to CommentFeature
           setReplyToComment={setReplyToComment}
-          setEditingCommentId={setEditingCommentId}
-          setEditingCommentText={setEditingCommentText}
           setTempEditingText={setTempEditingText}
           setCommentImage={setCommentImage}
           setUpdateCommentImagePreview={setUpdateCommentImagePreview}
           setIsUpdateModalOpen={setIsUpdateModalOpen}
-          setCommentToDelete={setCommentToDelete}
           setIsDeleteModalOpen={setIsDeleteModalOpen}
-          fetchComments={fetchComments}
-          fetchTotalCommentsCount={fetchTotalCommentsCount}
           handleAddComment={handleAddComment}
           handleAddReply={handleAddReply}
           confirmDeleteComment={confirmDeleteComment}
@@ -464,8 +473,6 @@ const MemePost = ({
           handleCancelUpdateComment={handleCancelUpdateComment}
           handleLoadMore={handleLoadMore}
           handleLoadMoreReplies={handleLoadMoreReplies}
-          handleLikeComment={handleLikeComment}
-          handleUnlikeComment={handleUnlikeComment}
           handleCommentReactionChange={handleCommentReactionChange}
         />
       )}
