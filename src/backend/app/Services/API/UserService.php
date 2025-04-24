@@ -19,6 +19,8 @@ use App\Exceptions\UserNotFoundException;
 use App\Exceptions\UserNotCreatedException;
 use App\Exceptions\UserStatusNotFoundException;
 use App\Exceptions\ActivationTokenNotFoundException;
+use App\Models\Follow;
+use Illuminate\Support\Facades\Log;
 
 class UserService
 {
@@ -253,18 +255,13 @@ class UserService
 
     public function getSuggestedUsers($currentUserId)
     {
-        if (!$currentUserId) {
-            throw new \InvalidArgumentException('Invalid user ID');
-        }
+        // $followedUsers = Follow::where('follower_id', $currentUserId)->get('following_id')->toArray();
+        $followedUserIds = Follow::where('follower_id', $currentUserId)
+        ->get('following_id')->toArray();
+        $followedUserIds[] = $currentUserId;
 
-        return User::where('id', '!=', $currentUserId)
-            ->whereNotIn('id', function ($query) use ($currentUserId) {
-                $query->select('following_id')
-                      ->from('follows')
-                      ->where('follower_id', $currentUserId);
-            })
-            ->inRandomOrder()
-            ->limit(10)
-            ->get(['id', 'first_name', 'last_name', 'username', 'avatar']);
+        $suggestedUsers = User::whereNotIn('id', $followedUserIds)->inRandomOrder()->limit(5)->get()->toArray();
+        Log::info('Suggested Users', $suggestedUsers);
+        return $suggestedUsers;
     }
 }

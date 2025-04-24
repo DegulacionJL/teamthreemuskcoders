@@ -1,6 +1,8 @@
+import { useAuth } from 'hooks/useAuth';
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { followUser } from 'services/follow.service';
 import { getSuggestedUsers, getTrendingMemes } from 'services/user.service';
 import { Whatshot } from '@mui/icons-material';
 import {
@@ -30,32 +32,53 @@ const RightContent = ({
   handleTabChange,
   handleUserNameClick,
 }) => {
+  const { user } = useAuth({ middleware: 'auth' });
   const theme = useTheme();
   const navigate = useNavigate();
 
-  // State for Suggested Users
+  // State for Suggested User
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [loadingSuggestedUsers, setLoadingSuggestedUsers] = useState(true);
+  // const [followStates, setFollowStates] = useState({});
+  const { currentUserId } = useAuth();
 
   // State for Trending Hashtags
   const [trendingHashtags, setTrendingHashtags] = useState([]);
   const [loadingTrendingHashtags, setLoadingTrendingHashtags] = useState(true);
 
   // Fetch Suggested Users
-  useEffect(() => {
-    const fetchSuggestedUsers = async () => {
-      try {
-        const users = await getSuggestedUsers();
-        setSuggestedUsers(users || []); // Fallback to an empty array
-      } catch (error) {
-        console.error('Error fetching suggested users:', error);
-      } finally {
-        setLoadingSuggestedUsers(false);
-      }
-    };
+  const fetchSuggestedUsers = async () => {
+    const listSuggestedUsers = await getSuggestedUsers(user.id);
+    if (!listSuggestedUsers) {
+      setLoadingSuggestedUsers(true);
+    }
+    setLoadingSuggestedUsers(false);
+    setSuggestedUsers(listSuggestedUsers);
+    // console.log('Suggested users:', listSuggestedUsers);
 
+    // try {
+    //   console.log('Fetching suggested users...');
+    //   const token = localStorage.getItem('access_token');
+    //   console.log('Auth token available:', !!token);
+    //   const users = await getSuggestedUsers(user.id);
+    //   console.log('Suggested users response:', users);
+    //   setSuggestedUsers(users || []); // Fallback to an empty array
+    // } catch (error) {
+    //   console.error('Error fetching suggested users:', error);
+    //   // Log more details about the error
+    //   if (error.response) {
+    //     console.error('Error response:', error.response.data);
+    //     console.error('Error status:', error.response.status);
+    //   }
+    // } finally {
+    //   setLoadingSuggestedUsers(false);
+    // }
+  };
+
+  useEffect(() => {
+    // console.log('user', user);
     fetchSuggestedUsers();
-  }, []);
+  }, [user]);
 
   // Fetch Trending Hashtags
   useEffect(() => {
@@ -75,6 +98,26 @@ const RightContent = ({
 
   const handleHashtagClick = (postId) => {
     navigate(`/posts/${postId}`); // Redirect to the specific post
+  };
+
+  const handleFollowUser = async (userId) => {
+    try {
+      await followUser(userId);
+      setSuggestedUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
+
+      const currentUser = JSON.parse(localStorage.getItem('user'));
+      const currentUserId = currentUser?.id;
+
+      const newSuggestions = await getSuggestedUsers(currentUserId);
+      const currentUserIds = suggestedUsers.map((u) => u.id);
+
+      const newUser = newSuggestions.find((u) => !currentUserIds.includes(u.id) && u.id !== userId);
+      if (newUser) {
+        setSuggestedUsers((prevUsers) => [...prevUsers, newUser]);
+      }
+    } catch (error) {
+      console.error('Follow error: ', error);
+    }
   };
 
   return (
@@ -126,14 +169,15 @@ const RightContent = ({
           </Box>
         ) : (
           <List disablePadding>
-            {suggestedUsers.map((user) => (
+            {suggestedUsers.map((suggestedUser) => (
               <ListItem
-                key={user.id}
+                key={suggestedUser.id}
                 secondaryAction={
                   <Button
                     variant="outlined"
                     color="primary"
                     size="small"
+                    onClick={() => handleFollowUser(suggestedUser.id)}
                     sx={{
                       borderRadius: 4,
                       color: '#8a4fff',
@@ -150,12 +194,12 @@ const RightContent = ({
                 divider
               >
                 <ListItemAvatar>
-                  <Avatar
+                  {/* <Avatar
                     src={user.avatar}
                     sx={{ bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : '#e0e0ff' }}
-                  >
-                    {user.first_name?.[0] || user.last_name?.[0] || 'U'}
-                  </Avatar>
+                  > */}
+                  {suggestedUser.first_name?.[0] || suggestedUser.last_name?.[0] || 'U'}
+                  {/* </Avatar> */}
                 </ListItemAvatar>
                 <ListItemText
                   primary={
@@ -167,12 +211,12 @@ const RightContent = ({
                           color: theme.palette.primary.main,
                         },
                       }}
-                      onClick={(e) => handleUserNameClick(e, user.id)}
+                      onClick={(e) => handleUserNameClick(e, suggestedUser.id)}
                     >
-                      {`${user.first_name} ${user.last_name}`}
+                      {`${suggestedUser.first_name} ${suggestedUser.last_name}`}
                     </Typography>
                   }
-                  secondary={`@${user.username}`}
+                  secondary={`@${suggestedUser.username}`}
                 />
               </ListItem>
             ))}

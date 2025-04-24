@@ -45,7 +45,7 @@ class UserController extends Controller
         $this->middleware('role:System Admin')->except([
             'register',
             'activate',
-            'getSuggestedUsers', // ✅ Add this here
+            'getSuggestedUsers', 
         ]);
         
     }
@@ -294,33 +294,35 @@ class UserController extends Controller
         return response()->json($this->response, $this->response['code']);
     }
 
-    public function getSuggestedUsers()
-{
-    try {
-        // Ensure the user is authenticated
-        if (!auth()->check()) {
+    public function getSuggestedUsers($id)
+    {
+        try {
+            // Ensure the user is authenticated
+            // if (!auth()->check()) {
+            //     return response()->json([
+            //         'error' => 'User not authenticated',
+            //         'code' => 401,
+            //     ], 401);
+            // }
+
+            $suggestedUsers = $this->userService->getSuggestedUsers($id);
+            // Log::info('controller follows', $suggestedUsers);
+            // return response()->json([
+            //     'data' => $suggestedUsers,
+            //     'code' => 200,
+            // ], 200);
+            $this->response['data']=$suggestedUsers;
+        } catch (Exception $e) {
+            Log::error('Error in getSuggestedUsers: ' . $e->getMessage());
+
             return response()->json([
-                'error' => 'User not authenticated',
-                'code' => 401,
-            ], 401);
+                'error' => 'Failed to fetch suggested users: ' . $e->getMessage(),
+                'code' => 500,
+            ], 500);
         }
-
-        $suggestedUsers = $this->userService->getSuggestedUsers(auth()->id());
-
-        return response()->json([
-            'data' => $suggestedUsers,
-            'code' => 200,
-        ], 200);
-    } catch (Exception $e) {
-        Log::error('Error in getSuggestedUsers: ' . $e->getMessage());
-
-        return response()->json([
-            'error' => 'Failed to fetch suggested users: ' . $e->getMessage(),
-            'code' => 500,
-        ], 500);
+        return response()->json($this->response, $this->response['code']);
     }
 }
-    }
 
    
 

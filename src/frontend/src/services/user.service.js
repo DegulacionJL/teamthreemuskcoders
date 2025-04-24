@@ -131,24 +131,39 @@ const uploadCoverPhoto = async (userId, file) => {
   }
 };
 
-console.log('Token:', localStorage.getItem('access_token'));
+// console.log('Token:', localStorage.getItem('access_token'));
 
-const getSuggestedUsers = async () => {
-  try {
-    const authToken = localStorage.getItem('access_token'); // Retrieve token from local storage
-    if (!authToken) throw new Error('Authentication token is missing');
+const getSuggestedUsers = async ($id) => {
+  const response = await api.get(`/users/suggested/${$id}`);
+  // console.log('suggestedUsers', response.data);
+  // const suggestedUsers = response.data.map((follow) => follow.user);
+  // console.log('suggestedUsers', suggestedUsers);
+  return response.data.data;
+  // try {
+  //   const authToken = localStorage.getItem('access_token'); // Retrieve token from local storage
+  //   if (!authToken) {
+  //     console.error('Authentication token is missing');
+  //     throw new Error('Authentication token is missing');
+  //   }
 
-    const response = await api.get('/users/suggested', {
-      headers: {
-        Authorization: `Bearer ${authToken}`, // Pass token in the Authorization header
-      },
-    });
+  //   console.log('Making API request with token:', authToken.substring(0, 10) + '...');
 
-    return response.data.data;
-  } catch (error) {
-    console.error('Error fetching suggested users:', error);
-    throw error;
-  }
+  //   const response = await api.get('/users/suggested', {
+  //     headers: {
+  //       Authorization: `Bearer ${authToken}`, // Pass token in the Authorization header
+  //     },
+  //   });
+
+  //   console.log('API response status:', response.status);
+  //   return response.data.data;
+  // } catch (error) {
+  //   console.error('Error fetching suggested users:', error);
+  //   if (error.response) {
+  //     console.error('Response data:', error.response.data);
+  //     console.error('Response status:', error.response.status);
+  //   }
+  //   throw error;
+  // }
 };
 const getTrendingMemes = async () => {
   try {
