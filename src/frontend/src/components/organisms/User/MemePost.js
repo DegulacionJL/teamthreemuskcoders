@@ -1,6 +1,3 @@
-// MemePost.js
-'use client';
-
 import { useAuth } from 'hooks/useAuth';
 import { useComments } from 'hooks/useComments';
 import PropTypes from 'prop-types';
@@ -16,7 +13,6 @@ import {
   CardContent,
   CardHeader,
   CardMedia,
-  CircularProgress,
   IconButton,
   Menu,
   MenuItem,
@@ -30,6 +26,26 @@ import EditPostModal from '../EditPostModal';
 import LightBox from '../LightBox';
 import ReportPostConfirmationModal from '../ReportPostModal';
 import PostReactions from './PostReaction';
+
+// MemePost.js
+
+// MemePost.js
+
+// MemePost.js
+
+// MemePost.js
+
+// MemePost.js
+
+// MemePost.js
+
+// MemePost.js
+
+// MemePost.js
+
+// MemePost.js
+
+// MemePost.js
 
 // MemePost.js
 
@@ -79,7 +95,6 @@ const MemePost = ({
   const [currentImage, setCurrentImage] = useState(image);
   const [isPostDeleteModalOpen, setIsPostDeleteModalOpen] = useState(false);
   const [isReportPostModalOpen, setIsReportPostModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [reactionType, setReactionType] = useState(null);
   const [likeCount, setLikeCount] = useState(0);
   const [showComments, setShowComments] = useState(false); // Controls visibility of the comment section
@@ -103,16 +118,12 @@ const MemePost = ({
     replyLoading,
     hasFetchedComments,
     setReplyToComment,
-    setEditingCommentId,
-    setEditingCommentText,
     setTempEditingText,
     setCommentImage,
     setUpdateCommentImagePreview,
     setIsUpdateModalOpen,
-    setCommentToDelete,
     setIsDeleteModalOpen,
     fetchComments,
-    fetchTotalCommentsCount,
     handleAddComment,
     handleAddReply,
     confirmDeleteComment,
@@ -154,7 +165,7 @@ const MemePost = ({
         if (updatedPost && updatedPost.image) {
           setCurrentImage(updatedPost.image);
         } else if (removeImage) {
-          longtempssetCurrentImage(null);
+          setCurrentImage(null);
         }
         setCurrentCaption(newCaption);
       } catch (error) {
@@ -265,25 +276,6 @@ const MemePost = ({
         position: 'relative',
       }}
     >
-      {isLoading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-            zIndex: 100,
-          }}
-        >
-          <CircularProgress />
-        </Box>
-      )}
-
       <CardHeader
         avatar={
           <Avatar
