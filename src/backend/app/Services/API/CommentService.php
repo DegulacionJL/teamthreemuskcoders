@@ -19,21 +19,25 @@ class CommentService
      * Get comments for a post.
      *
      * @param int $postId
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @param int $perPage
+     * @param int $page
+     * @return array
      */
     public function getComments($postId, $perPage = 5, $page = 1)
     {
         $comments = Comment::where('post_id', $postId)
             ->whereNull('parent_id')
-            ->with(['user', 'replies.user']) // Eager load replies and their users
+            ->with(['user', 'replies.user'])
             ->orderBy('created_at', 'asc')
             ->paginate($perPage, ['*'], 'page', $page);
 
         // Fetch likes for all comments and replies in one go
         $commentIds = $comments->pluck('id')->toArray();
+        $replyIds = [];
         foreach ($comments as $comment) {
-            $commentIds = array_merge($commentIds, $comment->replies->pluck('id')->toArray());
+            $replyIds = array_merge($replyIds, $comment->replies->pluck('id')->toArray());
         }
+        $commentIds = array_merge($commentIds, $replyIds);
 
         $likesData = CommentLike::whereIn('comment_id', $commentIds)
             ->select('comment_id', \DB::raw('count(*) as like_count'))
@@ -48,10 +52,18 @@ class CommentService
             ->pluck('comment_id')
             ->toArray() : [];
 
-        // Attach likes data to comments and replies
+        // Attach likes and reply pagination metadata to comments
         foreach ($comments as $comment) {
             $comment->like_count = $likesData[$comment->id] ?? 0;
             $comment->user_has_liked = in_array($comment->id, $userLikes);
+            $totalReplies = Comment::where('parent_id', $comment->id)->count();
+            $repliesPerPage = 3; // Default replies per page
+            $comment->replies_pagination = [
+                'total' => $totalReplies,
+                'per_page' => min($repliesPerPage, $totalReplies),
+                'current_page' => 1,
+                'has_more' => $totalReplies > $repliesPerPage,
+            ];
             foreach ($comment->replies as $reply) {
                 $reply->like_count = $likesData[$reply->id] ?? 0;
                 $reply->user_has_liked = in_array($reply->id, $userLikes);
@@ -63,7 +75,54 @@ class CommentService
         return [
             'comments' => $comments,
             'total_with_replies' => $totalWithReplies,
-            'has_more' => $comments->hasMorePages(),
+        ];
+    }
+
+    /**
+     * Get paginated replies for a comment.
+     *
+     * @param int $commentId
+     * @param int $postId
+     * @param int $perPage
+     * @param int $page
+     * @return array
+     */
+    public function getReplies($commentId, $postId, $perPage = 3, $page = 1)
+    {
+        $comment = Comment::where('id', $commentId)
+            ->where('post_id', $postId)
+            ->firstOrFail();
+
+        $replies = Comment::where('parent_id', $commentId)
+            ->with(['user'])
+            ->orderBy('created_at', 'asc')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        // Fetch likes for replies
+        $replyIds = $replies->pluck('id')->toArray();
+        $likesData = CommentLike::whereIn('comment_id', $replyIds)
+            ->select('comment_id', \DB::raw('count(*) as like_count'))
+            ->groupBy('comment_id')
+            ->get()
+            ->pluck('like_count', 'comment_id')
+            ->toArray();
+
+        $userId = Auth::check() ? Auth::id() : null;
+        $userLikes = $userId ? CommentLike::whereIn('comment_id', $replyIds)
+            ->where('user_id', $userId)
+            ->pluck('comment_id')
+            ->toArray() : [];
+
+        foreach ($replies as $reply) {
+            $reply->like_count = $likesData[$reply->id] ?? 0;
+            $reply->user_has_liked = in_array($reply->id, $userLikes);
+        }
+
+        $totalReplies = Comment::where('parent_id', $commentId)->count();
+
+        return [
+            'replies' => $replies,
+            'total_replies' => $totalReplies,
         ];
     }
 

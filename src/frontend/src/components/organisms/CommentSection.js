@@ -23,6 +23,8 @@ const CommentSection = ({
   onReactionChange,
   user: propUser,
   onReportClick,
+  onLoadMoreReplies,
+  replyLoading,
 }) => {
   const [newCommentText, setNewCommentText] = useState('');
   const [newCommentImage, setNewCommentImage] = useState(null);
@@ -94,6 +96,8 @@ const CommentSection = ({
         onReactionChange={onReactionChange}
         currentUser={currentUser}
         onReportClick={onReportClick}
+        onLoadMoreReplies={onLoadMoreReplies}
+        replyLoading={replyLoading}
       />
     );
   }
@@ -186,6 +190,8 @@ const CommentSection = ({
         onReactionChange={onReactionChange}
         currentUser={currentUser}
         onReportClick={onReportClick}
+        onLoadMoreReplies={onLoadMoreReplies}
+        replyLoading={replyLoading}
       />
     </Box>
   );
@@ -205,6 +211,8 @@ CommentSection.propTypes = {
   onReactionChange: PropTypes.func.isRequired,
   user: PropTypes.object,
   onReportClick: PropTypes.func.isRequired,
+  onLoadMoreReplies: PropTypes.func.isRequired,
+  replyLoading: PropTypes.object.isRequired,
 };
 
 export default CommentSection;

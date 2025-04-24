@@ -16,6 +16,8 @@ const CommentsList = ({
   onReactionChange,
   currentUser,
   onReportClick,
+  onLoadMoreReplies,
+  replyLoading,
 }) => {
   return (
     <Box sx={{ mt: 2, ml: 2 }}>
@@ -35,6 +37,8 @@ const CommentsList = ({
             onReactionChange={onReactionChange}
             currentUser={currentUser}
             onReportClick={onReportClick}
+            onLoadMoreReplies={onLoadMoreReplies}
+            replyLoading={replyLoading}
           />
         ))
       ) : (
@@ -59,6 +63,8 @@ CommentsList.propTypes = {
   onReactionChange: PropTypes.func.isRequired,
   currentUser: PropTypes.object,
   onReportClick: PropTypes.func.isRequired,
+  onLoadMoreReplies: PropTypes.func.isRequired,
+  replyLoading: PropTypes.object.isRequired,
 };
 
 export default CommentsList;

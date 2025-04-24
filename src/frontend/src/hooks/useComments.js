@@ -3,6 +3,7 @@ import {
   addComment,
   deleteComment,
   getComments,
+  getReplies,
   likeComment,
   unlikeComment,
   updateComment,
@@ -24,6 +25,8 @@ export const useComments = (postId) => {
   const [showComments, setShowComments] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [replyPages, setReplyPages] = useState({}); // Track reply pagination per comment
+  const [replyLoading, setReplyLoading] = useState({}); // Track loading state per comment
 
   const fetchComments = useCallback(
     async (page = 1, append = false) => {
@@ -45,6 +48,7 @@ export const useComments = (postId) => {
               likeCount: reply.like_count,
               reactionType: reply.user_has_liked ? '😂' : null,
             })),
+            replies_pagination: comment.replies_pagination,
           }));
 
           if (append) {
@@ -70,6 +74,49 @@ export const useComments = (postId) => {
       }
     },
     [postId, showComments]
+  );
+
+  const fetchReplies = useCallback(
+    async (commentId, page = 1, append = false) => {
+      setReplyLoading((prev) => ({ ...prev, [commentId]: true }));
+      try {
+        const response = await getReplies(postId, commentId, {
+          page,
+          per_page: 3,
+          sort: 'asc',
+        });
+
+        const processedReplies = response.data.map((reply) => ({
+          ...reply,
+          likeCount: reply.like_count,
+          reactionType: reply.user_has_liked ? '😂' : null,
+        }));
+
+        setComments((prev) =>
+          prev.map((comment) =>
+            comment.id === commentId
+              ? {
+                  ...comment,
+                  replies: append
+                    ? [...(comment.replies || []), ...processedReplies]
+                    : processedReplies,
+                  replies_pagination: response.pagination,
+                }
+              : comment
+          )
+        );
+
+        setReplyPages((prev) => ({
+          ...prev,
+          [commentId]: page,
+        }));
+      } catch (error) {
+        console.error('Error fetching replies:', error);
+      } finally {
+        setReplyLoading((prev) => ({ ...prev, [commentId]: false }));
+      }
+    },
+    [postId]
   );
 
   useEffect(() => {
@@ -119,7 +166,8 @@ export const useComments = (postId) => {
 
         await addComment(postId, text, image, finalParentId);
         setReplyToComment(null);
-        await fetchComments(1); // Fetch all comments again to get updated replies
+        await fetchComments(1); // Refresh main comments
+        setReplyPages((prev) => ({ ...prev, [finalParentId]: 1 })); // Reset reply page
       } catch (error) {
         console.error('Error adding reply:', error);
         await fetchComments(1);
@@ -141,6 +189,7 @@ export const useComments = (postId) => {
     try {
       await deleteComment(postId, commentToDelete);
       await fetchComments(1);
+      setReplyPages({}); // Reset reply pagination
     } catch (error) {
       console.error('Error deleting comment:', error);
     } finally {
@@ -214,11 +263,19 @@ export const useComments = (postId) => {
     fetchComments(currentPage + 1, true);
   }, [fetchComments, currentPage]);
 
+  const handleLoadMoreReplies = useCallback(
+    (commentId) => {
+      const nextPage = (replyPages[commentId] || 1) + 1;
+      fetchReplies(commentId, nextPage, true);
+    },
+    [fetchReplies, replyPages]
+  );
+
   const handleLikeComment = useCallback(
     async (commentId) => {
       try {
         await likeComment(commentId);
-        await fetchComments(1); // Refresh comments to get updated likes
+        await fetchComments(1); // Refresh comments
       } catch (error) {
         console.error('Error liking comment:', error);
       }
@@ -230,7 +287,7 @@ export const useComments = (postId) => {
     async (commentId) => {
       try {
         await unlikeComment(commentId);
-        await fetchComments(1); // Refresh comments to get updated likes
+        await fetchComments(1); // Refresh comments
       } catch (error) {
         console.error('Error unliking comment:', error);
       }
@@ -287,6 +344,8 @@ export const useComments = (postId) => {
     showComments,
     commentToDelete,
     isDeleteModalOpen,
+    replyPages,
+    replyLoading,
     setShowComments,
     setReplyToComment,
     setEditingCommentId,
@@ -307,6 +366,7 @@ export const useComments = (postId) => {
     handleUpdateComment,
     handleCancelUpdateComment,
     handleLoadMore,
+    handleLoadMoreReplies,
     handleLikeComment,
     handleUnlikeComment,
     handleCommentReactionChange,

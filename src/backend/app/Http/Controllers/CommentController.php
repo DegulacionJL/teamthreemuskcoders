@@ -68,6 +68,45 @@ class CommentController extends Controller
     }
 
     /**
+     * Get Paginated Replies
+     *
+     * Retrieves paginated replies for a specific comment.
+     *
+     * @param int $postId
+     * @param int $commentId
+     * @return JsonResponse
+     */
+    public function getReplies($postId, $commentId)
+    {
+        try {
+            $perPage = request()->query('per_page', 3);
+            $page = request()->query('page', 1);
+
+            $result = $this->commentService->getReplies($commentId, $postId, $perPage, $page);
+
+            $replies = $result['replies'];
+            $totalReplies = $result['total_replies'];
+
+            $this->response['data'] = CommentResource::collection($replies);
+            $this->response['pagination'] = [
+                'total' => $replies->total(),
+                'total_replies' => $totalReplies,
+                'per_page' => $replies->perPage(),
+                'current_page' => $replies->currentPage(),
+                'last_page' => $replies->lastPage(),
+                'has_more' => $replies->hasMorePages(),
+            ];
+        } catch (Exception $e) {
+            $this->response = [
+                'error' => $e->getMessage(),
+                'code' => 500,
+            ];
+        }
+
+        return response()->json($this->response, $this->response['code']);
+    }
+
+    /**
      * Create Comment
      *
      * Creates a new comment for a specific post.
@@ -151,42 +190,6 @@ class CommentController extends Controller
         try {
             $this->commentService->deleteComment($commentId, $postId);
             $this->response['message'] = 'Comment deleted successfully.';
-        } catch (Exception $e) {
-            $this->response = [
-                'error' => $e->getMessage(),
-                'code' => 500,
-            ];
-        }
-
-        return response()->json($this->response, $this->response['code']);
-    }
-
-    public function likeComment($commentId): JsonResponse
-    {
-        try {
-            $result = $this->commentService->likeComment($commentId);
-            $this->response['data'] = [
-                'like_count' => $result['like_count'],
-                'user_has_liked' => true
-            ];
-        } catch (Exception $e) {
-            $this->response = [
-                'error' => $e->getMessage(),
-                'code' => 500,
-            ];
-        }
-
-        return response()->json($this->response, $this->response['code']);
-    }
-
-    public function unlikeComment($commentId): JsonResponse
-    {
-        try {
-            $result = $this->commentService->unlikeComment($commentId);
-            $this->response['data'] = [
-                'like_count' => $result['like_count'],
-                'user_has_liked' => false
-            ];
         } catch (Exception $e) {
             $this->response = [
                 'error' => $e->getMessage(),

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
-import { Box, Button, Typography, useTheme } from '@mui/material';
+import { Box, Button, CircularProgress, Typography, useTheme } from '@mui/material';
 import AvatarWithInitials from 'components/atoms/AvatarWithInitial';
 import ImagePreview from 'components/atoms/ImagePreview';
 import CommentActions from 'components/molecules/CommentActions';
@@ -24,12 +24,15 @@ const CommentItem = ({
   maxDepth = Infinity,
   onReactionChange,
   currentUser,
-  onReportClick, // New prop for reporting
+  onReportClick,
+  onLoadMoreReplies,
+  replyLoading,
 }) => {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const isMaxDepthReached = depth >= maxDepth;
   const navigate = useNavigate();
   const theme = useTheme();
+  const hasMoreReplies = comment.replies_pagination?.has_more || false;
 
   // Function to handle author click
   const handleAuthorClick = () => {
@@ -183,8 +186,27 @@ const CommentItem = ({
                 onReactionChange={onReactionChange}
                 currentUser={currentUser}
                 onReportClick={onReportClick}
+                onLoadMoreReplies={onLoadMoreReplies}
+                replyLoading={replyLoading}
               />
             ))}
+            {hasMoreReplies && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                <Button
+                  onClick={() => onLoadMoreReplies(comment.id)}
+                  disabled={replyLoading[comment.id]}
+                >
+                  {replyLoading[comment.id] ? (
+                    <>
+                      <CircularProgress size={20} sx={{ mr: 1 }} />
+                      Loading...
+                    </>
+                  ) : (
+                    'Load More Replies'
+                  )}
+                </Button>
+              </Box>
+            )}
           </Box>
         )}
       </Box>
@@ -217,6 +239,8 @@ CommentItem.propTypes = {
   onReactionChange: PropTypes.func.isRequired,
   currentUser: PropTypes.object,
   onReportClick: PropTypes.func.isRequired,
+  onLoadMoreReplies: PropTypes.func.isRequired,
+  replyLoading: PropTypes.object.isRequired,
 };
 
 export default CommentItem;

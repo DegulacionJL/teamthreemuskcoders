@@ -8,6 +8,16 @@ const getComments = async (postId, params = {}) => {
   return await req;
 };
 
+const getReplies = async (postId, commentId, params = {}) => {
+  const req = api
+    .get(`/posts/${postId}/comments/${commentId}/replies`, { params })
+    .then(({ data }) => ({
+      data: data.data,
+      pagination: data.pagination,
+    }));
+  return await req;
+};
+
 const addComment = async (postId, commentText, commentImage, parentId = null) => {
   const isMultipart = !!commentImage;
   const requestData = isMultipart
@@ -80,6 +90,7 @@ const reportComment = async (postId, commentId, reason) => {
 
 export {
   getComments,
+  getReplies,
   addComment,
   deleteComment,
   updateComment,

@@ -22,6 +22,7 @@ class CommentResource extends JsonResource
             'replies' => $this->whenLoaded('replies', function () {
                 return CommentResource::collection($this->replies);
             }),
+            'replies_pagination' => $this->replies_pagination ?? null,
             'created_at' => $this->created_at->diffForHumans(),
             'updated_at' => $this->updated_at->toDateTimeString(),
             'timestamp' => $this->created_at->diffForHumans(),

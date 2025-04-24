@@ -36,6 +36,7 @@ const CommentFeature = ({ postId, user }) => {
     showComments,
     commentToDelete,
     isDeleteModalOpen,
+    replyLoading,
     setShowComments,
     setReplyToComment,
     setTempEditingText,
@@ -52,6 +53,7 @@ const CommentFeature = ({ postId, user }) => {
     handleUpdateComment,
     handleCancelUpdateComment,
     handleLoadMore,
+    handleLoadMoreReplies,
     handleCommentReactionChange,
   } = useComments(postId);
 
@@ -71,6 +73,8 @@ const CommentFeature = ({ postId, user }) => {
       setReportError('Please provide a reason for reporting.');
       return;
     }
+
+    Foo;
 
     setIsReporting(true);
     setReportError(null);
@@ -137,6 +141,8 @@ const CommentFeature = ({ postId, user }) => {
             onReactionChange={handleCommentReactionChange}
             user={user}
             onReportClick={handleReportClick}
+            onLoadMoreReplies={handleLoadMoreReplies}
+            replyLoading={replyLoading}
           />
           {hasMore && (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
