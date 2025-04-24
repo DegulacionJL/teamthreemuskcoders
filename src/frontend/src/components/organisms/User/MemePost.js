@@ -65,8 +65,48 @@ const MemePost = ({
   const [showComments, setShowComments] = useState(false); // Controls visibility of the comment section
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
-  // Use the useComments hook to get the total comment count
-  const { totalCommentsCount } = useComments(id);
+  // Use the useComments hook to manage comments state
+  const {
+    comments,
+    isLoading: commentsLoading,
+    totalCommentsCount,
+    hasMore,
+    editingCommentId,
+    editingCommentText,
+    tempEditingText,
+    commentImage,
+    updateCommentImagePreview,
+    isUpdateModalOpen,
+    replyToComment,
+    commentToDelete,
+    isDeleteModalOpen,
+    replyPages,
+    replyLoading,
+    setReplyToComment,
+    setEditingCommentId,
+    setEditingCommentText,
+    setTempEditingText,
+    setCommentImage,
+    setUpdateCommentImagePreview,
+    setIsUpdateModalOpen,
+    setCommentToDelete,
+    setIsDeleteModalOpen,
+    fetchComments,
+    fetchTotalCommentsCount,
+    handleAddComment,
+    handleAddReply,
+    confirmDeleteComment,
+    handleDeleteComment,
+    handleEditCommentClick,
+    handleUpdateCommentImage,
+    handleUpdateComment,
+    handleCancelUpdateComment,
+    handleLoadMore,
+    handleLoadMoreReplies,
+    handleLikeComment,
+    handleUnlikeComment,
+    handleCommentReactionChange,
+  } = useComments(id);
 
   const isDarkMode = darkMode !== undefined ? darkMode : contextDarkMode;
 
@@ -138,19 +178,10 @@ const MemePost = ({
     setShowComments((prev) => !prev);
   };
 
-  const handleAddComment = (text) => {
-    if (!text.trim()) return;
-
-    const newComment = {
-      user: loggedInUser || {
-        first_name: 'Current',
-        last_name: 'User',
-        avatar: '/placeholder.svg?height=40&width=40',
-      },
-      text: text,
-    };
-
-    console.log('New comment added:', newComment);
+  const handleImageClick = () => {
+    if (currentImage) {
+      setIsLightboxOpen(true);
+    }
   };
 
   function getRelativeTime(timestamp) {
@@ -193,12 +224,6 @@ const MemePost = ({
         {formattedText}
       </Typography>
     );
-  };
-
-  const handleImageClick = () => {
-    if (currentImage) {
-      setIsLightboxOpen(true);
-    }
   };
 
   return (
@@ -336,7 +361,7 @@ const MemePost = ({
         caption={currentCaption}
         user={postUsers}
         timestamp={timestamp}
-        comments={[]} // LightBox will not fetch comments directly; rely on CommentFeature
+        comments={comments} // Pass comments to LightBox
         reactionCount={likeCount}
         onAddComment={handleAddComment}
         darkMode={isDarkMode}
@@ -390,7 +415,51 @@ const MemePost = ({
       </Box>
 
       {/* Render the comment section only when showComments is true */}
-      {showComments && <CommentFeature postId={id} user={loggedInUser} />}
+      {showComments && (
+        <CommentFeature
+          postId={id}
+          user={loggedInUser}
+          comments={comments}
+          isLoading={commentsLoading}
+          totalCommentsCount={totalCommentsCount}
+          hasMore={hasMore}
+          editingCommentId={editingCommentId}
+          editingCommentText={editingCommentText}
+          tempEditingText={tempEditingText}
+          commentImage={commentImage}
+          updateCommentImagePreview={updateCommentImagePreview}
+          isUpdateModalOpen={isUpdateModalOpen}
+          replyToComment={replyToComment}
+          commentToDelete={commentToDelete}
+          isDeleteModalOpen={isDeleteModalOpen}
+          replyPages={replyPages}
+          replyLoading={replyLoading}
+          setReplyToComment={setReplyToComment}
+          setEditingCommentId={setEditingCommentId}
+          setEditingCommentText={setEditingCommentText}
+          setTempEditingText={setTempEditingText}
+          setCommentImage={setCommentImage}
+          setUpdateCommentImagePreview={setUpdateCommentImagePreview}
+          setIsUpdateModalOpen={setIsUpdateModalOpen}
+          setCommentToDelete={setCommentToDelete}
+          setIsDeleteModalOpen={setIsDeleteModalOpen}
+          fetchComments={fetchComments}
+          fetchTotalCommentsCount={fetchTotalCommentsCount}
+          handleAddComment={handleAddComment}
+          handleAddReply={handleAddReply}
+          confirmDeleteComment={confirmDeleteComment}
+          handleDeleteComment={handleDeleteComment}
+          handleEditCommentClick={handleEditCommentClick}
+          handleUpdateCommentImage={handleUpdateCommentImage}
+          handleUpdateComment={handleUpdateComment}
+          handleCancelUpdateComment={handleCancelUpdateComment}
+          handleLoadMore={handleLoadMore}
+          handleLoadMoreReplies={handleLoadMoreReplies}
+          handleLikeComment={handleLikeComment}
+          handleUnlikeComment={handleUnlikeComment}
+          handleCommentReactionChange={handleCommentReactionChange}
+        />
+      )}
 
       <EditPostModal
         open={isEditModalOpen}
