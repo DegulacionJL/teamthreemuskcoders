@@ -1,9 +1,8 @@
-'use client';
-
 import { useAuth } from 'hooks/useAuth';
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { followUser } from 'services/follow.service';
 import { getSuggestedUsers, getTrendingMemes } from 'services/user.service';
 import { Whatshot } from '@mui/icons-material';
 import {
@@ -40,6 +39,8 @@ const RightContent = ({
   // State for Suggested User
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [loadingSuggestedUsers, setLoadingSuggestedUsers] = useState(true);
+  // const [followStates, setFollowStates] = useState({});
+  const { currentUserId } = useAuth();
 
   // State for Trending Hashtags
   const [trendingHashtags, setTrendingHashtags] = useState([]);
@@ -99,6 +100,26 @@ const RightContent = ({
     navigate(`/posts/${postId}`); // Redirect to the specific post
   };
 
+  const handleFollowUser = async (userId) => {
+    try {
+      await followUser(userId);
+      setSuggestedUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
+
+      const currentUser = JSON.parse(localStorage.getItem('user'));
+      const currentUserId = currentUser?.id;
+
+      const newSuggestions = await getSuggestedUsers(currentUserId);
+      const currentUserIds = suggestedUsers.map((u) => u.id);
+
+      const newUser = newSuggestions.find((u) => !currentUserIds.includes(u.id) && u.id !== userId);
+      if (newUser) {
+        setSuggestedUsers((prevUsers) => [...prevUsers, newUser]);
+      }
+    } catch (error) {
+      console.error('Follow error: ', error);
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -156,6 +177,7 @@ const RightContent = ({
                     variant="outlined"
                     color="primary"
                     size="small"
+                    onClick={() => handleFollowUser(suggestedUser.id)}
                     sx={{
                       borderRadius: 4,
                       color: '#8a4fff',
@@ -189,7 +211,7 @@ const RightContent = ({
                           color: theme.palette.primary.main,
                         },
                       }}
-                      onClick={(e) => handleUserNameClick(e, user.id)}
+                      onClick={(e) => handleUserNameClick(e, suggestedUser.id)}
                     >
                       {`${suggestedUser.first_name} ${suggestedUser.last_name}`}
                     </Typography>

@@ -45,7 +45,7 @@ class UserController extends Controller
         $this->middleware('role:System Admin')->except([
             'register',
             'activate',
-            'getSuggestedUsers', // ✅ Add this here
+            'getSuggestedUsers', 
         ]);
         
     }

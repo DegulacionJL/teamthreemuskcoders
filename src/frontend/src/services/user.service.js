@@ -131,11 +131,11 @@ const uploadCoverPhoto = async (userId, file) => {
   }
 };
 
-console.log('Token:', localStorage.getItem('access_token'));
+// console.log('Token:', localStorage.getItem('access_token'));
 
 const getSuggestedUsers = async ($id) => {
   const response = await api.get(`/users/suggested/${$id}`);
-  console.log('suggestedUsers', response.data);
+  // console.log('suggestedUsers', response.data);
   // const suggestedUsers = response.data.map((follow) => follow.user);
   // console.log('suggestedUsers', suggestedUsers);
   return response.data.data;

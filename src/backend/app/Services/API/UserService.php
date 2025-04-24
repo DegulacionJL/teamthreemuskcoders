@@ -260,7 +260,7 @@ class UserService
         ->get('following_id')->toArray();
         $followedUserIds[] = $currentUserId;
 
-        $suggestedUsers = User::whereNotIn('id', $followedUserIds)->inRandomOrder()->take(5)->get()->toArray();
+        $suggestedUsers = User::whereNotIn('id', $followedUserIds)->inRandomOrder()->limit(5)->get()->toArray();
         Log::info('Suggested Users', $suggestedUsers);
         return $suggestedUsers;
     }
