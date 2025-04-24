@@ -7,8 +7,14 @@ import AnimatedEmoji from '../../atoms/animation/AnimatedEmoji';
 
 const CommentReactions = ({ commentId, isDarkMode, onReactionChange }) => {
   const [showReactions, setShowReactions] = useState(false);
-  const [hasReacted, setHasReacted] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
+  const [hasReacted, setHasReacted] = useState(() => {
+    const storedReaction = localStorage.getItem(`comment_reaction_${commentId}`);
+    return storedReaction === '😂';
+  });
+  const [likeCount, setLikeCount] = useState(() => {
+    const storedCount = localStorage.getItem(`comment_like_count_${commentId}`);
+    return storedCount ? parseInt(storedCount, 10) : 0;
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const likeButtonRef = useRef(null);
@@ -46,16 +52,14 @@ const CommentReactions = ({ commentId, isDarkMode, onReactionChange }) => {
     setIsLoading(true);
     try {
       const response = await likeComment(commentId);
-      // Optimistically update state based on the response
       setHasReacted(response.user_has_liked || true);
       setLikeCount(response.like_count || likeCount + 1);
       localStorage.setItem(`comment_reaction_${commentId}`, '😂');
       localStorage.setItem(`comment_like_count_${commentId}`, response.like_count.toString());
-      // Fetch latest state to confirm
       await fetchLikes();
     } catch (error) {
       console.error('Error while reacting to the comment:', error);
-      setHasReacted(false); // Rollback on error
+      setHasReacted(false);
       setLikeCount((prev) => Math.max(0, prev - 1));
     } finally {
       setIsLoading(false);
@@ -84,11 +88,10 @@ const CommentReactions = ({ commentId, isDarkMode, onReactionChange }) => {
         localStorage.setItem(`comment_reaction_${commentId}`, '😂');
         localStorage.setItem(`comment_like_count_${commentId}`, response.like_count.toString());
       }
-      // Fetch latest state to confirm
       await fetchLikes();
     } catch (error) {
       console.error('Error while toggling comment reaction:', error);
-      setHasReacted(prevHasReacted); // Rollback on error
+      setHasReacted(prevHasReacted);
       setLikeCount(prevLikeCount);
     } finally {
       setIsLoading(false);
@@ -143,7 +146,7 @@ const CommentReactions = ({ commentId, isDarkMode, onReactionChange }) => {
                   borderWidth: 8,
                   borderStyle: 'solid',
                   borderColor: `${
-                    isDarkMode ? 'rgba(40, 40, 40, 0.9)' : 'rgba(245, 245, 245, 0.9)'
+                    isDarkMode ? 'rgba(40, 40, 25, 0.9)' : 'rgba(245, 245, 245, 0.9)'
                   } transparent transparent transparent`,
                 },
               }}

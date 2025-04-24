@@ -231,6 +231,92 @@ class CommentController extends Controller
             ];
         }
 
+        Dotenv::require('dotenv')->env('APP_URL') . '/storage';
+        return response()->json($this->response, $this->response['code']);
+    }
+
+    /**
+     * Like a Comment
+     *
+     * Likes a specific comment.
+     *
+     * @authenticated
+     * @param int $comment
+     * @return JsonResponse
+     */
+    public function likeComment($comment): JsonResponse
+    {
+        try {
+            $data = $this->commentService->likeComment($comment);
+            $this->response['data'] = [
+                'like_count' => $data['like_count'],
+                'user_has_liked' => true,
+            ];
+        } catch (Exception $e) {
+            $this->response = [
+                'error' => $e->getMessage(),
+                'code' => 500,
+            ];
+        }
+
+        return response()->json($this->response, $this->response['code']);
+    }
+
+    /**
+     * Unlike a Comment
+     *
+     * Removes a like from a specific comment.
+     *
+     * @authenticated
+     * @param int $comment
+     * @return JsonResponse
+     */
+    public function unlikeComment($comment): JsonResponse
+    {
+        try {
+            $data = $this->commentService->unlikeComment($comment);
+            $this->response['data'] = [
+                'like_count' => $data['like_count'],
+                'user_has_liked' => false,
+            ];
+        } catch (Exception $e) {
+            $this->response = [
+                'error' => $e->getMessage(),
+                'code' => 500,
+            ];
+        }
+
+        return response()->json($this->response, $this->response['code']);
+    }
+
+    /**
+     * Get Comment Likes
+     *
+     * Retrieves the like count and user like status for a specific comment.
+     *
+     * @authenticated
+     * @param int $comment
+     * @return JsonResponse
+     */
+    public function getCommentLikes($comment): JsonResponse
+    {
+        try {
+            $commentModel = \App\Models\Comment::findOrFail($comment);
+            $likeCount = $commentModel->likes()->count();
+            $userHasLiked = \Illuminate\Support\Facades\Auth::check() &&
+                $commentModel->likes()->where('user_id', \Illuminate\Support\Facades\Auth::id())->exists();
+
+            $this->response['data'] = [
+                'like_count' => $likeCount,
+                'user_has_liked' => $userHasLiked,
+            ];
+        } catch (Exception $e) {
+            $this->response = [
+                'error' => $e->getMessage(),
+                'code' => 500,
+            ];
+        }
+
         return response()->json($this->response, $this->response['code']);
     }
 }

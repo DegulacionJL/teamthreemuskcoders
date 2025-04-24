@@ -58,7 +58,7 @@ const likeComment = async (commentId) => {
     .post(`/likes/comments/${commentId}`)
     .then(({ data }) => {
       console.log('Like Comment Response:', data);
-      return data.data; // Access the nested 'data' field
+      return data.data;
     })
     .catch((error) => {
       console.error('Error liking comment:', error.response?.data || error.message);
@@ -72,10 +72,24 @@ const unlikeComment = async (commentId) => {
     .delete(`/likes/comments/${commentId}/unlike`)
     .then(({ data }) => {
       console.log('Unlike Comment Response:', data);
-      return data.data; // Access the nested 'data' field
+      return data.data;
     })
     .catch((error) => {
       console.error('Error unliking comment:', error.response?.data || error.message);
+      throw error;
+    });
+  return await req;
+};
+
+const getCommentLikes = async (commentId) => {
+  const req = api
+    .get(`/likes/comments/${commentId}/likes`)
+    .then(({ data }) => {
+      console.log('Get Comment Likes Response:', data);
+      return data.data;
+    })
+    .catch((error) => {
+      console.error('Error getting comment likes:', error.response?.data || error.message);
       throw error;
     });
   return await req;
@@ -96,5 +110,6 @@ export {
   updateComment,
   likeComment,
   unlikeComment,
+  getCommentLikes,
   reportComment,
 };
