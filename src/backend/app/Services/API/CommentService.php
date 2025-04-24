@@ -27,7 +27,7 @@ class CommentService
     {
         $repliesPerPage = 3; // Define the number of replies per page
 
-        $comments = Comment::where('post_id', $postId)
+        $commentsQuery = Comment::where('post_id', $postId)
             ->whereNull('parent_id')
             ->with([
                 'user',
@@ -37,8 +37,9 @@ class CommentService
                         ->take($repliesPerPage); // Strictly limit to 3 replies
                 },
             ])
-            ->orderBy('created_at', 'asc')
-            ->paginate($perPage, ['*'], 'page', $page);
+            ->orderBy('created_at', 'asc');
+
+        $comments = $commentsQuery->paginate($perPage, ['*'], 'page', $page);
 
         // Fetch likes for all comments and replies in one go
         $commentIds = $comments->pluck('id')->toArray();
@@ -68,6 +69,9 @@ class CommentService
 
             // Calculate total replies for this comment
             $totalReplies = Comment::where('parent_id', $comment->id)->count();
+
+            // Ensure only 3 replies are attached
+            $comment->setRelation('replies', $comment->replies->take($repliesPerPage));
 
             // Set pagination metadata for replies
             $comment->replies_pagination = [

@@ -34,7 +34,7 @@ export const useComments = (postId) => {
       try {
         const response = await getComments(postId, {
           page,
-          per_page: showComments ? 3 : 0,
+          per_page: 5, // Match backend default
           sort: 'asc',
         });
 
