@@ -1,7 +1,7 @@
 // CommentFeature.js
 import { useComments } from 'hooks/useComments';
 import PropTypes from 'prop-types';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import * as commentService from 'services/comment.service';
 import CloseIcon from '@mui/icons-material/Close';
 import {
@@ -57,9 +57,15 @@ const CommentFeature = ({ postId, user }) => {
     handleCommentReactionChange,
   } = useComments(postId);
 
+  // Ref to track if comments have been fetched
+  const hasFetchedComments = useRef(false);
+
   // Fetch comments when CommentFeature mounts (i.e., when the comment section is shown)
   useEffect(() => {
-    fetchComments(1);
+    if (!hasFetchedComments.current) {
+      fetchComments(1);
+      hasFetchedComments.current = true;
+    }
   }, [fetchComments]);
 
   const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);

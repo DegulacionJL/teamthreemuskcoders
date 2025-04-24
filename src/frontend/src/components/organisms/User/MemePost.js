@@ -64,11 +64,9 @@ const MemePost = ({
   const [likeCount, setLikeCount] = useState(0);
   const [showComments, setShowComments] = useState(false); // Controls visibility of the comment section
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  const [commentsFetched, setCommentsFetched] = useState(false); // Track if comments have been fetched
 
-  // Use the useComments hook to get the total comment count and fetch comments
-  const { totalCommentsCount, fetchComments } = useComments(id);
-  const [comments, setComments] = useState([]);
+  // Use the useComments hook to get the total comment count
+  const { totalCommentsCount } = useComments(id);
 
   const isDarkMode = darkMode !== undefined ? darkMode : contextDarkMode;
 
@@ -136,21 +134,8 @@ const MemePost = ({
     localStorage.setItem(`post_like_count_${postId}`, count.toString());
   }, []);
 
-  const handleToggleComments = async () => {
+  const handleToggleComments = () => {
     setShowComments((prev) => !prev);
-    if (!commentsFetched) {
-      // Fetch comments only when the section is opened for the first time
-      setIsLoading(true);
-      try {
-        const response = await fetchComments(1);
-        setComments(response || []);
-        setCommentsFetched(true);
-      } catch (error) {
-        console.error('Error fetching comments:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
   };
 
   const handleAddComment = (text) => {
@@ -165,7 +150,6 @@ const MemePost = ({
       text: text,
     };
 
-    setComments((prev) => [...prev, newComment]);
     console.log('New comment added:', newComment);
   };
 
@@ -211,20 +195,8 @@ const MemePost = ({
     );
   };
 
-  const handleImageClick = async () => {
+  const handleImageClick = () => {
     if (currentImage) {
-      if (!commentsFetched) {
-        setIsLoading(true);
-        try {
-          const response = await fetchComments(1);
-          setComments(response || []);
-          setCommentsFetched(true);
-        } catch (error) {
-          console.error('Error fetching comments:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
       setIsLightboxOpen(true);
     }
   };
@@ -364,7 +336,7 @@ const MemePost = ({
         caption={currentCaption}
         user={postUsers}
         timestamp={timestamp}
-        comments={comments || []}
+        comments={[]} // LightBox will not fetch comments directly; rely on CommentFeature
         reactionCount={likeCount}
         onAddComment={handleAddComment}
         darkMode={isDarkMode}
@@ -380,7 +352,7 @@ const MemePost = ({
         <Button
           startIcon={<ChatBubbleOutline />}
           size="small"
-          onClick={handleToggleComments} // Toggle comment section visibility and fetch comments if needed
+          onClick={handleToggleComments} // Toggle comment section visibility
           sx={{ color: theme.palette.text.secondary }}
         >
           Comments {totalCommentsCount > 0 && `(${totalCommentsCount})`}

@@ -1,5 +1,5 @@
 // useComments.js
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import {
   addComment,
   deleteComment,
@@ -9,6 +9,9 @@ import {
   unlikeComment,
   updateComment,
 } from 'services/comment.service';
+
+// Cache to store comment counts for each post
+const commentCountCache = new Map();
 
 export const useComments = (postId) => {
   const [comments, setComments] = useState([]);
@@ -28,11 +31,22 @@ export const useComments = (postId) => {
   const [replyPages, setReplyPages] = useState({}); // Track reply pagination per comment
   const [replyLoading, setReplyLoading] = useState({}); // Track loading state per comment
 
+  // Ref to track if comments are being fetched
+  const isFetchingComments = useRef(false);
+
   // Fetch only the total comment count initially
   const fetchTotalCommentsCount = useCallback(async () => {
+    // Check cache first
+    if (commentCountCache.has(postId)) {
+      setTotalCommentsCount(commentCountCache.get(postId));
+      return;
+    }
+
     try {
       const response = await getComments(postId, { page: 1, per_page: 0 });
-      setTotalCommentsCount(response.pagination.total_with_replies || 0);
+      const count = response.pagination.total_with_replies || 0;
+      setTotalCommentsCount(count);
+      commentCountCache.set(postId, count); // Cache the count
     } catch (error) {
       console.error('Error fetching total comments count:', error);
       setTotalCommentsCount(0);
@@ -42,6 +56,8 @@ export const useComments = (postId) => {
   // Fetch full comments data when explicitly requested
   const fetchComments = useCallback(
     async (page = 1, append = false) => {
+      if (isFetchingComments.current) return; // Prevent concurrent fetches
+      isFetchingComments.current = true;
       setIsLoading(true);
       try {
         const response = await getComments(postId, {
@@ -70,7 +86,9 @@ export const useComments = (postId) => {
 
         setHasMore(response.pagination.has_more);
         setCurrentPage(page);
-        setTotalCommentsCount(response.pagination.total_with_replies || 0);
+        const newCount = response.pagination.total_with_replies || 0;
+        setTotalCommentsCount(newCount);
+        commentCountCache.set(postId, newCount); // Update cache
       } catch (error) {
         console.error('Error fetching comments:', error);
         if (!append) {
@@ -79,6 +97,7 @@ export const useComments = (postId) => {
         }
       } finally {
         setIsLoading(false);
+        isFetchingComments.current = false;
       }
     },
     [postId]
