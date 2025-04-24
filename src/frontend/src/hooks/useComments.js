@@ -1,4 +1,3 @@
-// useComments.js
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   addComment,
@@ -7,7 +6,7 @@ import {
   getReplies,
   likeComment,
   unlikeComment,
-  updateComment,
+  getTotalCommentsCount, // Import the new function
 } from 'services/comment.service';
 
 export const useComments = (postId) => {
@@ -25,19 +24,16 @@ export const useComments = (postId) => {
   const [replyToComment, setReplyToComment] = useState(null);
   const [commentToDelete, setCommentToDelete] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [replyPages, setReplyPages] = useState({}); // Track reply pagination per comment
-  const [replyLoading, setReplyLoading] = useState({}); // Track loading state per comment
-
-  // Ref to track if comments are being fetched
+  const [replyPages, setReplyPages] = useState({});
+  const [replyLoading, setReplyLoading] = useState({});
   const isFetchingComments = useRef(false);
-  // Ref to track if comments have been fetched for this post
   const hasFetchedComments = useRef(false);
 
   // Fetch only the total comment count (used on initial load)
   const fetchTotalCommentsCount = useCallback(async () => {
     try {
-      const response = await getComments(postId, { page: 1, per_page: 0 });
-      const count = response.pagination.total_with_replies || 0;
+      const response = await getTotalCommentsCount(postId);
+      const count = response.total_with_replies || 0;
       setTotalCommentsCount(count);
     } catch (error) {
       console.error('Error fetching total comments count:', error);
@@ -48,13 +44,13 @@ export const useComments = (postId) => {
   // Fetch full comments data when explicitly requested
   const fetchComments = useCallback(
     async (page = 1, append = false) => {
-      if (isFetchingComments.current) return; // Prevent concurrent fetches
+      if (isFetchingComments.current) return;
       isFetchingComments.current = true;
       setIsLoading(true);
       try {
         const response = await getComments(postId, {
           page,
-          per_page: 5, // Match backend default
+          per_page: 5,
           sort: 'asc',
         });
 
@@ -78,10 +74,8 @@ export const useComments = (postId) => {
 
         setHasMore(response.pagination.has_more);
         setCurrentPage(page);
-        // Update totalCommentsCount directly from the response
         const newCount = response.pagination.total_with_replies || 0;
         setTotalCommentsCount(newCount);
-        // Mark comments as fetched
         hasFetchedComments.current = true;
       } catch (error) {
         console.error('Error fetching comments:', error);
@@ -151,14 +145,15 @@ export const useComments = (postId) => {
       setIsLoading(true);
       try {
         await addComment(postId, text, image);
-        await fetchComments(1); // Refresh comments after adding (this also updates totalCommentsCount)
+        await fetchComments(1);
+        await fetchTotalCommentsCount(); // Update total count after adding a comment
       } catch (error) {
         console.error('Error adding comment:', error);
       } finally {
         setIsLoading(false);
       }
     },
-    [postId, fetchComments]
+    [postId, fetchComments, fetchTotalCommentsCount]
   );
 
   const handleAddReply = useCallback(
@@ -173,16 +168,18 @@ export const useComments = (postId) => {
 
         await addComment(postId, text, image, finalParentId);
         setReplyToComment(null);
-        await fetchComments(1); // Refresh main comments (this also updates totalCommentsCount)
-        setReplyPages((prev) => ({ ...prev, [finalParentId]: 1 })); // Reset reply page
+        await fetchComments(1);
+        await fetchTotalCommentsCount(); // Update total count after adding a reply
+        setReplyPages((prev) => ({ ...prev, [finalParentId]: 1 }));
       } catch (error) {
         console.error('Error adding reply:', error);
-        await fetchComments(1); // Refresh comments (this also updates totalCommentsCount)
+        await fetchComments(1);
+        await fetchTotalCommentsCount();
       } finally {
         setIsLoading(false);
       }
     },
-    [postId, comments, fetchComments]
+    [postId, comments, fetchComments, fetchTotalCommentsCount]
   );
 
   const confirmDeleteComment = useCallback((commentId) => {
@@ -195,8 +192,9 @@ export const useComments = (postId) => {
     setIsLoading(true);
     try {
       await deleteComment(postId, commentToDelete);
-      await fetchComments(1); // Refresh comments (this also updates totalCommentsCount)
-      setReplyPages({}); // Reset reply pagination
+      await fetchComments(1);
+      await fetchTotalCommentsCount(); // Update total count after deleting a comment
+      setReplyPages({});
     } catch (error) {
       console.error('Error deleting comment:', error);
     } finally {
@@ -204,7 +202,7 @@ export const useComments = (postId) => {
       setIsDeleteModalOpen(false);
       setIsLoading(false);
     }
-  }, [postId, commentToDelete, fetchComments]);
+  }, [postId, commentToDelete, fetchComments, fetchTotalCommentsCount]);
 
   const handleEditCommentClick = useCallback((comment) => {
     setEditingCommentId(comment.id);
@@ -236,7 +234,8 @@ export const useComments = (postId) => {
       formData.append('_method', 'PUT');
 
       await updateComment(postId, editingCommentId, formData);
-      await fetchComments(1); // Refresh comments (this also updates totalCommentsCount)
+      await fetchComments(1);
+      await fetchTotalCommentsCount(); // Update total count after updating a comment
       setEditingCommentId(null);
       setEditingCommentText('');
       setTempEditingText('');
@@ -255,6 +254,7 @@ export const useComments = (postId) => {
     commentImage,
     updateCommentImagePreview,
     fetchComments,
+    fetchTotalCommentsCount,
   ]);
 
   const handleCancelUpdateComment = useCallback(() => {
@@ -282,7 +282,7 @@ export const useComments = (postId) => {
     async (commentId) => {
       try {
         await likeComment(commentId);
-        await fetchComments(1); // Refresh comments
+        await fetchComments(1);
       } catch (error) {
         console.error('Error liking comment:', error);
       }
@@ -294,7 +294,7 @@ export const useComments = (postId) => {
     async (commentId) => {
       try {
         await unlikeComment(commentId);
-        await fetchComments(1); // Refresh comments
+        await fetchComments(1);
       } catch (error) {
         console.error('Error unliking comment:', error);
       }

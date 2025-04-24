@@ -421,4 +421,15 @@ class CommentService
 
         return $report;
     }
+
+    /**
+ * Get total comments count (including replies) for a post.
+ *
+ * @param int $postId
+ * @return int
+ */
+public function getTotalCommentsCount($postId)
+{
+    return Comment::where('post_id', $postId)->count();
+}
 }

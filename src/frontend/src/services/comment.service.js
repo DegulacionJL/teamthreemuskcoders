@@ -102,6 +102,11 @@ const reportComment = async (postId, commentId, reason) => {
   return await req;
 };
 
+const getTotalCommentsCount = async (postId) => {
+  const req = api.get(`/posts/${postId}/comments/total-count`).then(({ data }) => data.data);
+  return await req;
+};
+
 export {
   getComments,
   getReplies,
@@ -112,4 +117,5 @@ export {
   unlikeComment,
   getCommentLikes,
   reportComment,
+  getTotalCommentsCount,
 };

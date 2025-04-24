@@ -319,4 +319,31 @@ class CommentController extends Controller
 
         return response()->json($this->response, $this->response['code']);
     }
+    
+    /**
+ * Get Total Comment Count
+ *
+ * Retrieves the total number of comments (including replies) for a specific post.
+ *
+ * @param int $postId
+ * @return JsonResponse
+ */
+public function getTotalCount($postId)
+{
+    try {
+        $totalWithReplies = $this->commentService->getTotalCommentsCount($postId);
+
+        $this->response['data'] = [
+            'total_with_replies' => $totalWithReplies,
+        ];
+    } catch (Exception $e) {
+        $this->response = [
+            'error' => $e->getMessage(),
+            'code' => 500,
+        ];
+    }
+
+    return response()->json($this->response, $this->response['code']);
+}
+
 }
