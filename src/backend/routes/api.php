@@ -49,7 +49,7 @@ Route::prefix('posts')
         Route::get('/leaderboard', [PostController::class, 'getUserLeaderboard'])->middleware('auth:api'); // Updated for Leaderboard
         Route::get('/top-post', [PostController::class, 'getTopPost'])->middleware('auth:api'); // New endpoint for Top Meme
         // FIXED: Removed role restriction or fixed role name (depends on your role naming)
-        Route::get('/trending-memes', [PostController::class, 'getTrendingMemes'])->middleware('auth:api');
+        // Route::get('/trending-memes', [PostController::class, 'getTrendingMemes'])->middleware('auth:api');
     });
 
     Route::prefix('likes')->group(function() {
@@ -91,9 +91,12 @@ Route::prefix('users')
         // Route::get('/suggested', [UserController::class, 'getSuggestedUsers'])->middleware('auth:api');
         });
 
-        Route::middleware('auth:sanctum')->get('/user/suggested', [UserController::class, 'getSuggestedUsers']);
+        // Route::middleware('auth:sanctum')->get('/user/suggested', [UserController::class, 'getSuggestedUsers']);
 
-        
+        Route::middleware('auth:api')->group(function () {
+            Route::get('/users/suggested/{id}', [UserController::class, 'getSuggestedUsers']);
+            Route::get('/posts/trending-memes', [PostController::class, 'getTrendingMemes']);
+        });
 
     Route::prefix('userlist')
     ->group(function () {

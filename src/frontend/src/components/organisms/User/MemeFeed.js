@@ -245,6 +245,7 @@ function MemeFeed() {
   };
 
   useEffect(() => {
+    console.log('ikaw bahala');
     fetchPosts(1);
     fetchLeaderboard('daily');
   }, []);
