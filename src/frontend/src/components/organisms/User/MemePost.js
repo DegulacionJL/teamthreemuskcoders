@@ -27,46 +27,6 @@ import LightBox from '../LightBox';
 import ReportPostConfirmationModal from '../ReportPostModal';
 import PostReactions from './PostReaction';
 
-// MemePost.js
-
-// MemePost.js
-
-// MemePost.js
-
-// MemePost.js
-
-// MemePost.js
-
-// MemePost.js
-
-// MemePost.js
-
-// MemePost.js
-
-// MemePost.js
-
-// MemePost.js
-
-// MemePost.js
-
-// MemePost.js
-
-// MemePost.js
-
-// MemePost.js
-
-// MemePost.js
-
-// MemePost.js
-
-// MemePost.js
-
-// MemePost.js
-
-// MemePost.js
-
-// MemePost.js
-
 const MemePost = ({
   id,
   caption,

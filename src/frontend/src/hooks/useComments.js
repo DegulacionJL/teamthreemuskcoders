@@ -4,9 +4,9 @@ import {
   deleteComment,
   getComments,
   getReplies,
+  getTotalCommentsCount,
   likeComment,
   unlikeComment,
-  getTotalCommentsCount,
   updateComment, // Add the missing import
 } from 'services/comment.service';
 
