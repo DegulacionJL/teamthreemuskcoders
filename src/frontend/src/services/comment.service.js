@@ -71,28 +71,6 @@ const unlikeComment = async (commentId) => {
   return await req;
 };
 
-const getCommentLikes = async (commentId) => {
-  const req = api
-    .get(`/likes/comments/${commentId}/likes`)
-    .then(({ data }) => {
-      console.log('Get Comment Likes Response:', data);
-      const responseData = data.data; // Access the nested 'data' field
-      return {
-        likes: responseData.likes || [],
-        like_count: responseData.like_count || 0,
-        user_has_liked: responseData.user_has_liked || false,
-      };
-    })
-    .catch((error) => {
-      console.error('Error in getCommentLikes service:', error.response?.data || error.message);
-      return {
-        likes: [],
-        like_count: 0,
-        user_has_liked: false,
-      };
-    });
-  return await req;
-};
 const reportComment = async (postId, commentId, reason) => {
   const req = api
     .post(`/posts/${postId}/comments/${commentId}/report`, { reason })
@@ -107,6 +85,5 @@ export {
   updateComment,
   likeComment,
   unlikeComment,
-  getCommentLikes,
   reportComment,
 };

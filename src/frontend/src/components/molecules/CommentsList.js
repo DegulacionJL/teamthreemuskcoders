@@ -13,10 +13,6 @@ const CommentsList = ({
   onDeleteClick,
   editingCommentId,
   editingCommentText,
-  onLoadMoreReplies,
-  onBackReplies,
-  replyHasMore,
-  replyPage,
   onReactionChange,
   currentUser,
   onReportClick,
@@ -36,10 +32,6 @@ const CommentsList = ({
             onDeleteClick={onDeleteClick}
             editingCommentId={editingCommentId}
             editingCommentText={editingCommentText}
-            onLoadMoreReplies={onLoadMoreReplies}
-            onBackReplies={onBackReplies}
-            replyHasMore={replyHasMore}
-            replyPage={replyPage}
             onReactionChange={onReactionChange}
             currentUser={currentUser}
             onReportClick={onReportClick}
@@ -64,10 +56,6 @@ CommentsList.propTypes = {
   onDeleteClick: PropTypes.func.isRequired,
   editingCommentId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   editingCommentText: PropTypes.string,
-  onLoadMoreReplies: PropTypes.func.isRequired,
-  onBackReplies: PropTypes.func.isRequired,
-  replyHasMore: PropTypes.object.isRequired,
-  replyPage: PropTypes.object.isRequired,
   onReactionChange: PropTypes.func.isRequired,
   currentUser: PropTypes.object,
   onReportClick: PropTypes.func.isRequired,

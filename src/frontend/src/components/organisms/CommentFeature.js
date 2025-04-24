@@ -26,15 +26,13 @@ const CommentFeature = ({ postId, user }) => {
     isLoading,
     totalCommentsCount,
     hasMore,
-    replyToComment,
-    replyPage,
-    replyHasMore,
     editingCommentId,
     editingCommentText,
     tempEditingText,
     commentImage,
     updateCommentImagePreview,
     isUpdateModalOpen,
+    replyToComment,
     showComments,
     commentToDelete,
     isDeleteModalOpen,
@@ -54,8 +52,6 @@ const CommentFeature = ({ postId, user }) => {
     handleUpdateComment,
     handleCancelUpdateComment,
     handleLoadMore,
-    handleLoadMoreReplies,
-    handleBackReplies,
     handleCommentReactionChange,
   } = useComments(postId);
 
@@ -138,10 +134,6 @@ const CommentFeature = ({ postId, user }) => {
             onDeleteClick={confirmDeleteComment}
             editingCommentId={editingCommentId}
             editingCommentText={editingCommentText}
-            onLoadMoreReplies={handleLoadMoreReplies}
-            onBackReplies={handleBackReplies}
-            replyHasMore={replyHasMore}
-            replyPage={replyPage}
             onReactionChange={handleCommentReactionChange}
             user={user}
             onReportClick={handleReportClick}

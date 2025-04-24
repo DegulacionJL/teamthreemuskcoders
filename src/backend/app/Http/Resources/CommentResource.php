@@ -25,6 +25,8 @@ class CommentResource extends JsonResource
             'created_at' => $this->created_at->diffForHumans(),
             'updated_at' => $this->updated_at->toDateTimeString(),
             'timestamp' => $this->created_at->diffForHumans(),
+            'like_count' => $this->like_count ?? 0,
+            'user_has_liked' => $this->user_has_liked ?? false,
         ];
     }
 }

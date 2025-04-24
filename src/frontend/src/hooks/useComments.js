@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   addComment,
   deleteComment,
-  getCommentLikes,
   getComments,
   likeComment,
   unlikeComment,
@@ -15,8 +14,6 @@ export const useComments = (postId) => {
   const [totalCommentsCount, setTotalCommentsCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
-  const [replyPage, setReplyPage] = useState({});
-  const [replyHasMore, setReplyHasMore] = useState({});
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentText, setEditingCommentText] = useState('');
   const [tempEditingText, setTempEditingText] = useState('');
@@ -41,16 +38,19 @@ export const useComments = (postId) => {
         if (showComments) {
           const processedComments = response.data.map((comment) => ({
             ...comment,
-            replies: [],
+            likeCount: comment.like_count,
+            reactionType: comment.user_has_liked ? '😂' : null,
+            replies: comment.replies.map((reply) => ({
+              ...reply,
+              likeCount: reply.like_count,
+              reactionType: reply.user_has_liked ? '😂' : null,
+            })),
           }));
 
           if (append) {
             setComments((prev) => [...prev, ...processedComments]);
           } else {
             setComments(processedComments);
-            for (const comment of processedComments) {
-              await fetchReplies(comment.id, 1);
-            }
           }
 
           setHasMore(response.pagination.has_more);
@@ -84,36 +84,6 @@ export const useComments = (postId) => {
 
     fetchTotalCommentsCount();
   }, [postId]);
-
-  const fetchReplies = useCallback(
-    async (commentId, page = 1, append = false) => {
-      if (!showComments) return;
-      setIsLoading(true);
-      try {
-        const response = await getComments(postId, {
-          parent_id: commentId,
-          page,
-          per_page: 3,
-          sort: 'asc',
-        });
-        const newReplies = response.data || [];
-        setComments((prev) =>
-          prev.map((comment) =>
-            comment.id === commentId
-              ? { ...comment, replies: append ? [...comment.replies, ...newReplies] : newReplies }
-              : comment
-          )
-        );
-        setReplyHasMore((prev) => ({ ...prev, [commentId]: response.pagination.has_more }));
-        setReplyPage((prev) => ({ ...prev, [commentId]: page }));
-      } catch (error) {
-        console.error('Error fetching replies:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [postId, showComments]
-  );
 
   useEffect(() => {
     if (showComments && comments.length === 0) {
@@ -149,7 +119,7 @@ export const useComments = (postId) => {
 
         await addComment(postId, text, image, finalParentId);
         setReplyToComment(null);
-        await fetchReplies(finalParentId, 1);
+        await fetchComments(1); // Fetch all comments again to get updated replies
       } catch (error) {
         console.error('Error adding reply:', error);
         await fetchComments(1);
@@ -157,7 +127,7 @@ export const useComments = (postId) => {
         setIsLoading(false);
       }
     },
-    [postId, comments, fetchComments, fetchReplies]
+    [postId, comments, fetchComments]
   );
 
   const confirmDeleteComment = useCallback((commentId) => {
@@ -244,65 +214,29 @@ export const useComments = (postId) => {
     fetchComments(currentPage + 1, true);
   }, [fetchComments, currentPage]);
 
-  const handleLoadMoreReplies = useCallback(
-    (commentId) => {
-      const currentPageForReply = replyPage[commentId] || 1;
-      fetchReplies(commentId, currentPageForReply + 1, true);
-    },
-    [fetchReplies, replyPage]
-  );
-
-  const handleBackReplies = useCallback(
-    (commentId) => {
-      const currentPageForReply = replyPage[commentId] || 1;
-      if (currentPageForReply > 1) {
-        fetchReplies(commentId, currentPageForReply - 1);
+  const handleLikeComment = useCallback(
+    async (commentId) => {
+      try {
+        await likeComment(commentId);
+        await fetchComments(1); // Refresh comments to get updated likes
+      } catch (error) {
+        console.error('Error liking comment:', error);
       }
     },
-    [fetchReplies, replyPage]
+    [fetchComments]
   );
 
-  const handleLikeComment = useCallback(async (commentId) => {
-    try {
-      await likeComment(commentId);
-      // Fetch the latest like state from the server
-      const likeData = await getCommentLikes(commentId);
-      setComments((prev) =>
-        prev.map((comment) =>
-          comment.id === commentId
-            ? {
-                ...comment,
-                likeCount: likeData.like_count,
-                reactionType: likeData.user_has_liked ? '😂' : null,
-              }
-            : comment
-        )
-      );
-    } catch (error) {
-      console.error('Error liking comment:', error);
-    }
-  }, []);
-
-  const handleUnlikeComment = useCallback(async (commentId) => {
-    try {
-      await unlikeComment(commentId);
-      // Fetch the latest like state from the server
-      const likeData = await getCommentLikes(commentId);
-      setComments((prev) =>
-        prev.map((comment) =>
-          comment.id === commentId
-            ? {
-                ...comment,
-                likeCount: likeData.like_count,
-                reactionType: likeData.user_has_liked ? '😂' : null,
-              }
-            : comment
-        )
-      );
-    } catch (error) {
-      console.error('Error unliking comment:', error);
-    }
-  }, []);
+  const handleUnlikeComment = useCallback(
+    async (commentId) => {
+      try {
+        await unlikeComment(commentId);
+        await fetchComments(1); // Refresh comments to get updated likes
+      } catch (error) {
+        console.error('Error unliking comment:', error);
+      }
+    },
+    [fetchComments]
+  );
 
   const handleCommentReactionChange = useCallback(
     (commentId, hasReacted, newReactionType, count) => {
@@ -314,7 +248,18 @@ export const useComments = (postId) => {
                 reactionType: hasReacted ? newReactionType : null,
                 likeCount: count,
               }
-            : comment
+            : {
+                ...comment,
+                replies: comment.replies.map((reply) =>
+                  reply.id === commentId
+                    ? {
+                        ...reply,
+                        reactionType: hasReacted ? newReactionType : null,
+                        likeCount: count,
+                      }
+                    : reply
+                ),
+              }
         )
       );
       if (hasReacted && newReactionType) {
@@ -331,10 +276,7 @@ export const useComments = (postId) => {
     comments,
     isLoading,
     totalCommentsCount,
-    currentPage,
     hasMore,
-    replyPage,
-    replyHasMore,
     editingCommentId,
     editingCommentText,
     tempEditingText,
@@ -365,8 +307,6 @@ export const useComments = (postId) => {
     handleUpdateComment,
     handleCancelUpdateComment,
     handleLoadMore,
-    handleLoadMoreReplies,
-    handleBackReplies,
     handleLikeComment,
     handleUnlikeComment,
     handleCommentReactionChange,

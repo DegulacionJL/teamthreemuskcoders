@@ -22,23 +22,14 @@ const CommentItem = ({
   editingCommentId,
   editingCommentText,
   maxDepth = Infinity,
-  onLoadMoreReplies,
-  onBackReplies,
-  replyHasMore,
-  replyPage,
   onReactionChange,
   currentUser,
   onReportClick, // New prop for reporting
 }) => {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const isMaxDepthReached = depth >= maxDepth;
-  const hasMoreReplies = !!replyHasMore[comment.id];
-  const currentReplyPage = replyPage[comment.id] || 1;
   const navigate = useNavigate();
   const theme = useTheme();
-
-  const handleLoadMore = () => onLoadMoreReplies && onLoadMoreReplies(comment.id);
-  const handleBack = () => onBackReplies && currentReplyPage > 1 && onBackReplies(comment.id);
 
   // Function to handle author click
   const handleAuthorClick = () => {
@@ -189,21 +180,11 @@ const CommentItem = ({
                 editingCommentId={editingCommentId}
                 editingCommentText={editingCommentText}
                 maxDepth={maxDepth}
-                onLoadMoreReplies={onLoadMoreReplies}
-                onBackReplies={onBackReplies}
-                replyHasMore={replyHasMore}
-                replyPage={replyPage}
                 onReactionChange={onReactionChange}
                 currentUser={currentUser}
                 onReportClick={onReportClick}
               />
             ))}
-            {(hasMoreReplies || currentReplyPage > 1) && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mt: 1 }}>
-                {currentReplyPage > 1 && <Button onClick={handleBack}>Back</Button>}
-                {hasMoreReplies && <Button onClick={handleLoadMore}>Load More</Button>}
-              </Box>
-            )}
           </Box>
         )}
       </Box>
@@ -233,10 +214,6 @@ CommentItem.propTypes = {
   editingCommentId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   editingCommentText: PropTypes.string,
   maxDepth: PropTypes.number,
-  onLoadMoreReplies: PropTypes.func,
-  onBackReplies: PropTypes.func,
-  replyHasMore: PropTypes.object,
-  replyPage: PropTypes.object,
   onReactionChange: PropTypes.func.isRequired,
   currentUser: PropTypes.object,
   onReportClick: PropTypes.func.isRequired,
