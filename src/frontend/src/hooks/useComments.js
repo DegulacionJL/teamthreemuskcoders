@@ -30,8 +30,10 @@ export const useComments = (postId) => {
 
   // Ref to track if comments are being fetched
   const isFetchingComments = useRef(false);
+  // Ref to track if comments have been fetched for this post
+  const hasFetchedComments = useRef(false);
 
-  // Fetch only the total comment count
+  // Fetch only the total comment count (used on initial load)
   const fetchTotalCommentsCount = useCallback(async () => {
     try {
       const response = await getComments(postId, { page: 1, per_page: 0 });
@@ -76,8 +78,11 @@ export const useComments = (postId) => {
 
         setHasMore(response.pagination.has_more);
         setCurrentPage(page);
+        // Update totalCommentsCount directly from the response
         const newCount = response.pagination.total_with_replies || 0;
         setTotalCommentsCount(newCount);
+        // Mark comments as fetched
+        hasFetchedComments.current = true;
       } catch (error) {
         console.error('Error fetching comments:', error);
         if (!append) {
@@ -146,15 +151,14 @@ export const useComments = (postId) => {
       setIsLoading(true);
       try {
         await addComment(postId, text, image);
-        await fetchComments(1); // Refresh comments after adding
-        await fetchTotalCommentsCount(); // Fetch the updated count
+        await fetchComments(1); // Refresh comments after adding (this also updates totalCommentsCount)
       } catch (error) {
         console.error('Error adding comment:', error);
       } finally {
         setIsLoading(false);
       }
     },
-    [postId, fetchComments, fetchTotalCommentsCount]
+    [postId, fetchComments]
   );
 
   const handleAddReply = useCallback(
@@ -169,18 +173,16 @@ export const useComments = (postId) => {
 
         await addComment(postId, text, image, finalParentId);
         setReplyToComment(null);
-        await fetchComments(1); // Refresh main comments
-        await fetchTotalCommentsCount(); // Fetch the updated count
+        await fetchComments(1); // Refresh main comments (this also updates totalCommentsCount)
         setReplyPages((prev) => ({ ...prev, [finalParentId]: 1 })); // Reset reply page
       } catch (error) {
         console.error('Error adding reply:', error);
-        await fetchComments(1);
-        await fetchTotalCommentsCount(); // Fetch the updated count
+        await fetchComments(1); // Refresh comments (this also updates totalCommentsCount)
       } finally {
         setIsLoading(false);
       }
     },
-    [postId, comments, fetchComments, fetchTotalCommentsCount]
+    [postId, comments, fetchComments]
   );
 
   const confirmDeleteComment = useCallback((commentId) => {
@@ -193,8 +195,7 @@ export const useComments = (postId) => {
     setIsLoading(true);
     try {
       await deleteComment(postId, commentToDelete);
-      await fetchComments(1);
-      await fetchTotalCommentsCount(); // Fetch the updated count
+      await fetchComments(1); // Refresh comments (this also updates totalCommentsCount)
       setReplyPages({}); // Reset reply pagination
     } catch (error) {
       console.error('Error deleting comment:', error);
@@ -203,7 +204,7 @@ export const useComments = (postId) => {
       setIsDeleteModalOpen(false);
       setIsLoading(false);
     }
-  }, [postId, commentToDelete, fetchComments, fetchTotalCommentsCount]);
+  }, [postId, commentToDelete, fetchComments]);
 
   const handleEditCommentClick = useCallback((comment) => {
     setEditingCommentId(comment.id);
@@ -235,8 +236,7 @@ export const useComments = (postId) => {
       formData.append('_method', 'PUT');
 
       await updateComment(postId, editingCommentId, formData);
-      await fetchComments(1);
-      await fetchTotalCommentsCount(); // Fetch the updated count
+      await fetchComments(1); // Refresh comments (this also updates totalCommentsCount)
       setEditingCommentId(null);
       setEditingCommentText('');
       setTempEditingText('');
@@ -255,7 +255,6 @@ export const useComments = (postId) => {
     commentImage,
     updateCommentImagePreview,
     fetchComments,
-    fetchTotalCommentsCount,
   ]);
 
   const handleCancelUpdateComment = useCallback(() => {
@@ -353,6 +352,7 @@ export const useComments = (postId) => {
     isDeleteModalOpen,
     replyPages,
     replyLoading,
+    hasFetchedComments: hasFetchedComments.current,
     setReplyToComment,
     setEditingCommentId,
     setEditingCommentText,

@@ -82,6 +82,7 @@ const MemePost = ({
     isDeleteModalOpen,
     replyPages,
     replyLoading,
+    hasFetchedComments, // Added to track if comments have been fetched
     setReplyToComment,
     setEditingCommentId,
     setEditingCommentText,
@@ -174,9 +175,16 @@ const MemePost = ({
     localStorage.setItem(`post_like_count_${postId}`, count.toString());
   }, []);
 
-  const handleToggleComments = () => {
-    setShowComments((prev) => !prev);
-  };
+  const handleToggleComments = useCallback(() => {
+    setShowComments((prev) => {
+      const newShowComments = !prev;
+      // Fetch comments only if they haven't been fetched yet and the comment section is being opened
+      if (newShowComments && !hasFetchedComments) {
+        fetchComments(1);
+      }
+      return newShowComments;
+    });
+  }, [hasFetchedComments, fetchComments]);
 
   const handleImageClick = () => {
     if (currentImage) {
@@ -434,6 +442,7 @@ const MemePost = ({
           isDeleteModalOpen={isDeleteModalOpen}
           replyPages={replyPages}
           replyLoading={replyLoading}
+          hasFetchedComments={hasFetchedComments} // Pass hasFetchedComments to CommentFeature
           setReplyToComment={setReplyToComment}
           setEditingCommentId={setEditingCommentId}
           setEditingCommentText={setEditingCommentText}
