@@ -25,9 +25,18 @@ class CommentService
      */
     public function getComments($postId, $perPage = 5, $page = 1)
     {
+        $repliesPerPage = 3; // Define the number of replies per page
+
         $comments = Comment::where('post_id', $postId)
             ->whereNull('parent_id')
-            ->with(['user', 'replies.user'])
+            ->with([
+                'user',
+                'replies' => function ($query) use ($repliesPerPage) {
+                    $query->with('user')
+                        ->orderBy('created_at', 'asc')
+                        ->take($repliesPerPage); // Strictly limit to 3 replies
+                },
+            ])
             ->orderBy('created_at', 'asc')
             ->paginate($perPage, ['*'], 'page', $page);
 
@@ -37,9 +46,9 @@ class CommentService
         foreach ($comments as $comment) {
             $replyIds = array_merge($replyIds, $comment->replies->pluck('id')->toArray());
         }
-        $commentIds = array_merge($commentIds, $replyIds);
+        $allCommentIds = array_merge($commentIds, $replyIds);
 
-        $likesData = CommentLike::whereIn('comment_id', $commentIds)
+        $likesData = CommentLike::whereIn('comment_id', $allCommentIds)
             ->select('comment_id', \DB::raw('count(*) as like_count'))
             ->groupBy('comment_id')
             ->get()
@@ -47,7 +56,7 @@ class CommentService
             ->toArray();
 
         $userId = Auth::check() ? Auth::id() : null;
-        $userLikes = $userId ? CommentLike::whereIn('comment_id', $commentIds)
+        $userLikes = $userId ? CommentLike::whereIn('comment_id', $allCommentIds)
             ->where('user_id', $userId)
             ->pluck('comment_id')
             ->toArray() : [];
@@ -56,14 +65,18 @@ class CommentService
         foreach ($comments as $comment) {
             $comment->like_count = $likesData[$comment->id] ?? 0;
             $comment->user_has_liked = in_array($comment->id, $userLikes);
+
+            // Calculate total replies for this comment
             $totalReplies = Comment::where('parent_id', $comment->id)->count();
-            $repliesPerPage = 3; // Default replies per page
+
+            // Set pagination metadata for replies
             $comment->replies_pagination = [
                 'total' => $totalReplies,
                 'per_page' => min($repliesPerPage, $totalReplies),
                 'current_page' => 1,
                 'has_more' => $totalReplies > $repliesPerPage,
             ];
+
             foreach ($comment->replies as $reply) {
                 $reply->like_count = $likesData[$reply->id] ?? 0;
                 $reply->user_has_liked = in_array($reply->id, $userLikes);
