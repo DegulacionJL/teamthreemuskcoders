@@ -1,6 +1,7 @@
+// CommentFeature.js
 import { useComments } from 'hooks/useComments';
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import * as commentService from 'services/comment.service';
 import CloseIcon from '@mui/icons-material/Close';
 import {
@@ -33,17 +34,16 @@ const CommentFeature = ({ postId, user }) => {
     updateCommentImagePreview,
     isUpdateModalOpen,
     replyToComment,
-    showComments,
     commentToDelete,
     isDeleteModalOpen,
     replyLoading,
-    setShowComments,
     setReplyToComment,
     setTempEditingText,
     setCommentImage,
     setUpdateCommentImagePreview,
     setIsUpdateModalOpen,
     setIsDeleteModalOpen,
+    fetchComments, // Use fetchComments from useComments
     handleAddComment,
     handleAddReply,
     confirmDeleteComment,
@@ -57,11 +57,16 @@ const CommentFeature = ({ postId, user }) => {
     handleCommentReactionChange,
   } = useComments(postId);
 
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [reportCommentId, setReportCommentId] = useState(null);
-  const [reportReason, setReportReason] = useState('');
-  const [reportError, setReportError] = useState(null);
-  const [isReporting, setIsReporting] = useState(false);
+  // Fetch comments when CommentFeature mounts (i.e., when the comment section is shown)
+  useEffect(() => {
+    fetchComments(1);
+  }, [fetchComments]);
+
+  const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
+  const [reportCommentId, setReportCommentId] = React.useState(null);
+  const [reportReason, setReportReason] = React.useState('');
+  const [reportError, setReportError] = React.useState(null);
+  const [isReporting, setIsReporting] = React.useState(false);
 
   const handleReportClick = (commentId) => {
     setReportCommentId(commentId);
@@ -73,8 +78,6 @@ const CommentFeature = ({ postId, user }) => {
       setReportError('Please provide a reason for reporting.');
       return;
     }
-
-    Foo;
 
     setIsReporting(true);
     setReportError(null);
@@ -121,37 +124,29 @@ const CommentFeature = ({ postId, user }) => {
         </Box>
       )}
 
-      <Button onClick={() => setShowComments(!showComments)} sx={{ mb: 2 }}>
-        {showComments ? 'Hide' : 'Show'} Comments ({totalCommentsCount})
-      </Button>
-
-      {showComments && (
-        <>
-          <CommentSection
-            comments={comments}
-            onAddComment={handleAddComment}
-            replyToComment={replyToComment}
-            onReplyClick={setReplyToComment}
-            onCancelReply={() => setReplyToComment(null)}
-            onAddReply={handleAddReply}
-            onEditClick={handleEditCommentClick}
-            onDeleteClick={confirmDeleteComment}
-            editingCommentId={editingCommentId}
-            editingCommentText={editingCommentText}
-            onReactionChange={handleCommentReactionChange}
-            user={user}
-            onReportClick={handleReportClick}
-            onLoadMoreReplies={handleLoadMoreReplies}
-            replyLoading={replyLoading}
-          />
-          {hasMore && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-              <Button onClick={handleLoadMore} disabled={isLoading}>
-                Load More
-              </Button>
-            </Box>
-          )}
-        </>
+      <CommentSection
+        comments={comments}
+        onAddComment={handleAddComment}
+        replyToComment={replyToComment}
+        onReplyClick={setReplyToComment}
+        onCancelReply={() => setReplyToComment(null)}
+        onAddReply={handleAddReply}
+        onEditClick={handleEditCommentClick}
+        onDeleteClick={confirmDeleteComment}
+        editingCommentId={editingCommentId}
+        editingCommentText={editingCommentText}
+        onReactionChange={handleCommentReactionChange}
+        user={user}
+        onReportClick={handleReportClick}
+        onLoadMoreReplies={handleLoadMoreReplies}
+        replyLoading={replyLoading}
+      />
+      {hasMore && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+          <Button onClick={handleLoadMore} disabled={isLoading}>
+            Load More
+          </Button>
+        </Box>
       )}
 
       <DeleteConfirmationModal

@@ -1,3 +1,4 @@
+// useComments.js
 import { useCallback, useEffect, useState } from 'react';
 import {
   addComment,
@@ -22,12 +23,23 @@ export const useComments = (postId) => {
   const [updateCommentImagePreview, setUpdateCommentImagePreview] = useState(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [replyToComment, setReplyToComment] = useState(null);
-  const [showComments, setShowComments] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [replyPages, setReplyPages] = useState({}); // Track reply pagination per comment
   const [replyLoading, setReplyLoading] = useState({}); // Track loading state per comment
 
+  // Fetch only the total comment count initially
+  const fetchTotalCommentsCount = useCallback(async () => {
+    try {
+      const response = await getComments(postId, { page: 1, per_page: 0 });
+      setTotalCommentsCount(response.pagination.total_with_replies || 0);
+    } catch (error) {
+      console.error('Error fetching total comments count:', error);
+      setTotalCommentsCount(0);
+    }
+  }, [postId]);
+
+  // Fetch full comments data when explicitly requested
   const fetchComments = useCallback(
     async (page = 1, append = false) => {
       setIsLoading(true);
@@ -38,42 +50,38 @@ export const useComments = (postId) => {
           sort: 'asc',
         });
 
-        if (showComments) {
-          const processedComments = response.data.map((comment) => ({
-            ...comment,
-            likeCount: comment.like_count,
-            reactionType: comment.user_has_liked ? '😂' : null,
-            replies: comment.replies.map((reply) => ({
-              ...reply,
-              likeCount: reply.like_count,
-              reactionType: reply.user_has_liked ? '😂' : null,
-            })),
-            replies_pagination: comment.replies_pagination,
-          }));
+        const processedComments = response.data.map((comment) => ({
+          ...comment,
+          likeCount: comment.like_count,
+          reactionType: comment.user_has_liked ? '😂' : null,
+          replies: comment.replies.map((reply) => ({
+            ...reply,
+            likeCount: reply.like_count,
+            reactionType: reply.user_has_liked ? '😂' : null,
+          })),
+          replies_pagination: comment.replies_pagination,
+        }));
 
-          if (append) {
-            setComments((prev) => [...prev, ...processedComments]);
-          } else {
-            setComments(processedComments);
-          }
-
-          setHasMore(response.pagination.has_more);
-          setCurrentPage(page);
+        if (append) {
+          setComments((prev) => [...prev, ...processedComments]);
+        } else {
+          setComments(processedComments);
         }
 
-        setTotalCommentsCount(response.pagination.total_with_replies);
+        setHasMore(response.pagination.has_more);
+        setCurrentPage(page);
+        setTotalCommentsCount(response.pagination.total_with_replies || 0);
       } catch (error) {
         console.error('Error fetching comments:', error);
         if (!append) {
           setComments([]);
-          setTotalCommentsCount(0);
           setHasMore(false);
         }
       } finally {
         setIsLoading(false);
       }
     },
-    [postId, showComments]
+    [postId]
   );
 
   const fetchReplies = useCallback(
@@ -119,24 +127,10 @@ export const useComments = (postId) => {
     [postId]
   );
 
+  // Fetch total comment count on mount
   useEffect(() => {
-    const fetchTotalCommentsCount = async () => {
-      try {
-        const response = await getComments(postId, { page: 1, per_page: 0 });
-        setTotalCommentsCount(response.pagination.total_with_replies);
-      } catch (error) {
-        console.error('Error fetching total comments count:', error);
-      }
-    };
-
     fetchTotalCommentsCount();
-  }, [postId]);
-
-  useEffect(() => {
-    if (showComments && comments.length === 0) {
-      fetchComments(1);
-    }
-  }, [showComments, comments.length, fetchComments]);
+  }, [fetchTotalCommentsCount]);
 
   const handleAddComment = useCallback(
     async (text, image) => {
@@ -144,7 +138,7 @@ export const useComments = (postId) => {
       setIsLoading(true);
       try {
         await addComment(postId, text, image);
-        await fetchComments(1);
+        await fetchComments(1); // Refresh comments after adding
       } catch (error) {
         console.error('Error adding comment:', error);
       } finally {
@@ -341,12 +335,10 @@ export const useComments = (postId) => {
     updateCommentImagePreview,
     isUpdateModalOpen,
     replyToComment,
-    showComments,
     commentToDelete,
     isDeleteModalOpen,
     replyPages,
     replyLoading,
-    setShowComments,
     setReplyToComment,
     setEditingCommentId,
     setEditingCommentText,
@@ -356,7 +348,8 @@ export const useComments = (postId) => {
     setIsUpdateModalOpen,
     setCommentToDelete,
     setIsDeleteModalOpen,
-    fetchComments,
+    fetchComments, // Explicitly expose fetchComments to be called by the parent
+    fetchTotalCommentsCount,
     handleAddComment,
     handleAddReply,
     confirmDeleteComment,

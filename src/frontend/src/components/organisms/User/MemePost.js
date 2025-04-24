@@ -1,10 +1,10 @@
+// MemePost.js
 'use client';
 
 import { useAuth } from 'hooks/useAuth';
 import { useComments } from 'hooks/useComments';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { getComments } from 'services/comment.service';
 import 'yet-another-react-lightbox/styles.css';
 import { ChatBubbleOutline, MoreVert, Share } from '@mui/icons-material';
 import {
@@ -24,7 +24,6 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material';
 import CommentFeature from 'components/organisms/CommentFeature';
-// Import the useComments hook
 import { useTheme as useCustomTheme } from 'theme/ThemeContext';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import EditPostModal from '../EditPostModal';
@@ -63,11 +62,12 @@ const MemePost = ({
   const [isLoading, setIsLoading] = useState(false);
   const [reactionType, setReactionType] = useState(null);
   const [likeCount, setLikeCount] = useState(0);
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(false); // Controls visibility of the comment section
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [commentsFetched, setCommentsFetched] = useState(false); // Track if comments have been fetched
 
-  // Use the useComments hook to get the total comment count
-  const { totalCommentsCount } = useComments(id);
+  // Use the useComments hook to get the total comment count and fetch comments
+  const { totalCommentsCount, fetchComments } = useComments(id);
   const [comments, setComments] = useState([]);
 
   const isDarkMode = darkMode !== undefined ? darkMode : contextDarkMode;
@@ -136,15 +136,20 @@ const MemePost = ({
     localStorage.setItem(`post_like_count_${postId}`, count.toString());
   }, []);
 
-  const fetchComments = async () => {
-    setIsLoading(true);
-    try {
-      const response = await getComments(id);
-      setComments(response.data);
-    } catch (error) {
-      console.error('Error fetching comments:', error);
-    } finally {
-      setIsLoading(false);
+  const handleToggleComments = async () => {
+    setShowComments((prev) => !prev);
+    if (!commentsFetched) {
+      // Fetch comments only when the section is opened for the first time
+      setIsLoading(true);
+      try {
+        const response = await fetchComments(1);
+        setComments(response || []);
+        setCommentsFetched(true);
+      } catch (error) {
+        console.error('Error fetching comments:', error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -208,7 +213,18 @@ const MemePost = ({
 
   const handleImageClick = async () => {
     if (currentImage) {
-      await fetchComments();
+      if (!commentsFetched) {
+        setIsLoading(true);
+        try {
+          const response = await fetchComments(1);
+          setComments(response || []);
+          setCommentsFetched(true);
+        } catch (error) {
+          console.error('Error fetching comments:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
       setIsLightboxOpen(true);
     }
   };
@@ -364,11 +380,10 @@ const MemePost = ({
         <Button
           startIcon={<ChatBubbleOutline />}
           size="small"
-          onClick={() => setShowComments(!showComments)}
+          onClick={handleToggleComments} // Toggle comment section visibility and fetch comments if needed
           sx={{ color: theme.palette.text.secondary }}
         >
-          Comments {totalCommentsCount > 0 && `(${totalCommentsCount})`}{' '}
-          {/* Display comment count */}
+          Comments {totalCommentsCount > 0 && `(${totalCommentsCount})`}
         </Button>
         <Button startIcon={<Share />} size="small" sx={{ color: theme.palette.text.secondary }}>
           Share
@@ -402,6 +417,7 @@ const MemePost = ({
         )}
       </Box>
 
+      {/* Render the comment section only when showComments is true */}
       {showComments && <CommentFeature postId={id} user={loggedInUser} />}
 
       <EditPostModal
