@@ -6,7 +6,8 @@ import {
   getReplies,
   likeComment,
   unlikeComment,
-  getTotalCommentsCount, // Import the new function
+  getTotalCommentsCount,
+  updateComment, // Add the missing import
 } from 'services/comment.service';
 
 export const useComments = (postId) => {
@@ -233,7 +234,7 @@ export const useComments = (postId) => {
       }
       formData.append('_method', 'PUT');
 
-      await updateComment(postId, editingCommentId, formData);
+      await updateComment(postId, editingCommentId, formData); // Now updateComment is defined
       await fetchComments(1);
       await fetchTotalCommentsCount(); // Update total count after updating a comment
       setEditingCommentId(null);
