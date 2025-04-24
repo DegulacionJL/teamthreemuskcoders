@@ -51,7 +51,6 @@ export default function User() {
             sx={{
               backgroundColor: (theme) =>
                 theme.palette.mode === 'light' ? theme.palette.grey[100] : theme.palette.grey[900],
-              pb: 8,
               minHeight: 'calc(100vh - 64px)', // Adjusted for navbar height
               flexGrow: 1, // Ensures it takes up remaining space
             }}

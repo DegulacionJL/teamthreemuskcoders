@@ -1,5 +1,6 @@
 'use client';
 
+import { useAuth } from 'hooks/useAuth';
 import { useEffect, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +25,7 @@ import RightSidebar from './RightContent';
 function MemeFeed() {
   const theme = useTheme();
   const { darkMode } = useCustomTheme();
+  const { user } = useAuth({ middleware: 'auth' });
   const navigate = useNavigate();
 
   // State
@@ -245,7 +247,6 @@ function MemeFeed() {
   };
 
   useEffect(() => {
-    console.log('ikaw bahala');
     fetchPosts(1);
     fetchLeaderboard('daily');
   }, []);
@@ -334,7 +335,7 @@ function MemeFeed() {
         }}
       >
         <CreatePostCard
-          currentUser={currentUser}
+          currentUser={user}
           caption={caption}
           setCaption={setCaption}
           imagePreview={imagePreview}

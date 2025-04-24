@@ -1,6 +1,5 @@
-'use client';
-
 import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
 import { PhotoCamera } from '@mui/icons-material';
 import { Avatar, Box, Button, Card, CardContent, TextField, Typography } from '@mui/material';
 import { useTheme } from '@mui/material';
@@ -19,6 +18,7 @@ const CreatePostCard = ({
   handleMemeCreatorSave,
 }) => {
   const theme = useTheme();
+  const navigate = useNavigate();
 
   return (
     <Card sx={{ width: '100%', mb: 3, maxWidth: '80%' }}>
@@ -95,7 +95,19 @@ const CreatePostCard = ({
                     }`
                   : 'JD'}
               </Avatar>
-              <Typography variant="h6">
+              <Typography
+                variant="h6"
+                onClick={() => {
+                  console.log('navigating to user:', currentUser?.id);
+                  navigate(`/users/${currentUser?.id}`);
+                }}
+                sx={{
+                  cursor: 'pointer',
+                  '&:hover': {
+                    textDecoration: 'underline',
+                  },
+                }}
+              >
                 {currentUser
                   ? `${
                       currentUser.first_name?.charAt(0).toUpperCase() +
@@ -104,7 +116,7 @@ const CreatePostCard = ({
                       currentUser.last_name?.charAt(0).toUpperCase() +
                       currentUser.last_name?.slice(1)
                     }`
-                  : 'John Degz'}
+                  : 'Unauthenticated User'}
               </Typography>
             </Box>
 
@@ -208,6 +220,7 @@ CreatePostCard.propTypes = {
     avatar: PropTypes.string,
     first_name: PropTypes.string,
     last_name: PropTypes.string,
+    id: PropTypes.number, // Added ID to prop types
   }),
   caption: PropTypes.string.isRequired,
   setCaption: PropTypes.func.isRequired,
