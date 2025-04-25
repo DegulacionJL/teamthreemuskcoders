@@ -1,46 +1,146 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import { deleteUser, retrieveUser, searchUsers } from 'services/user.service';
-import { Email, Person, VerifiedUser, Work } from '@mui/icons-material';
-import Avatar from '@mui/material/Avatar';
-import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
-import Typography from '@mui/material/Typography';
+import { CalendarMonth, Email, Info, Person, VerifiedUser, Work } from '@mui/icons-material';
+import CloseIcon from '@mui/icons-material/Close';
+import {
+  Avatar,
+  Box,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  IconButton,
+  LinearProgress,
+  Paper,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import DataTable from 'components/molecules/DataTable';
 import AddEditModal from 'components/molecules/users/AddEditModal';
 import { criteria, meta as defaultMeta } from 'config/search';
 
-function Users() {
+/* -------------------------------------------------------------------- */
+export default function Users() {
   const { t } = useTranslation();
+
+  /* --------------------------- state -------------------------------- */
   const [data, setData] = useState([]);
   const [user, setUser] = useState(null);
+  const [detail, setDetail] = useState(null);
   const [query, setQuery] = useState(criteria);
   const [meta, setMeta] = useState(defaultMeta);
-  const [open, setOpen] = useState(false);
+  const [openForm, setOpenForm] = useState(false);
+  const [openDetail, setOpenDetail] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+
+  /* --------------------- fetch helpers & debounce ------------------- */
+
+  const parseDate = (raw) => {
+    if (!raw) return null;
+
+    // ISO dates parse fine
+    let ms = Date.parse(raw);
+
+    // If still NaN and only digits, treat as Unix timestamp
+    if (Number.isNaN(ms) && /^\d+$/.test(raw)) {
+      ms = raw.length === 10 ? Number(raw) * 1000 : Number(raw); // sec vs ms
+    }
+
+    // If Laravel format, replace space with ‘T’
+    if (Number.isNaN(ms)) {
+      ms = Date.parse(raw.replace(' ', 'T'));
+    }
+
+    return Number.isNaN(ms) ? null : new Date(ms);
+  };
+  const debounceRef = useRef();
 
   const fetchUsers = async () => {
-    const { meta, data } = await searchUsers(query);
-    setMeta({ ...meta, meta });
-    setData(data);
+    if (isFetching) return;
+    setIsFetching(true);
+    try {
+      const res = await searchUsers(query);
+      setMeta(res.meta);
+      setData(res.data);
+    } catch (err) {
+      console.error(err);
+      toast(t('Unable to fetch users'), { type: 'error' });
+    } finally {
+      setIsFetching(false);
+    }
   };
 
   useEffect(() => {
-    fetchUsers();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(fetchUsers, 300);
+    return () => clearTimeout(debounceRef.current);
   }, [query]);
 
+  const updateQuery = useCallback(
+    (patch) =>
+      setQuery((q) => {
+        const next = { ...q, ...patch };
+        return JSON.stringify(next) === JSON.stringify(q) ? q : next;
+      }),
+    []
+  );
+
+  /* ------------------------- memoised handlers ---------------------- */
+  const handleChangePage = useCallback((_, value) => updateQuery({ page: value }), [updateQuery]);
+
+  const handleSort = useCallback(
+    (_, { order, sort }) => updateQuery({ order, sort }),
+    [updateQuery]
+  );
+
+  const handleSearch = useCallback((kw) => updateQuery({ keyword: kw, page: 1 }), [updateQuery]);
+
+  const handleRowClick = useCallback(
+    async (row) => {
+      try {
+        const full = await retrieveUser(row.id);
+
+        console.log('full user from API:', full);
+
+        setDetail(full);
+        setOpenDetail(true);
+      } catch (err) {
+        toast(t('Unable to load user details'), { type: 'error' });
+        console.error(err);
+      }
+    },
+    [t]
+  );
+
+  const handleEdit = useCallback(async (id) => {
+    setUser(await retrieveUser(id));
+    setOpenForm(true);
+  }, []);
+
+  const handleDelete = useCallback(
+    async (id) => {
+      if (confirm(t('Are you sure you want to delete this user?'))) {
+        await deleteUser(id);
+        toast(t('User deleted successfully'), { type: 'success' });
+        fetchUsers();
+      }
+    },
+    [t]
+  );
+
+  /* --------------------------- table spec --------------------------- */
   const headers = [
     {
       id: 'avatar',
       label: '',
+      width: 64,
       render: (row) => (
         <Avatar
           src={row?.avatar ? row.avatar.replace(/\\/g, '') : 'https://via.placeholder.com/40'}
           alt="Profile"
           sx={{ width: 40, height: 40 }}
-          onError={(e) => {
-            e.target.src = 'https://via.placeholder.com/40';
-          }}
         />
       ),
     },
@@ -51,6 +151,7 @@ function Users() {
           <Person sx={{ verticalAlign: 'middle', color: '#ff7043' }} /> {t('First Name')}
         </>
       ),
+      width: 160,
     },
     {
       id: 'last_name',
@@ -59,6 +160,7 @@ function Users() {
           <Person sx={{ verticalAlign: 'middle', color: '#ff7043' }} /> {t('Last Name')}
         </>
       ),
+      width: 160,
     },
     {
       id: 'email',
@@ -67,6 +169,7 @@ function Users() {
           <Email sx={{ verticalAlign: 'middle', color: '#42a5f5' }} /> {t('Email Address')}
         </>
       ),
+      width: 240,
     },
     {
       id: 'role',
@@ -75,6 +178,7 @@ function Users() {
           <Work sx={{ verticalAlign: 'middle', color: '#66bb6a' }} /> {t('Role')}
         </>
       ),
+      width: 120,
     },
     {
       id: 'status.name',
@@ -83,100 +187,160 @@ function Users() {
           <VerifiedUser sx={{ verticalAlign: 'middle', color: '#ffca28' }} /> {t('Status')}
         </>
       ),
+      width: 120,
     },
   ];
 
+  /* ------------------------------ UI ------------------------------- */
   return (
-    <Box
-      sx={{
-        p: 3,
-        backgroundColor: '#121212', // Dark background for the whole container
-        minHeight: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-      }}
-    >
-      <Paper
-        elevation={4}
+    <Fragment>
+      <Box
         sx={{
-          width: '100%',
-          maxWidth: 1200,
-          p: 3,
-          borderRadius: 3,
-          backgroundColor: '#333', // Dark background for the Paper component
-          boxShadow: 3,
+          backgroundColor: '#121212',
+          minHeight: '100vh',
+          display: 'flex',
+          justifyContent: 'center',
         }}
       >
-        <Typography
-          variant="h5"
+        <Paper
+          elevation={4}
           sx={{
-            mb: 3,
-            fontWeight: 'bold',
-            color: '#81d4fa', // Lighter text for header
-            fontFamily: 'Poppins, sans-serif',
+            width: '100%',
+            maxWidth: 1200,
+            p: 3,
+            borderRadius: 0,
+            backgroundColor: '#333',
+            boxShadow: 3,
           }}
         >
-          {t('Manage Users')}
-        </Typography>
-
-        <DataTable
-          header={headers}
-          data={data}
-          page={query.page}
-          total={meta.lastPage}
-          order={query.order}
-          sort={query.sort}
-          handleChangePage={(event, value) => setQuery({ ...query, page: value })}
-          handleSort={(event, { order, sort }) => setQuery({ ...query, order, sort })}
-          handleSearch={(keyword) => setQuery({ ...query, keyword, page: 1 })}
-          handleEdit={async (id) => {
-            const user = await retrieveUser(id);
-            setOpen(true);
-            setUser(user);
-          }}
-          handleDelete={async (id) => {
-            if (confirm(t('Are you sure you want to delete this user?'))) {
-              await deleteUser(id);
-              fetchUsers();
-              toast(t('User deleted successfully'), { type: 'success' });
-            }
-          }}
-          handleAdd={() => {
-            setUser(null);
-            setOpen(true);
-          }}
-          sx={{
-            boxShadow: 2,
-            borderRadius: 2,
-            '& .MuiTableHead-root': {
-              backgroundColor: '#1e293b',
-              color: 'white',
-            },
-            '& .MuiTableRow-root:hover': {
-              backgroundColor: '#424242', // Dark hover effect
-            },
-            '& .MuiTableCell-root': {
-              color: '#e0e0e0', // Light color for table text
+          <Typography
+            variant="h5"
+            sx={{
+              mb: 3,
+              fontWeight: 'bold',
+              color: '#81d4fa',
               fontFamily: 'Poppins, sans-serif',
-            },
-          }}
-        />
-      </Paper>
+            }}
+          >
+            {t('Manage Users')}
+          </Typography>
 
+          {isFetching && <LinearProgress sx={{ mb: 1 }} />}
+
+          <DataTable
+            header={headers}
+            data={data}
+            page={query.page}
+            total={meta.lastPage}
+            order={query.order}
+            sort={query.sort}
+            handleChangePage={handleChangePage}
+            handleSort={handleSort}
+            handleSearch={handleSearch}
+            handleEdit={handleEdit}
+            handleDelete={handleDelete}
+            handleRowClick={handleRowClick}
+            sx={{
+              tableLayout: 'fixed',
+              boxShadow: 2,
+              borderRadius: 2,
+              '& .MuiTableHead-root': {
+                backgroundColor: '#1e293b',
+                color: 'white',
+              },
+              '& .MuiTableRow-root:hover': { backgroundColor: '#424242' },
+              '& .MuiTableCell-root': {
+                color: '#e0e0e0',
+                fontFamily: 'Poppins, sans-serif',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              },
+            }}
+          />
+        </Paper>
+      </Box>
+
+      {/* ---------------------- Detail dialog ------------------------ */}
+      <Dialog
+        open={openDetail}
+        onClose={() => setOpenDetail(false)}
+        fullWidth
+        maxWidth="sm"
+        PaperProps={{ sx: { backgroundColor: '#1e1e1e', color: 'white' } }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Info sx={{ color: '#81d4fa' }} /> {t('User Details')}
+          <Box sx={{ flexGrow: 1 }} />
+          <Tooltip title={t('Close')}>
+            <IconButton onClick={() => setOpenDetail(false)} sx={{ color: 'white' }}>
+              <CloseIcon />
+            </IconButton>
+          </Tooltip>
+        </DialogTitle>
+        <DialogContent dividers>
+          {detail && (
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={4} sx={{ textAlign: 'center' }}>
+                <Avatar
+                  src={detail?.avatar?.replace(/\\/g, '')}
+                  alt="Profile"
+                  sx={{ width: 100, height: 100, mx: 'auto' }}
+                />
+                <Typography mt={2} variant="h6">
+                  {detail.first_name} {detail.last_name}
+                </Typography>
+                <Typography variant="body2" color="gray">
+                  {detail.role}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={8}>
+                <Box sx={{ display: 'flex', mb: 1 }}>
+                  <Email sx={{ mr: 1 }} />
+                  <Typography>{detail.email}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', mb: 1 }}>
+                  <CalendarMonth sx={{ mr: 1 }} />
+                  <Typography>
+                    {t('Joined')}:&nbsp;
+                    {new Date(detail.created_at).toLocaleDateString()}
+                  </Typography>
+                </Box>
+                {detail.last_login_at ? (
+                  <Box sx={{ display: 'flex', mb: 1 }}>
+                    <VerifiedUser sx={{ mr: 1 }} />
+                    <Typography>
+                      {t('Last login')}:&nbsp;
+                      {new Date(detail.last_login_at).toLocaleString() || t('Invalid Date')}
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Box sx={{ display: 'flex', mb: 1 }}>
+                    <VerifiedUser sx={{ mr: 1 }} />
+                    <Typography>
+                      {t('Last login')}: {t('Never logged in')}
+                    </Typography>
+                  </Box>
+                )}
+              </Grid>
+            </Grid>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* -------------------- Add / Edit modal ----------------------- */}
       <AddEditModal
-        open={open}
+        open={openForm}
         user={user}
-        handleSaveEvent={(response) => {
+        handleSaveEvent={() => {
           fetchUsers();
-          setOpen(false);
+          setOpenForm(false);
           toast(user ? t('User updated successfully') : t('User created successfully'), {
             type: 'success',
           });
         }}
-        handleClose={() => setOpen(false)}
+        handleClose={() => setOpenForm(false)}
       />
-    </Box>
+    </Fragment>
   );
 }
-
-export default Users;

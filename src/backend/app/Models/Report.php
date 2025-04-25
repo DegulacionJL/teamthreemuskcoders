@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class Report extends Model
 {
@@ -30,5 +31,19 @@ class Report extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Log debug information for the report creation
+     */
+    public static function logReportCreation($report)
+    {
+        Log::debug('Report Created:', [
+            'user_id' => $report->user_id,
+            'reportable_id' => $report->reportable_id,
+            'reportable_type' => $report->reportable_type,
+            'reason' => $report->reason,
+            'status' => $report->status,
+        ]);
     }
 }
