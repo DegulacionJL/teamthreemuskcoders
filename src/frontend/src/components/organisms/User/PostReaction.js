@@ -2,7 +2,7 @@
 
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getLikes, likePost, unlikePost } from 'services/meme.service';
+import { likePost, unlikePost } from 'services/meme.service';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import { Box, Button, CircularProgress, Fade, Popper, Typography } from '@mui/material';
 
@@ -29,58 +29,42 @@ AnimatedEmoji.propTypes = {
   onClick: PropTypes.func,
 };
 
-const PostReactions = ({ postId, isDarkMode, onReactionChange, initialReactionType }) => {
+const PostReactions = ({
+  postId,
+  isDarkMode,
+  onReactionChange,
+  initialReactionType,
+  initialLikeCount = 0,
+  initialHasReacted = false,
+}) => {
   const [showReactions, setShowReactions] = useState(false);
-  const [hasReacted, setHasReacted] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
+  const [hasReacted, setHasReacted] = useState(initialHasReacted);
+  const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const likeButtonRef = useRef(null);
 
-  // Fetch initial like data
+  // Initialize state from props and localStorage
   useEffect(() => {
-    const fetchLikes = async () => {
-      setIsInitializing(true);
-      try {
-        // Try to get data from localStorage first for immediate display
-        const storedReaction = localStorage.getItem(`post_reaction_${postId}`);
-        const storedLikeCount = localStorage.getItem(`post_like_count_${postId}`);
+    setIsInitializing(true);
+    // Load from localStorage if available, otherwise use props
+    const storedReaction = localStorage.getItem(`post_reaction_${postId}`);
+    const storedLikeCount = localStorage.getItem(`post_like_count_${postId}`);
 
-        if (storedReaction) {
-          setHasReacted(true);
-        }
+    const hasReactedFromStorage = storedReaction === (initialReactionType || '😂');
+    setHasReacted(hasReactedFromStorage || initialHasReacted);
+    setLikeCount(storedLikeCount ? Number.parseInt(storedLikeCount, 10) : initialLikeCount);
 
-        if (storedLikeCount) {
-          setLikeCount(Number.parseInt(storedLikeCount, 10));
-        }
+    // Update localStorage with initial values if not present
+    if (!storedReaction && initialHasReacted) {
+      localStorage.setItem(`post_reaction_${postId}`, initialReactionType || '😂');
+    }
+    if (!storedLikeCount) {
+      localStorage.setItem(`post_like_count_${postId}`, initialLikeCount.toString());
+    }
 
-        // Then fetch from server to ensure data is up-to-date
-        const response = await getLikes(postId);
-
-        // Ensure we have valid data
-        if (response) {
-          setLikeCount(response.like_count || 0);
-          setHasReacted(response.user_has_liked || false);
-
-          // Update localStorage with fresh data
-          if (response.user_has_liked) {
-            localStorage.setItem(`post_reaction_${postId}`, initialReactionType || '😂');
-          } else {
-            localStorage.removeItem(`post_reaction_${postId}`);
-          }
-
-          localStorage.setItem(`post_like_count_${postId}`, response.like_count.toString());
-        }
-      } catch (error) {
-        console.error('Error fetching likes:', error);
-        // Keep using localStorage data if API fails
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-
-    fetchLikes();
-  }, [postId, initialReactionType]);
+    setIsInitializing(false);
+  }, [postId, initialReactionType, initialLikeCount, initialHasReacted]);
 
   // Notify parent component when like count changes
   useEffect(() => {
@@ -103,16 +87,12 @@ const PostReactions = ({ postId, isDarkMode, onReactionChange, initialReactionTy
       const response = await likePost(postId);
 
       // Update with actual data from server
-      if (response && response.like_count !== undefined) {
-        setLikeCount(response.like_count);
-      }
+      const newLikeCount = response?.like_count ?? likeCount + 1;
+      setLikeCount(newLikeCount);
 
       // Update localStorage
       localStorage.setItem(`post_reaction_${postId}`, '😂');
-      localStorage.setItem(
-        `post_like_count_${postId}`,
-        response?.like_count?.toString() || (likeCount + 1).toString()
-      );
+      localStorage.setItem(`post_like_count_${postId}`, newLikeCount.toString());
     } catch (error) {
       // Revert UI state if API call fails
       setHasReacted(false);
@@ -144,10 +124,10 @@ const PostReactions = ({ postId, isDarkMode, onReactionChange, initialReactionTy
       }
 
       // Update with actual data from server
-      if (response && response.like_count !== undefined) {
-        setLikeCount(response.like_count);
-        localStorage.setItem(`post_like_count_${postId}`, response.like_count.toString());
-      }
+      const newLikeCount =
+        response?.like_count ?? (newReactionState ? likeCount + 1 : Math.max(0, likeCount - 1));
+      setLikeCount(newLikeCount);
+      localStorage.setItem(`post_like_count_${postId}`, newLikeCount.toString());
     } catch (error) {
       // Revert UI state if API call fails
       setHasReacted(!newReactionState);
@@ -156,7 +136,7 @@ const PostReactions = ({ postId, isDarkMode, onReactionChange, initialReactionTy
     } finally {
       setIsLoading(false);
     }
-  }, [hasReacted, postId, isLoading]);
+  }, [hasReacted, postId, isLoading, likeCount]);
 
   return (
     <Box sx={{ position: 'relative' }}>
@@ -242,6 +222,13 @@ PostReactions.propTypes = {
   isDarkMode: PropTypes.bool.isRequired,
   onReactionChange: PropTypes.func,
   initialReactionType: PropTypes.string,
+  initialLikeCount: PropTypes.number,
+  initialHasReacted: PropTypes.bool,
+};
+
+PostReactions.defaultProps = {
+  initialLikeCount: 0,
+  initialHasReacted: false,
 };
 
 export default PostReactions;

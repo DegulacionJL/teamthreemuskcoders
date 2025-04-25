@@ -1,10 +1,7 @@
-'use client';
-
 import { useAuth } from 'hooks/useAuth';
 import { useComments } from 'hooks/useComments';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { getComments } from 'services/comment.service';
 import 'yet-another-react-lightbox/styles.css';
 import { ChatBubbleOutline, MoreVert, Share } from '@mui/icons-material';
 import {
@@ -16,7 +13,6 @@ import {
   CardContent,
   CardHeader,
   CardMedia,
-  CircularProgress,
   IconButton,
   Menu,
   MenuItem,
@@ -24,7 +20,6 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material';
 import CommentFeature from 'components/organisms/CommentFeature';
-// Import the useComments hook
 import { useTheme as useCustomTheme } from 'theme/ThemeContext';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import EditPostModal from '../EditPostModal';
@@ -60,15 +55,47 @@ const MemePost = ({
   const [currentImage, setCurrentImage] = useState(image);
   const [isPostDeleteModalOpen, setIsPostDeleteModalOpen] = useState(false);
   const [isReportPostModalOpen, setIsReportPostModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [reactionType, setReactionType] = useState(null);
   const [likeCount, setLikeCount] = useState(0);
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(false); // Controls visibility of the comment section
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
-  // Use the useComments hook to get the total comment count
-  const { totalCommentsCount } = useComments(id);
-  const [comments, setComments] = useState([]);
+  // Use the useComments hook to manage comments state
+  const {
+    comments,
+    isLoading: commentsLoading,
+    totalCommentsCount,
+    hasMore,
+    editingCommentId,
+    editingCommentText,
+    tempEditingText,
+    commentImage,
+    updateCommentImagePreview,
+    isUpdateModalOpen,
+    replyToComment,
+    commentToDelete,
+    isDeleteModalOpen,
+    replyLoading,
+    hasFetchedComments,
+    setReplyToComment,
+    setTempEditingText,
+    setCommentImage,
+    setUpdateCommentImagePreview,
+    setIsUpdateModalOpen,
+    setIsDeleteModalOpen,
+    fetchComments,
+    handleAddComment,
+    handleAddReply,
+    confirmDeleteComment,
+    handleDeleteComment,
+    handleEditCommentClick,
+    handleUpdateCommentImage,
+    handleUpdateComment,
+    handleCancelUpdateComment,
+    handleLoadMore,
+    handleLoadMoreReplies,
+    handleCommentReactionChange,
+  } = useComments(id);
 
   const isDarkMode = darkMode !== undefined ? darkMode : contextDarkMode;
 
@@ -136,32 +163,21 @@ const MemePost = ({
     localStorage.setItem(`post_like_count_${postId}`, count.toString());
   }, []);
 
-  const fetchComments = async () => {
-    setIsLoading(true);
-    try {
-      const response = await getComments(id);
-      setComments(response.data);
-    } catch (error) {
-      console.error('Error fetching comments:', error);
-    } finally {
-      setIsLoading(false);
+  const handleToggleComments = useCallback(() => {
+    setShowComments((prev) => {
+      const newShowComments = !prev;
+      // Fetch comments only if they haven't been fetched yet and the comment section is being opened
+      if (newShowComments && !hasFetchedComments) {
+        fetchComments(1);
+      }
+      return newShowComments;
+    });
+  }, [hasFetchedComments, fetchComments]);
+
+  const handleImageClick = () => {
+    if (currentImage) {
+      setIsLightboxOpen(true);
     }
-  };
-
-  const handleAddComment = (text) => {
-    if (!text.trim()) return;
-
-    const newComment = {
-      user: loggedInUser || {
-        first_name: 'Current',
-        last_name: 'User',
-        avatar: '/placeholder.svg?height=40&width=40',
-      },
-      text: text,
-    };
-
-    setComments((prev) => [...prev, newComment]);
-    console.log('New comment added:', newComment);
   };
 
   function getRelativeTime(timestamp) {
@@ -206,13 +222,6 @@ const MemePost = ({
     );
   };
 
-  const handleImageClick = async () => {
-    if (currentImage) {
-      await fetchComments();
-      setIsLightboxOpen(true);
-    }
-  };
-
   return (
     <Card
       sx={{
@@ -227,25 +236,6 @@ const MemePost = ({
         position: 'relative',
       }}
     >
-      {isLoading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-            zIndex: 100,
-          }}
-        >
-          <CircularProgress />
-        </Box>
-      )}
-
       <CardHeader
         avatar={
           <Avatar
@@ -348,7 +338,7 @@ const MemePost = ({
         caption={currentCaption}
         user={postUsers}
         timestamp={timestamp}
-        comments={comments || []}
+        comments={comments} // Pass comments to LightBox
         reactionCount={likeCount}
         onAddComment={handleAddComment}
         darkMode={isDarkMode}
@@ -364,11 +354,10 @@ const MemePost = ({
         <Button
           startIcon={<ChatBubbleOutline />}
           size="small"
-          onClick={() => setShowComments(!showComments)}
+          onClick={handleToggleComments} // Toggle comment section visibility
           sx={{ color: theme.palette.text.secondary }}
         >
-          Comments {totalCommentsCount > 0 && `(${totalCommentsCount})`}{' '}
-          {/* Display comment count */}
+          Comments {totalCommentsCount > 0 && `(${totalCommentsCount})`}
         </Button>
         <Button startIcon={<Share />} size="small" sx={{ color: theme.palette.text.secondary }}>
           Share
@@ -402,7 +391,43 @@ const MemePost = ({
         )}
       </Box>
 
-      {showComments && <CommentFeature postId={id} user={loggedInUser} />}
+      {/* Render the comment section only when showComments is true */}
+      {showComments && (
+        <CommentFeature
+          postId={id}
+          user={loggedInUser}
+          comments={comments}
+          isLoading={commentsLoading}
+          hasMore={hasMore}
+          editingCommentId={editingCommentId}
+          editingCommentText={editingCommentText}
+          tempEditingText={tempEditingText}
+          commentImage={commentImage}
+          updateCommentImagePreview={updateCommentImagePreview}
+          isUpdateModalOpen={isUpdateModalOpen}
+          replyToComment={replyToComment}
+          commentToDelete={commentToDelete}
+          isDeleteModalOpen={isDeleteModalOpen}
+          replyLoading={replyLoading}
+          setReplyToComment={setReplyToComment}
+          setTempEditingText={setTempEditingText}
+          setCommentImage={setCommentImage}
+          setUpdateCommentImagePreview={setUpdateCommentImagePreview}
+          setIsUpdateModalOpen={setIsUpdateModalOpen}
+          setIsDeleteModalOpen={setIsDeleteModalOpen}
+          handleAddComment={handleAddComment}
+          handleAddReply={handleAddReply}
+          confirmDeleteComment={confirmDeleteComment}
+          handleDeleteComment={handleDeleteComment}
+          handleEditCommentClick={handleEditCommentClick}
+          handleUpdateCommentImage={handleUpdateCommentImage}
+          handleUpdateComment={handleUpdateComment}
+          handleCancelUpdateComment={handleCancelUpdateComment}
+          handleLoadMore={handleLoadMore}
+          handleLoadMoreReplies={handleLoadMoreReplies}
+          handleCommentReactionChange={handleCommentReactionChange}
+        />
+      )}
 
       <EditPostModal
         open={isEditModalOpen}

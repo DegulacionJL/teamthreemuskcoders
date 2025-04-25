@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
-import { Box, Button, Typography, useTheme } from '@mui/material';
+import { Box, Button, CircularProgress, Typography, useTheme } from '@mui/material';
 import AvatarWithInitials from 'components/atoms/AvatarWithInitial';
 import ImagePreview from 'components/atoms/ImagePreview';
 import CommentActions from 'components/molecules/CommentActions';
@@ -22,23 +22,17 @@ const CommentItem = ({
   editingCommentId,
   editingCommentText,
   maxDepth = Infinity,
-  onLoadMoreReplies,
-  onBackReplies,
-  replyHasMore,
-  replyPage,
   onReactionChange,
   currentUser,
-  onReportClick, // New prop for reporting
+  onReportClick,
+  onLoadMoreReplies,
+  replyLoading,
 }) => {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const isMaxDepthReached = depth >= maxDepth;
-  const hasMoreReplies = !!replyHasMore[comment.id];
-  const currentReplyPage = replyPage[comment.id] || 1;
   const navigate = useNavigate();
   const theme = useTheme();
-
-  const handleLoadMore = () => onLoadMoreReplies && onLoadMoreReplies(comment.id);
-  const handleBack = () => onBackReplies && currentReplyPage > 1 && onBackReplies(comment.id);
+  const hasMoreReplies = comment.replies_pagination?.has_more || false;
 
   // Function to handle author click
   const handleAuthorClick = () => {
@@ -189,19 +183,28 @@ const CommentItem = ({
                 editingCommentId={editingCommentId}
                 editingCommentText={editingCommentText}
                 maxDepth={maxDepth}
-                onLoadMoreReplies={onLoadMoreReplies}
-                onBackReplies={onBackReplies}
-                replyHasMore={replyHasMore}
-                replyPage={replyPage}
                 onReactionChange={onReactionChange}
                 currentUser={currentUser}
                 onReportClick={onReportClick}
+                onLoadMoreReplies={onLoadMoreReplies}
+                replyLoading={replyLoading}
               />
             ))}
-            {(hasMoreReplies || currentReplyPage > 1) && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mt: 1 }}>
-                {currentReplyPage > 1 && <Button onClick={handleBack}>Back</Button>}
-                {hasMoreReplies && <Button onClick={handleLoadMore}>Load More</Button>}
+            {hasMoreReplies && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                <Button
+                  onClick={() => onLoadMoreReplies(comment.id)}
+                  disabled={replyLoading[comment.id]}
+                >
+                  {replyLoading[comment.id] ? (
+                    <>
+                      <CircularProgress size={20} sx={{ mr: 1 }} />
+                      Loading...
+                    </>
+                  ) : (
+                    'Load More Replies'
+                  )}
+                </Button>
               </Box>
             )}
           </Box>
@@ -233,13 +236,11 @@ CommentItem.propTypes = {
   editingCommentId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   editingCommentText: PropTypes.string,
   maxDepth: PropTypes.number,
-  onLoadMoreReplies: PropTypes.func,
-  onBackReplies: PropTypes.func,
-  replyHasMore: PropTypes.object,
-  replyPage: PropTypes.object,
   onReactionChange: PropTypes.func.isRequired,
   currentUser: PropTypes.object,
   onReportClick: PropTypes.func.isRequired,
+  onLoadMoreReplies: PropTypes.func.isRequired,
+  replyLoading: PropTypes.object.isRequired,
 };
 
 export default CommentItem;

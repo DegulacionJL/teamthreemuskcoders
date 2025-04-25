@@ -140,6 +140,8 @@ Route::prefix('posts/{postId}/comments')->group(function () {
     Route::put('/{commentId}', [CommentController::class, 'update'])->middleware('auth:api'); // ✅ Update comment
     Route::delete('/{commentId}', [CommentController::class, 'destroy'])->middleware('auth:api');
     Route::post('/{commentId}/report', [CommentController::class, 'report'])->middleware('auth:api');
+    Route::get('/{commentId}/replies', [CommentController::class, 'getReplies']); // ✅ Get paginated replies
+    Route::get('/total-count', [CommentController::class, 'getTotalCount']);
 });
 
 // likes route

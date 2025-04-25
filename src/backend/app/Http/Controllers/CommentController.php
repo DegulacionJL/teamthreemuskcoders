@@ -42,13 +42,8 @@ class CommentController extends Controller
         try {
             $perPage = request()->query('per_page', 5);
             $page = request()->query('page', 1);
-            $parentId = request()->query('parent_id');
 
-            if ($parentId) {
-                $result = $this->commentService->getReplies($postId, $parentId, $perPage, $page);
-            } else {
-                $result = $this->commentService->getComments($postId, $perPage, $page);
-            }
+            $result = $this->commentService->getComments($postId, $perPage, $page);
 
             $comments = $result['comments'];
             $totalWithReplies = $result['total_with_replies'];
@@ -61,6 +56,45 @@ class CommentController extends Controller
                 'current_page' => $comments->currentPage(),
                 'last_page' => $comments->lastPage(),
                 'has_more' => $comments->hasMorePages(),
+            ];
+        } catch (Exception $e) {
+            $this->response = [
+                'error' => $e->getMessage(),
+                'code' => 500,
+            ];
+        }
+
+        return response()->json($this->response, $this->response['code']);
+    }
+
+    /**
+     * Get Paginated Replies
+     *
+     * Retrieves paginated replies for a specific comment.
+     *
+     * @param int $postId
+     * @param int $commentId
+     * @return JsonResponse
+     */
+    public function getReplies($postId, $commentId)
+    {
+        try {
+            $perPage = request()->query('per_page', 3);
+            $page = request()->query('page', 1);
+
+            $result = $this->commentService->getReplies($commentId, $postId, $perPage, $page);
+
+            $replies = $result['replies'];
+            $totalReplies = $result['total_replies'];
+
+            $this->response['data'] = CommentResource::collection($replies);
+            $this->response['pagination'] = [
+                'total' => $replies->total(),
+                'total_replies' => $totalReplies,
+                'per_page' => $replies->perPage(),
+                'current_page' => $replies->currentPage(),
+                'last_page' => $replies->lastPage(),
+                'has_more' => $replies->hasMorePages(),
             ];
         } catch (Exception $e) {
             $this->response = [
@@ -166,60 +200,6 @@ class CommentController extends Controller
         return response()->json($this->response, $this->response['code']);
     }
 
-    public function likeComment($commentId): JsonResponse
-{
-    try {
-        $result = $this->commentService->likeComment($commentId);
-        $this->response['data'] = [
-            'like_count' => $result['like_count'],
-            'user_has_liked' => true
-        ];
-    } catch (Exception $e) {
-        $this->response = [
-            'error' => $e->getMessage(),
-            'code' => 500,
-        ];
-    }
-
-    return response()->json($this->response, $this->response['code']);
-}
-
-public function unlikeComment($commentId): JsonResponse
-{
-    try {
-        $result = $this->commentService->unlikeComment($commentId);
-        $this->response['data'] = [
-            'like_count' => $result['like_count'],
-            'user_has_liked' => false
-        ];
-    } catch (Exception $e) {
-        $this->response = [
-            'error' => $e->getMessage(),
-            'code' => 500,
-        ];
-    }
-
-    return response()->json($this->response, $this->response['code']);
-}
-
-public function getCommentLikes($commentId): JsonResponse
-{
-    try {
-        $result = $this->commentService->getCommentLikes($commentId);
-        $this->response['data'] = [
-            'like_count' => $result['like_count'],
-            'user_has_liked' => $result['user_has_liked']
-        ];
-    } catch (Exception $e) {
-        $this->response = [
-            'error' => $e->getMessage(),
-            'code' => 500,
-        ];
-    }
-
-    return response()->json($this->response, $this->response['code']);
-}
-
     /**
      * Report Comment
      *
@@ -251,6 +231,119 @@ public function getCommentLikes($commentId): JsonResponse
             ];
         }
 
+        Dotenv::require('dotenv')->env('APP_URL') . '/storage';
         return response()->json($this->response, $this->response['code']);
     }
+
+    /**
+     * Like a Comment
+     *
+     * Likes a specific comment.
+     *
+     * @authenticated
+     * @param int $comment
+     * @return JsonResponse
+     */
+    public function likeComment($comment): JsonResponse
+    {
+        try {
+            $data = $this->commentService->likeComment($comment);
+            $this->response['data'] = [
+                'like_count' => $data['like_count'],
+                'user_has_liked' => true,
+            ];
+        } catch (Exception $e) {
+            $this->response = [
+                'error' => $e->getMessage(),
+                'code' => 500,
+            ];
+        }
+
+        return response()->json($this->response, $this->response['code']);
+    }
+
+    /**
+     * Unlike a Comment
+     *
+     * Removes a like from a specific comment.
+     *
+     * @authenticated
+     * @param int $comment
+     * @return JsonResponse
+     */
+    public function unlikeComment($comment): JsonResponse
+    {
+        try {
+            $data = $this->commentService->unlikeComment($comment);
+            $this->response['data'] = [
+                'like_count' => $data['like_count'],
+                'user_has_liked' => false,
+            ];
+        } catch (Exception $e) {
+            $this->response = [
+                'error' => $e->getMessage(),
+                'code' => 500,
+            ];
+        }
+
+        return response()->json($this->response, $this->response['code']);
+    }
+
+    /**
+     * Get Comment Likes
+     *
+     * Retrieves the like count and user like status for a specific comment.
+     *
+     * @authenticated
+     * @param int $comment
+     * @return JsonResponse
+     */
+    public function getCommentLikes($comment): JsonResponse
+    {
+        try {
+            $commentModel = \App\Models\Comment::findOrFail($comment);
+            $likeCount = $commentModel->likes()->count();
+            $userHasLiked = \Illuminate\Support\Facades\Auth::check() &&
+                $commentModel->likes()->where('user_id', \Illuminate\Support\Facades\Auth::id())->exists();
+
+            $this->response['data'] = [
+                'like_count' => $likeCount,
+                'user_has_liked' => $userHasLiked,
+            ];
+        } catch (Exception $e) {
+            $this->response = [
+                'error' => $e->getMessage(),
+                'code' => 500,
+            ];
+        }
+
+        return response()->json($this->response, $this->response['code']);
+    }
+    
+    /**
+ * Get Total Comment Count
+ *
+ * Retrieves the total number of comments (including replies) for a specific post.
+ *
+ * @param int $postId
+ * @return JsonResponse
+ */
+public function getTotalCount($postId)
+{
+    try {
+        $totalWithReplies = $this->commentService->getTotalCommentsCount($postId);
+
+        $this->response['data'] = [
+            'total_with_replies' => $totalWithReplies,
+        ];
+    } catch (Exception $e) {
+        $this->response = [
+            'error' => $e->getMessage(),
+            'code' => 500,
+        ];
+    }
+
+    return response()->json($this->response, $this->response['code']);
+}
+
 }

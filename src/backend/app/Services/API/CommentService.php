@@ -13,55 +13,136 @@ use Illuminate\Support\Facades\Storage;
 use App\Events\NotificationCreated;
 use App\Models\Notification;
 
-
 class CommentService
 {
     /**
      * Get comments for a post.
      *
      * @param int $postId
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @param int $perPage
+     * @param int $page
+     * @return array
      */
     public function getComments($postId, $perPage = 5, $page = 1)
     {
-        $comments = Comment::where('post_id', $postId)
+        $repliesPerPage = 3; // Define the number of replies per page
+
+        $commentsQuery = Comment::where('post_id', $postId)
             ->whereNull('parent_id')
-            ->with(['user']) // Load only user, not replies here
-            ->orderBy('created_at', 'asc')
-            ->paginate($perPage, ['*'], 'page', $page);
+            ->with([
+                'user',
+                'replies' => function ($query) use ($repliesPerPage) {
+                    $query->with('user')
+                        ->orderBy('created_at', 'asc')
+                        ->take($repliesPerPage); // Strictly limit to 3 replies
+                },
+            ])
+            ->orderBy('created_at', 'asc');
+
+        $comments = $commentsQuery->paginate($perPage, ['*'], 'page', $page);
+
+        // Fetch likes for all comments and replies in one go
+        $commentIds = $comments->pluck('id')->toArray();
+        $replyIds = [];
+        foreach ($comments as $comment) {
+            $replyIds = array_merge($replyIds, $comment->replies->pluck('id')->toArray());
+        }
+        $allCommentIds = array_merge($commentIds, $replyIds);
+
+        $likesData = CommentLike::whereIn('comment_id', $allCommentIds)
+            ->select('comment_id', \DB::raw('count(*) as like_count'))
+            ->groupBy('comment_id')
+            ->get()
+            ->pluck('like_count', 'comment_id')
+            ->toArray();
+
+        $userId = Auth::check() ? Auth::id() : null;
+        $userLikes = $userId ? CommentLike::whereIn('comment_id', $allCommentIds)
+            ->where('user_id', $userId)
+            ->pluck('comment_id')
+            ->toArray() : [];
+
+        // Attach likes and reply pagination metadata to comments
+        foreach ($comments as $comment) {
+            $comment->like_count = $likesData[$comment->id] ?? 0;
+            $comment->user_has_liked = in_array($comment->id, $userLikes);
+
+            // Calculate total replies for this comment
+            $totalReplies = Comment::where('parent_id', $comment->id)->count();
+
+            // Ensure only 3 replies are attached
+            $comment->setRelation('replies', $comment->replies->take($repliesPerPage));
+
+            // Set pagination metadata for replies
+            $comment->replies_pagination = [
+                'total' => $totalReplies,
+                'per_page' => min($repliesPerPage, $totalReplies),
+                'current_page' => 1,
+                'has_more' => $totalReplies > $repliesPerPage,
+            ];
+
+            foreach ($comment->replies as $reply) {
+                $reply->like_count = $likesData[$reply->id] ?? 0;
+                $reply->user_has_liked = in_array($reply->id, $userLikes);
+            }
+        }
 
         $totalWithReplies = Comment::where('post_id', $postId)->count();
 
         return [
             'comments' => $comments,
             'total_with_replies' => $totalWithReplies,
-            'has_more' => $comments->hasMorePages(),
         ];
     }
 
     /**
-     * Get replies for a specific comment.
+     * Get paginated replies for a comment.
      *
+     * @param int $commentId
      * @param int $postId
-     * @param int $parentId
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @param int $perPage
+     * @param int $page
+     * @return array
      */
-   public function getReplies($postId, $parentId, $perPage = 3, $page = 1)
+    public function getReplies($commentId, $postId, $perPage = 3, $page = 1)
     {
-        $replies = Comment::where('post_id', $postId)
-            ->where('parent_id', $parentId)
+        $comment = Comment::where('id', $commentId)
+            ->where('post_id', $postId)
+            ->firstOrFail();
+
+        $replies = Comment::where('parent_id', $commentId)
             ->with(['user'])
             ->orderBy('created_at', 'asc')
             ->paginate($perPage, ['*'], 'page', $page);
 
-        $totalWithReplies = Comment::where('post_id', $postId)->where('parent_id', $parentId)->count();
+        // Fetch likes for replies
+        $replyIds = $replies->pluck('id')->toArray();
+        $likesData = CommentLike::whereIn('comment_id', $replyIds)
+            ->select('comment_id', \DB::raw('count(*) as like_count'))
+            ->groupBy('comment_id')
+            ->get()
+            ->pluck('like_count', 'comment_id')
+            ->toArray();
+
+        $userId = Auth::check() ? Auth::id() : null;
+        $userLikes = $userId ? CommentLike::whereIn('comment_id', $replyIds)
+            ->where('user_id', $userId)
+            ->pluck('comment_id')
+            ->toArray() : [];
+
+        foreach ($replies as $reply) {
+            $reply->like_count = $likesData[$reply->id] ?? 0;
+            $reply->user_has_liked = in_array($reply->id, $userLikes);
+        }
+
+        $totalReplies = Comment::where('parent_id', $commentId)->count();
 
         return [
-            'comments' => $replies,
-            'total_with_replies' => $totalWithReplies,
-            'has_more' => $replies->hasMorePages(),
+            'replies' => $replies,
+            'total_replies' => $totalReplies,
         ];
     }
+
     /**
      * Add a new comment.
      *
@@ -140,58 +221,58 @@ class CommentService
      * @return Comment
      * @throws Exception
      */
-   public function updateComment($commentId, $postId, array $data)
-{
-    try {
-        $comment = Comment::where('id', $commentId)
-            ->where('post_id', $postId)
-            ->firstOrFail();
+    public function updateComment($commentId, $postId, array $data)
+    {
+        try {
+            $comment = Comment::where('id', $commentId)
+                ->where('post_id', $postId)
+                ->firstOrFail();
 
-        // Ensure only the owner can update the comment
-        if ($comment->user_id !== Auth::id()) {
-            throw new Exception("Unauthorized. You can only update your own comments.");
-        }
+            // Ensure only the owner can update the comment
+            if ($comment->user_id !== Auth::id()) {
+                throw new Exception("Unauthorized. You can only update your own comments.");
+            }
 
-        // Create a copy of data that we'll use for update
-        $updateData = $data;
-        
-        // Handle image removal flag
-        if (isset($data['remove_image']) && $data['remove_image'] === true) {
-            // Delete old image if exists
-            if ($comment->image && Storage::disk('public')->exists($comment->image)) {
-                Storage::disk('public')->delete($comment->image);
-            }
-            // Set image to null explicitly
-            $comment->image = null;
-            // Remove flag from data before update
-            unset($updateData['remove_image']);
-        }
-        // Handle new image upload
-        elseif (isset($data['image']) && $data['image']->isValid()) {
-            // Delete old image if exists
-            if ($comment->image && Storage::disk('public')->exists($comment->image)) {
-                Storage::disk('public')->delete($comment->image);
-            }
+            // Create a copy of data that we'll use for update
+            $updateData = $data;
             
-            $imagePath = $data['image']->store('comment_images', 'public');
-            $updateData['image'] = $imagePath;
-        }
-        // Important: remove 'image' from updateData if not explicitly set
-        // to preserve the existing image relationship
-        else {
-            unset($updateData['image']);
-        }
+            // Handle image removal flag
+            if (isset($data['remove_image']) && $data['remove_image'] === true) {
+                // Delete old image if exists
+                if ($comment->image && Storage::disk('public')->exists($comment->image)) {
+                    Storage::disk('public')->delete($comment->image);
+                }
+                // Set image to null explicitly
+                $comment->image = null;
+                // Remove flag from data before update
+                unset($updateData['remove_image']);
+            }
+            // Handle new image upload
+            elseif (isset($data['image']) && $data['image']->isValid()) {
+                // Delete old image if exists
+                if ($comment->image && Storage::disk('public')->exists($comment->image)) {
+                    Storage::disk('public')->delete($comment->image);
+                }
+                
+                $imagePath = $data['image']->store('comment_images', 'public');
+                $updateData['image'] = $imagePath;
+            }
+            // Important: remove 'image' from updateData if not explicitly set
+            // to preserve the existing image relationship
+            else {
+                unset($updateData['image']);
+            }
 
-        $comment->update($updateData);
+            $comment->update($updateData);
 
-        // Reload the comment with user relationship
-        return Comment::with(['user', 'replies.user'])->find($commentId);
-    } catch (ModelNotFoundException $e) {
-        throw new Exception("Comment not found for this post.");
-    } catch (Exception $e) {
-        throw new Exception("Failed to update comment: " . $e->getMessage());
+            // Reload the comment with user relationship
+            return Comment::with(['user', 'replies.user'])->find($commentId);
+        } catch (ModelNotFoundException $e) {
+            throw new Exception("Comment not found for this post.");
+        } catch (Exception $e) {
+            throw new Exception("Failed to update comment: " . $e->getMessage());
+        }
     }
-}
 
     /**
      * Delete a comment.
@@ -201,111 +282,100 @@ class CommentService
      * @throws Exception
      */
     public function deleteComment($commentId, $postId)
-{
-    $comment = Comment::where('id', $commentId)
-        ->where('post_id', $postId)
-        ->first();
+    {
+        $comment = Comment::where('id', $commentId)
+            ->where('post_id', $postId)
+            ->first();
 
-    if (!$comment) {
-        throw new Exception("Comment not found for this post.");
-    }
-
-    if ($comment->user_id !== Auth::id()) {
-        throw new Exception("Unauthorized. You can only delete your own comments.");
-    }
-
-    // Delete the image if it exists
-    if ($comment->image && Storage::disk('public')->exists($comment->image)) {
-        Storage::disk('public')->delete($comment->image);
-    }
-
-    // Find and delete images from any replies
-    $replies = Comment::where('parent_id', $commentId)->get();
-    foreach ($replies as $reply) {
-        if ($reply->image && Storage::disk('public')->exists($reply->image)) {
-            Storage::disk('public')->delete($reply->image);
+        if (!$comment) {
+            throw new Exception("Comment not found for this post.");
         }
-    }
 
-    // This will cascade delete all replies due to foreign key constraints
-    $comment->delete();
-}
+        if ($comment->user_id !== Auth::id()) {
+            throw new Exception("Unauthorized. You can only delete your own comments.");
+        }
+
+        // Delete the image if it exists
+        if ($comment->image && Storage::disk('public')->exists($comment->image)) {
+            Storage::disk('public')->delete($comment->image);
+        }
+
+        // Find and delete images from any replies
+        $replies = Comment::where('parent_id', $commentId)->get();
+        foreach ($replies as $reply) {
+            if ($reply->image && Storage::disk('public')->exists($reply->image)) {
+                Storage::disk('public')->delete($reply->image);
+            }
+        }
+
+        // This will cascade delete all replies due to foreign key constraints
+        $comment->delete();
+    }
 
     /**
      * Like a comment.
      *
      * @param int $commentId
-     * @return Comment
+     * @return array
      * @throws Exception
      */
     public function likeComment($commentId)
-{
-    if (!Auth::check()) {
-        throw new Exception("Unauthorized. Please log in.");
-    }
+    {
+        if (!Auth::check()) {
+            throw new Exception("Unauthorized. Please log in.");
+        }
 
-    $comment = Comment::findOrFail($commentId);
-    $userId = Auth::id();
+        $comment = Comment::findOrFail($commentId);
+        $userId = Auth::id();
 
-    $existingLike = CommentLike::where('user_id', $userId)
-        ->where('comment_id', $commentId)
-        ->first();
+        $existingLike = CommentLike::where('user_id', $userId)
+            ->where('comment_id', $commentId)
+            ->first();
 
-    if ($existingLike) {
+        if ($existingLike) {
+            return [
+                'like_count' => $comment->likes()->count()
+            ];
+        }
+
+        CommentLike::create([
+            'user_id' => $userId,
+            'comment_id' => $commentId
+        ]);
+
         return [
             'like_count' => $comment->likes()->count()
         ];
     }
 
-    CommentLike::create([
-        'user_id' => $userId,
-        'comment_id' => $commentId
-    ]);
-
-    return [
-        'like_count' => $comment->likes()->count()
-    ];
-}
-
     /**
      * Unlike a comment.
      *
      * @param int $commentId
-     * @return Comment
+     * @return array
      * @throws Exception
      */
     public function unlikeComment($commentId)
-{
-    if (!Auth::check()) {
-        throw new Exception("Unauthorized. Please log in.");
+    {
+        if (!Auth::check()) {
+            throw new Exception("Unauthorized. Please log in.");
+        }
+
+        $comment = Comment::findOrFail($commentId);
+        $userId = Auth::id();
+
+        $like = CommentLike::where('user_id', $userId)
+            ->where('comment_id', $commentId)
+            ->first();
+
+        if ($like) {
+            $like->delete();
+        }
+
+        return [
+            'like_count' => $comment->likes()->count()
+        ];
     }
-
-    $comment = Comment::findOrFail($commentId);
-    $userId = Auth::id();
-
-    $like = CommentLike::where('user_id', $userId)
-        ->where('comment_id', $commentId)
-        ->first();
-
-    if ($like) {
-        $like->delete();
-    }
-
-    return [
-        'like_count' => $comment->likes()->count()
-    ];
-}
-
-    public function getCommentLikes($commentId)
-{
-    $comment = Comment::findOrFail($commentId);
-    $userId = Auth::check() ? Auth::id() : null;
-
-    return [
-        'like_count' => $comment->likes()->count(),
-        'user_has_liked' => $userId ? $comment->likes()->where('user_id', $userId)->exists() : false
-    ];
-}
 
     /**
      * Report a comment.
@@ -352,4 +422,14 @@ class CommentService
         return $report;
     }
 
+    /**
+ * Get total comments count (including replies) for a post.
+ *
+ * @param int $postId
+ * @return int
+ */
+public function getTotalCommentsCount($postId)
+{
+    return Comment::where('post_id', $postId)->count();
+}
 }

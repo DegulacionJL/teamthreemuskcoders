@@ -20,13 +20,11 @@ const CommentSection = ({
   onDeleteClick,
   editingCommentId,
   editingCommentText,
-  onLoadMoreReplies,
-  onBackReplies,
-  replyHasMore,
-  replyPage,
   onReactionChange,
   user: propUser,
   onReportClick,
+  onLoadMoreReplies,
+  replyLoading,
 }) => {
   const [newCommentText, setNewCommentText] = useState('');
   const [newCommentImage, setNewCommentImage] = useState(null);
@@ -95,13 +93,11 @@ const CommentSection = ({
         onDeleteClick={onDeleteClick}
         editingCommentId={editingCommentId}
         editingCommentText={editingCommentText}
-        onLoadMoreReplies={onLoadMoreReplies}
-        onBackReplies={onBackReplies}
-        replyHasMore={replyHasMore}
-        replyPage={replyPage}
         onReactionChange={onReactionChange}
         currentUser={currentUser}
         onReportClick={onReportClick}
+        onLoadMoreReplies={onLoadMoreReplies}
+        replyLoading={replyLoading}
       />
     );
   }
@@ -191,13 +187,11 @@ const CommentSection = ({
         onDeleteClick={onDeleteClick}
         editingCommentId={editingCommentId}
         editingCommentText={editingCommentText}
-        onLoadMoreReplies={onLoadMoreReplies}
-        onBackReplies={onBackReplies}
-        replyHasMore={replyHasMore}
-        replyPage={replyPage}
         onReactionChange={onReactionChange}
         currentUser={currentUser}
         onReportClick={onReportClick}
+        onLoadMoreReplies={onLoadMoreReplies}
+        replyLoading={replyLoading}
       />
     </Box>
   );
@@ -214,13 +208,11 @@ CommentSection.propTypes = {
   onDeleteClick: PropTypes.func.isRequired,
   editingCommentId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   editingCommentText: PropTypes.string,
-  onLoadMoreReplies: PropTypes.func.isRequired,
-  onBackReplies: PropTypes.func.isRequired,
-  replyHasMore: PropTypes.object.isRequired,
-  replyPage: PropTypes.object.isRequired,
   onReactionChange: PropTypes.func.isRequired,
   user: PropTypes.object,
   onReportClick: PropTypes.func.isRequired,
+  onLoadMoreReplies: PropTypes.func.isRequired,
+  replyLoading: PropTypes.object.isRequired,
 };
 
 export default CommentSection;

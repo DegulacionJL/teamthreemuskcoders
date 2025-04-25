@@ -1,6 +1,6 @@
-import { useComments } from 'hooks/useComments';
+// CommentFeature.js
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import React from 'react';
 import * as commentService from 'services/comment.service';
 import CloseIcon from '@mui/icons-material/Close';
 import {
@@ -20,50 +20,45 @@ import ImageUploadButton from 'components/molecules/ImageUploadButton';
 import CommentSection from 'components/organisms/CommentSection';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 
-const CommentFeature = ({ postId, user }) => {
-  const {
-    comments,
-    isLoading,
-    totalCommentsCount,
-    hasMore,
-    replyToComment,
-    replyPage,
-    replyHasMore,
-    editingCommentId,
-    editingCommentText,
-    tempEditingText,
-    commentImage,
-    updateCommentImagePreview,
-    isUpdateModalOpen,
-    showComments,
-    commentToDelete,
-    isDeleteModalOpen,
-    setShowComments,
-    setReplyToComment,
-    setTempEditingText,
-    setCommentImage,
-    setUpdateCommentImagePreview,
-    setIsUpdateModalOpen,
-    setIsDeleteModalOpen,
-    handleAddComment,
-    handleAddReply,
-    confirmDeleteComment,
-    handleDeleteComment,
-    handleEditCommentClick,
-    handleUpdateCommentImage,
-    handleUpdateComment,
-    handleCancelUpdateComment,
-    handleLoadMore,
-    handleLoadMoreReplies,
-    handleBackReplies,
-    handleCommentReactionChange,
-  } = useComments(postId);
-
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [reportCommentId, setReportCommentId] = useState(null);
-  const [reportReason, setReportReason] = useState('');
-  const [reportError, setReportError] = useState(null);
-  const [isReporting, setIsReporting] = useState(false);
+const CommentFeature = ({
+  postId,
+  user,
+  comments,
+  isLoading,
+  hasMore,
+  editingCommentId,
+  editingCommentText,
+  tempEditingText,
+  commentImage,
+  updateCommentImagePreview,
+  isUpdateModalOpen,
+  replyToComment,
+  commentToDelete,
+  isDeleteModalOpen,
+  replyLoading,
+  setReplyToComment,
+  setTempEditingText,
+  setCommentImage,
+  setUpdateCommentImagePreview,
+  setIsUpdateModalOpen,
+  setIsDeleteModalOpen,
+  handleAddComment,
+  handleAddReply,
+  confirmDeleteComment,
+  handleDeleteComment,
+  handleEditCommentClick,
+  handleUpdateCommentImage,
+  handleUpdateComment,
+  handleCancelUpdateComment,
+  handleLoadMore,
+  handleLoadMoreReplies,
+  handleCommentReactionChange,
+}) => {
+  const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
+  const [reportCommentId, setReportCommentId] = React.useState(null);
+  const [reportReason, setReportReason] = React.useState('');
+  const [reportError, setReportError] = React.useState(null);
+  const [isReporting, setIsReporting] = React.useState(false);
 
   const handleReportClick = (commentId) => {
     setReportCommentId(commentId);
@@ -121,39 +116,29 @@ const CommentFeature = ({ postId, user }) => {
         </Box>
       )}
 
-      <Button onClick={() => setShowComments(!showComments)} sx={{ mb: 2 }}>
-        {showComments ? 'Hide' : 'Show'} Comments ({totalCommentsCount})
-      </Button>
-
-      {showComments && (
-        <>
-          <CommentSection
-            comments={comments}
-            onAddComment={handleAddComment}
-            replyToComment={replyToComment}
-            onReplyClick={setReplyToComment}
-            onCancelReply={() => setReplyToComment(null)}
-            onAddReply={handleAddReply}
-            onEditClick={handleEditCommentClick}
-            onDeleteClick={confirmDeleteComment}
-            editingCommentId={editingCommentId}
-            editingCommentText={editingCommentText}
-            onLoadMoreReplies={handleLoadMoreReplies}
-            onBackReplies={handleBackReplies}
-            replyHasMore={replyHasMore}
-            replyPage={replyPage}
-            onReactionChange={handleCommentReactionChange}
-            user={user}
-            onReportClick={handleReportClick}
-          />
-          {hasMore && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-              <Button onClick={handleLoadMore} disabled={isLoading}>
-                Load More
-              </Button>
-            </Box>
-          )}
-        </>
+      <CommentSection
+        comments={comments}
+        onAddComment={handleAddComment}
+        replyToComment={replyToComment}
+        onReplyClick={setReplyToComment}
+        onCancelReply={() => setReplyToComment(null)}
+        onAddReply={handleAddReply}
+        onEditClick={handleEditCommentClick}
+        onDeleteClick={confirmDeleteComment}
+        editingCommentId={editingCommentId}
+        editingCommentText={editingCommentText}
+        onReactionChange={handleCommentReactionChange}
+        user={user}
+        onReportClick={handleReportClick}
+        onLoadMoreReplies={handleLoadMoreReplies}
+        replyLoading={replyLoading}
+      />
+      {hasMore && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+          <Button onClick={handleLoadMore} disabled={isLoading}>
+            Load More
+          </Button>
+        </Box>
       )}
 
       <DeleteConfirmationModal
@@ -291,6 +276,36 @@ const CommentFeature = ({ postId, user }) => {
 CommentFeature.propTypes = {
   postId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   user: PropTypes.object.isRequired,
+  comments: PropTypes.array.isRequired,
+  isLoading: PropTypes.bool.isRequired,
+  hasMore: PropTypes.bool.isRequired,
+  editingCommentId: PropTypes.number,
+  editingCommentText: PropTypes.string,
+  tempEditingText: PropTypes.string,
+  commentImage: PropTypes.any,
+  updateCommentImagePreview: PropTypes.string,
+  isUpdateModalOpen: PropTypes.bool.isRequired,
+  replyToComment: PropTypes.any,
+  commentToDelete: PropTypes.number,
+  isDeleteModalOpen: PropTypes.bool.isRequired,
+  replyLoading: PropTypes.object.isRequired,
+  setReplyToComment: PropTypes.func.isRequired,
+  setTempEditingText: PropTypes.func.isRequired,
+  setCommentImage: PropTypes.func.isRequired,
+  setUpdateCommentImagePreview: PropTypes.func.isRequired,
+  setIsUpdateModalOpen: PropTypes.func.isRequired,
+  setIsDeleteModalOpen: PropTypes.func.isRequired,
+  handleAddComment: PropTypes.func.isRequired,
+  handleAddReply: PropTypes.func.isRequired,
+  confirmDeleteComment: PropTypes.func.isRequired,
+  handleDeleteComment: PropTypes.func.isRequired,
+  handleEditCommentClick: PropTypes.func.isRequired,
+  handleUpdateCommentImage: PropTypes.func.isRequired,
+  handleUpdateComment: PropTypes.func.isRequired,
+  handleCancelUpdateComment: PropTypes.func.isRequired,
+  handleLoadMore: PropTypes.func.isRequired,
+  handleLoadMoreReplies: PropTypes.func.isRequired,
+  handleCommentReactionChange: PropTypes.func.isRequired,
 };
 
 export default CommentFeature;

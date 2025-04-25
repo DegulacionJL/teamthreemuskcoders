@@ -13,13 +13,11 @@ const CommentsList = ({
   onDeleteClick,
   editingCommentId,
   editingCommentText,
-  onLoadMoreReplies,
-  onBackReplies,
-  replyHasMore,
-  replyPage,
   onReactionChange,
   currentUser,
   onReportClick,
+  onLoadMoreReplies,
+  replyLoading,
 }) => {
   return (
     <Box sx={{ mt: 2, ml: 2 }}>
@@ -36,13 +34,11 @@ const CommentsList = ({
             onDeleteClick={onDeleteClick}
             editingCommentId={editingCommentId}
             editingCommentText={editingCommentText}
-            onLoadMoreReplies={onLoadMoreReplies}
-            onBackReplies={onBackReplies}
-            replyHasMore={replyHasMore}
-            replyPage={replyPage}
             onReactionChange={onReactionChange}
             currentUser={currentUser}
             onReportClick={onReportClick}
+            onLoadMoreReplies={onLoadMoreReplies}
+            replyLoading={replyLoading}
           />
         ))
       ) : (
@@ -64,13 +60,11 @@ CommentsList.propTypes = {
   onDeleteClick: PropTypes.func.isRequired,
   editingCommentId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   editingCommentText: PropTypes.string,
-  onLoadMoreReplies: PropTypes.func.isRequired,
-  onBackReplies: PropTypes.func.isRequired,
-  replyHasMore: PropTypes.object.isRequired,
-  replyPage: PropTypes.object.isRequired,
   onReactionChange: PropTypes.func.isRequired,
   currentUser: PropTypes.object,
   onReportClick: PropTypes.func.isRequired,
+  onLoadMoreReplies: PropTypes.func.isRequired,
+  replyLoading: PropTypes.object.isRequired,
 };
 
 export default CommentsList;
