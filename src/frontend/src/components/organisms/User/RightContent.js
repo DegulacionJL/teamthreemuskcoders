@@ -39,8 +39,6 @@ const RightContent = ({
   // State for Suggested User
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [loadingSuggestedUsers, setLoadingSuggestedUsers] = useState(true);
-  // const [followStates, setFollowStates] = useState({});
-  const { currentUserId } = useAuth();
 
   // State for Trending Hashtags
   const [trendingHashtags, setTrendingHashtags] = useState([]);

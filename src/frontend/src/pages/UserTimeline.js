@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -72,6 +72,11 @@ const UserTimeline = () => {
 
   const { user: currentUser, isAuthenticated } = useAuth();
   const reduxUser = useSelector((state) => state.profile.user);
+  const fileRef = useRef(null);
+
+  const handleFileSelect = () => {
+    fileRef.current.click();
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -250,43 +255,49 @@ const UserTimeline = () => {
       {/* Cover Photo */}
       <Paper
         sx={{
-          height: 300,
+          height: 360,
           width: '100%',
           position: 'relative',
           backgroundImage: profile?.coverPhoto
             ? `url(${profile.coverPhoto})`
             : 'linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%)',
           backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundPosition: 'center center',
+          backgroundRepeat: 'no-repeat',
+          backgroundColor: 'transparent',
           borderRadius: 2,
           overflow: 'hidden',
         }}
       >
         {isCurrentUser && (
           <>
+            <IconButton
+              sx={{
+                position: 'absolute',
+                bottom: 16,
+                right: 16,
+                cursor: 'pointer',
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                '&:hover': {
+                  backgroundColor: 'black',
+                },
+                zIndex: 1,
+              }}
+              onClick={handleFileSelect}
+            >
+              <PhotoCameraIcon />
+            </IconButton>
             <input
+              ref={fileRef}
               accept="image/*"
               style={{ display: 'none' }}
               id="cover-photo-upload"
               type="file"
               onChange={handleCoverPhotoUpload}
             />
-            <label htmlFor="cover-photo-upload">
-              <IconButton
-                component="span"
-                sx={{
-                  position: 'absolute',
-                  bottom: 16,
-                  right: 16,
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                  },
-                }}
-              >
-                <PhotoCameraIcon />
-              </IconButton>
-            </label>
+
+            {/* <label htmlFor="cover-photo-upload"></label> */}
+            <label htmlFor="avatar-upload"></label>
           </>
         )}
       </Paper>
@@ -322,23 +333,7 @@ const UserTimeline = () => {
                 type="file"
                 onChange={handleProfilePhotoUpload}
               />
-              <label htmlFor="avatar-upload">
-                <IconButton
-                  component="span"
-                  size="small"
-                  sx={{
-                    position: 'absolute',
-                    bottom: 5,
-                    right: 5,
-                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    },
-                  }}
-                >
-                  <PhotoCameraIcon fontSize="small" />
-                </IconButton>
-              </label>
+              <label htmlFor="avatar-upload"></label>
             </>
           )}
         </Box>

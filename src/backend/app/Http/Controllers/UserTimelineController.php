@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\API\Users\uploadCoverPhotoRequest;
 
 class UserTimelineController extends Controller
 {
@@ -122,7 +123,7 @@ class UserTimelineController extends Controller
 
         try {
             $request->validate([
-                'coverPhoto' => 'required|image|max:2048',
+                'coverPhoto' => 'required|file|mimes:gif,jpeg,png,jpg|max:2048',
             ]);
 
             $coverPhoto = $this->userTimelineService->uploadCoverPhoto($userId, $request->file('coverPhoto'));
