@@ -6,7 +6,6 @@ import {
   Favorite as FavoriteIcon,
   MoreVert as MoreVertIcon,
   Send as SendIcon,
-  Share as ShareIcon,
 } from '@mui/icons-material';
 import {
   Avatar,
@@ -164,9 +163,6 @@ const PostCard = ({ post }) => {
           sx={{ color: 'text.secondary', textTransform: 'none' }}
         >
           Comment
-        </Button>
-        <Button startIcon={<ShareIcon />} sx={{ color: 'text.secondary', textTransform: 'none' }}>
-          Share
         </Button>
       </CardActions>
 

@@ -230,8 +230,7 @@ class CommentController extends Controller
                 'code' => 500,
             ];
         }
-
-        Dotenv::require('dotenv')->env('APP_URL') . '/storage';
+        
         return response()->json($this->response, $this->response['code']);
     }
 

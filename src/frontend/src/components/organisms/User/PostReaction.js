@@ -226,9 +226,4 @@ PostReactions.propTypes = {
   initialHasReacted: PropTypes.bool,
 };
 
-PostReactions.defaultProps = {
-  initialLikeCount: 0,
-  initialHasReacted: false,
-};
-
 export default PostReactions;

@@ -78,7 +78,6 @@ const en = {
         id: 'ID',
         name: 'Name',
         user_name: 'Username',
-        status: 'Status',
         country: 'Country',
         joined_date: 'Joined on',
         manage_users: 'Manage Users',
@@ -203,6 +202,7 @@ const en = {
       calculate: 'calculate',
       memefeed: 'Meme Feed',
       userlist: 'Find Friends',
+      profile: 'Profile',
     },
     table: {
       no_data: 'No data.',

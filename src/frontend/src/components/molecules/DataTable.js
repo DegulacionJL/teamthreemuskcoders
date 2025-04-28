@@ -8,7 +8,6 @@ import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableContainer from '@mui/material/TableContainer';
 import AdminTableBody from 'components/atoms/DataTable/AdminTableBody';
-import TableBody from 'components/atoms/DataTable/TableBody';
 import TableHead from 'components/atoms/DataTable/TableHead';
 import TableToolbar from 'components/atoms/DataTable/TableToolbar';
 
@@ -29,7 +28,6 @@ function DataTable(props) {
     handleFollow,
     toolbar,
     actions,
-    alignSearchRight,
     user,
   } = props;
 
@@ -85,7 +83,6 @@ DataTable.propTypes = {
   handleAdd: PropTypes.func,
   toolbar: PropTypes.bool,
   actions: PropTypes.bool,
-  alignSearchRight: PropTypes.bool,
   handleFollow: PropTypes.func,
   user: PropTypes.object,
 };

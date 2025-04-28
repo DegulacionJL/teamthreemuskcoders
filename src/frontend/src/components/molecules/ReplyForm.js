@@ -5,6 +5,7 @@ import React, { useRef, useState } from 'react';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import { Box, Button, IconButton, InputAdornment, TextField } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import ImagePreview from '../atoms/ImagePreview';
 
 const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
@@ -13,6 +14,9 @@ const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
   const [imagePreview, setImagePreview] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiButtonRef = useRef(null);
+
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
 
   const { refs, floatingStyles } = useFloating({
     open: showEmojiPicker,
@@ -101,7 +105,7 @@ const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
             position: 'absolute',
           }}
         >
-          <EmojiPicker onEmojiClick={handleEmojiClick} />
+          <EmojiPicker onEmojiClick={handleEmojiClick} theme={isDarkMode ? 'dark' : 'light'} />
         </Box>
       )}
       {imagePreview && (

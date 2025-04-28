@@ -2,23 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { getTopPost } from 'services/meme.service';
-import {
-  EmojiEvents,
-  LocalFireDepartment,
-  PhotoCamera,
-  Star,
-  TrendingUp,
-} from '@mui/icons-material';
+import { EmojiEvents, PhotoCamera } from '@mui/icons-material';
 import {
   Avatar,
   Box,
   Card,
   CardContent,
   CardHeader,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
   Paper,
   Tab,
   Tabs,
