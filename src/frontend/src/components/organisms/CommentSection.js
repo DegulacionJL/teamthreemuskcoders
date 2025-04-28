@@ -5,10 +5,10 @@ import React, { useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import { Avatar, Box, Button, IconButton, InputAdornment, TextField } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import ImagePreview from 'components/atoms/ImagePreview';
 import CommentsList from 'components/molecules/CommentsList';
 import ImageUploadButton from 'components/molecules/ImageUploadButton';
-import { useTheme } from '@mui/material/styles';
 
 const CommentSection = ({
   comments,

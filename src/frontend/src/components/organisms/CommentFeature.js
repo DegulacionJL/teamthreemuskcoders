@@ -1,6 +1,7 @@
 // CommentFeature.js
 import PropTypes from 'prop-types';
 import React from 'react';
+import { toast } from 'react-toastify';
 import * as commentService from 'services/comment.service';
 import CloseIcon from '@mui/icons-material/Close';
 import {
@@ -19,7 +20,6 @@ import ImagePreview from 'components/atoms/ImagePreview';
 import ImageUploadButton from 'components/molecules/ImageUploadButton';
 import CommentSection from 'components/organisms/CommentSection';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
-import { toast } from 'react-toastify';
 
 const CommentFeature = ({
   postId,

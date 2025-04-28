@@ -3,7 +3,7 @@ import { useComments } from 'hooks/useComments';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import 'yet-another-react-lightbox/styles.css';
-import { ChatBubbleOutline, MoreVert, Share } from '@mui/icons-material';
+import { ChatBubbleOutline, MoreVert } from '@mui/icons-material';
 import {
   Avatar,
   Box,
@@ -359,9 +359,9 @@ const MemePost = ({
         >
           Comments {totalCommentsCount > 0 && `(${totalCommentsCount})`}
         </Button>
-        <Button startIcon={<Share />} size="small" sx={{ color: theme.palette.text.secondary }}>
+        {/* <Button startIcon={<Share />} size="small" sx={{ color: theme.palette.text.secondary }}>
           Share
-        </Button>
+        </Button> */}
       </CardActions>
 
       <Box
