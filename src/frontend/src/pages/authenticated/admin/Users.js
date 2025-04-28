@@ -161,7 +161,7 @@ function Users() {
       <AddEditModal
         open={open}
         user={user}
-        handleSaveEvent={(response) => {
+        handleSaveEvent={() => {
           fetchUsers();
           setOpen(false);
           toast(user ? t('User updated successfully') : t('User created successfully'), {

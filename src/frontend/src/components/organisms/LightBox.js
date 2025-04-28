@@ -196,17 +196,6 @@ export default function LightBox({
               >
                 Comment
               </Button>
-              {/* <Button
-                startIcon={<ShareIcon />}
-                size="small"
-                sx={{
-                  flex: 1,
-                  color: theme.palette.text.secondary,
-                  borderBottom: `1px solid ${theme.palette.divider}`,
-                }}
-              >
-                Share
-              </Button> */}
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>

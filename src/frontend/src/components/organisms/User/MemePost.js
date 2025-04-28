@@ -359,9 +359,6 @@ const MemePost = ({
         >
           Comments {totalCommentsCount > 0 && `(${totalCommentsCount})`}
         </Button>
-        {/* <Button startIcon={<Share />} size="small" sx={{ color: theme.palette.text.secondary }}>
-          Share
-        </Button> */}
       </CardActions>
 
       <Box
