@@ -57,7 +57,7 @@ const MemePost = ({
   const [isReportPostModalOpen, setIsReportPostModalOpen] = useState(false);
   const [reactionType, setReactionType] = useState(null);
   const [likeCount, setLikeCount] = useState(0);
-  const [showComments, setShowComments] = useState(false); // Controls visibility of the comment section
+  const [showComments, setShowComments] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   // Use the useComments hook to manage comments state
@@ -166,7 +166,6 @@ const MemePost = ({
   const handleToggleComments = useCallback(() => {
     setShowComments((prev) => {
       const newShowComments = !prev;
-      // Fetch comments only if they haven't been fetched yet and the comment section is being opened
       if (newShowComments && !hasFetchedComments) {
         fetchComments(1);
       }
@@ -338,9 +337,7 @@ const MemePost = ({
         caption={currentCaption}
         user={postUsers}
         timestamp={timestamp}
-        comments={comments} // Pass comments to LightBox
-        reactionCount={likeCount}
-        onAddComment={handleAddComment}
+        postId={id}
         darkMode={isDarkMode}
       />
 
@@ -354,7 +351,7 @@ const MemePost = ({
         <Button
           startIcon={<ChatBubbleOutline />}
           size="small"
-          onClick={handleToggleComments} // Toggle comment section visibility
+          onClick={handleToggleComments}
           sx={{ color: theme.palette.text.secondary }}
         >
           Comments {totalCommentsCount > 0 && `(${totalCommentsCount})`}
@@ -388,7 +385,6 @@ const MemePost = ({
         )}
       </Box>
 
-      {/* Render the comment section only when showComments is true */}
       {showComments && (
         <CommentFeature
           postId={id}
