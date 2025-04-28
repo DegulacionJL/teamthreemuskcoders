@@ -2,6 +2,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import utc from 'dayjs/plugin/utc';
 import PropTypes from 'prop-types';
+import theme from 'theme';
 import Box from '@mui/material/Box';
 import BodyText from 'components/atoms/BodyText';
 
@@ -20,7 +21,7 @@ const NotificationItem = (props) => {
         display: 'flex',
         alignItems: 'top',
         cursor: 'pointer',
-        '&:hover': { background: '#f8f8f8' },
+        '&:hover': { background: theme.palette.action.hover },
       }}
       onClick={() => onClick(notification)}
     >
