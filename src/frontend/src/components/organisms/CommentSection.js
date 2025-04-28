@@ -8,6 +8,7 @@ import { Avatar, Box, Button, IconButton, InputAdornment, TextField } from '@mui
 import ImagePreview from 'components/atoms/ImagePreview';
 import CommentsList from 'components/molecules/CommentsList';
 import ImageUploadButton from 'components/molecules/ImageUploadButton';
+import { useTheme } from '@mui/material/styles';
 
 const CommentSection = ({
   comments,
@@ -30,6 +31,9 @@ const CommentSection = ({
   const [newCommentImage, setNewCommentImage] = useState(null);
   const [newCommentImagePreview, setNewCommentImagePreview] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
 
   const reduxUser = useSelector((state) => state.profile.user);
   const currentUser = propUser || reduxUser;
@@ -145,13 +149,14 @@ const CommentSection = ({
               style={{ ...floatingStyles, zIndex: 1500, position: 'absolute' }}
               sx={{
                 '& .emoji-picker-react': {
+                  backgroundColor: isDarkMode ? '#1a2235' : '#ffffff',
                   boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
                   borderRadius: 8,
                   overflow: 'visible',
                 },
               }}
             >
-              <EmojiPicker onEmojiClick={handleEmojiClick} />
+              <EmojiPicker onEmojiClick={handleEmojiClick} theme={isDarkMode ? 'dark' : 'light'} />
             </Box>
           )}
           {newCommentImagePreview && (

@@ -230,6 +230,7 @@ class CommentController extends Controller
                 'code' => 500,
             ];
         }
+        
         return response()->json($this->response, $this->response['code']);
     }
 
