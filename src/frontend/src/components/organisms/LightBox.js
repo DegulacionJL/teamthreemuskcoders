@@ -1,8 +1,9 @@
 import PropTypes from 'prop-types';
-import React from 'react';
-import { Close as CloseIcon } from '@mui/icons-material';
-import { Avatar, Box, IconButton, Typography, useTheme } from '@mui/material';
+import React, { useState } from 'react';
+import { ChatBubbleOutline, Close as CloseIcon } from '@mui/icons-material';
+import { Avatar, Box, Button, IconButton, Typography, useTheme } from '@mui/material';
 import CommentFeature from 'components/organisms/CommentFeature';
+import PostReaction from 'components/organisms/User/PostReaction';
 import { useComments } from 'hooks/useComments';
 
 export default function LightBox({
@@ -14,14 +15,19 @@ export default function LightBox({
   timestamp,
   postId,
   darkMode,
+  onReactionChange,
+  initialReactionType,
+  initialReactionCount,
 }) {
   const theme = useTheme();
   const isDarkMode = darkMode !== undefined ? darkMode : theme.palette.mode === 'dark';
+  const [showComments, setShowComments] = useState(false);
 
   // Use the useComments hook to manage comments state
   const {
     comments,
     isLoading: commentsLoading,
+    totalCommentsCount,
     hasMore,
     editingCommentId,
     editingCommentText,
@@ -83,6 +89,10 @@ export default function LightBox({
         {i < arr.length - 1 && <br />}
       </React.Fragment>
     ));
+  };
+
+  const handleToggleComments = () => {
+    setShowComments((prev) => !prev);
   };
 
   return (
@@ -190,43 +200,72 @@ export default function LightBox({
             </Typography>
           </Box>
 
-          {/* Comment Feature */}
-          <Box sx={{ flex: 1, overflowY: 'auto' }}>
-            <CommentFeature
+          {/* Reactions and Comment Toggle */}
+          <Box
+            sx={{
+              p: 1,
+              borderBottom: `1px solid ${theme.palette.divider}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <PostReaction
               postId={postId}
-              user={user}
-              comments={comments}
-              isLoading={commentsLoading}
-              hasMore={hasMore}
-              editingCommentId={editingCommentId}
-              editingCommentText={editingCommentText}
-              tempEditingText={tempEditingText}
-              commentImage={commentImage}
-              updateCommentImagePreview={updateCommentImagePreview}
-              isUpdateModalOpen={isUpdateModalOpen}
-              replyToComment={replyToComment}
-              commentToDelete={commentToDelete}
-              isDeleteModalOpen={isDeleteModalOpen}
-              replyLoading={replyLoading}
-              setReplyToComment={setReplyToComment}
-              setTempEditingText={setTempEditingText}
-              setCommentImage={setCommentImage}
-              setUpdateCommentImagePreview={setUpdateCommentImagePreview}
-              setIsUpdateModalOpen={setIsUpdateModalOpen}
-              setIsDeleteModalOpen={setIsDeleteModalOpen}
-              handleAddComment={handleAddComment}
-              handleAddReply={handleAddReply}
-              confirmDeleteComment={confirmDeleteComment}
-              handleDeleteComment={handleDeleteComment}
-              handleEditCommentClick={handleEditCommentClick}
-              handleUpdateCommentImage={handleUpdateCommentImage}
-              handleUpdateComment={handleUpdateComment}
-              handleCancelUpdateComment={handleCancelUpdateComment}
-              handleLoadMore={handleLoadMore}
-              handleLoadMoreReplies={handleLoadMoreReplies}
-              handleCommentReactionChange={handleCommentReactionChange}
+              isDarkMode={isDarkMode}
+              onReactionChange={onReactionChange}
+              initialReactionType={initialReactionType}
+              initialReactionCount={initialReactionCount}
             />
+            <Button
+              startIcon={<ChatBubbleOutline />}
+              size="small"
+              onClick={handleToggleComments}
+              sx={{ color: theme.palette.text.secondary }}
+            >
+              Comments {totalCommentsCount > 0 && `(${totalCommentsCount})`}
+            </Button>
           </Box>
+
+          {/* Comment Feature */}
+          {showComments && (
+            <Box sx={{ flex: 1, overflowY: 'auto' }}>
+              <CommentFeature
+                postId={postId}
+                user={user}
+                comments={comments}
+                isLoading={commentsLoading}
+                hasMore={hasMore}
+                editingCommentId={editingCommentId}
+                editingCommentText={editingCommentText}
+                tempEditingText={tempEditingText}
+                commentImage={commentImage}
+                updateCommentImagePreview={updateCommentImagePreview}
+                isUpdateModalOpen={isUpdateModalOpen}
+                replyToComment={replyToComment}
+                commentToDelete={commentToDelete}
+                isDeleteModalOpen={isDeleteModalOpen}
+                replyLoading={replyLoading}
+                setReplyToComment={setReplyToComment}
+                setTempEditingText={setTempEditingText}
+                setCommentImage={setCommentImage}
+                setUpdateCommentImagePreview={setUpdateCommentImagePreview}
+                setIsUpdateModalOpen={setIsUpdateModalOpen}
+                setIsDeleteModalOpen={setIsDeleteModalOpen}
+                handleAddComment={handleAddComment}
+                handleAddReply={handleAddReply}
+                confirmDeleteComment={confirmDeleteComment}
+                handleDeleteComment={handleDeleteComment}
+                handleEditCommentClick={handleEditCommentClick}
+                handleUpdateCommentImage={handleUpdateCommentImage}
+                handleUpdateComment={handleUpdateComment}
+                handleCancelUpdateComment={handleCancelUpdateComment}
+                handleLoadMore={handleLoadMore}
+                handleLoadMoreReplies={handleLoadMoreReplies}
+                handleCommentReactionChange={handleCommentReactionChange}
+              />
+            </Box>
+          )}
         </Box>
       </Box>
     </Box>
@@ -246,4 +285,7 @@ LightBox.propTypes = {
   timestamp: PropTypes.string,
   postId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   darkMode: PropTypes.bool,
+  onReactionChange: PropTypes.func,
+  initialReactionType: PropTypes.string,
+  initialReactionCount: PropTypes.number,
 };

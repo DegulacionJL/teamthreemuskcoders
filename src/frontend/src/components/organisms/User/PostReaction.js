@@ -1,5 +1,3 @@
-'use client';
-
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { likePost, unlikePost } from 'services/meme.service';
@@ -29,7 +27,7 @@ AnimatedEmoji.propTypes = {
   onClick: PropTypes.func,
 };
 
-const PostReactions = ({
+const PostReaction = ({
   postId,
   isDarkMode,
   onReactionChange,
@@ -217,7 +215,7 @@ const PostReactions = ({
   );
 };
 
-PostReactions.propTypes = {
+PostReaction.propTypes = {
   postId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   isDarkMode: PropTypes.bool.isRequired,
   onReactionChange: PropTypes.func,
@@ -226,4 +224,4 @@ PostReactions.propTypes = {
   initialHasReacted: PropTypes.bool,
 };
 
-export default PostReactions;
+export default PostReaction;

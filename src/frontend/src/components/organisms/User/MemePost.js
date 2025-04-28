@@ -25,7 +25,7 @@ import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import EditPostModal from '../EditPostModal';
 import LightBox from '../LightBox';
 import ReportPostConfirmationModal from '../ReportPostModal';
-import PostReactions from './PostReaction';
+import PostReaction from 'components/organisms/User/PostReaction';
 
 const MemePost = ({
   id,
@@ -339,10 +339,13 @@ const MemePost = ({
         timestamp={timestamp}
         postId={id}
         darkMode={isDarkMode}
+        onReactionChange={handleReactionChange}
+        initialReactionType={reactionType}
+        initialReactionCount={likeCount}
       />
 
       <CardActions disableSpacing sx={{ p: 0 }}>
-        <PostReactions
+        <PostReaction
           postId={id}
           isDarkMode={isDarkMode}
           onReactionChange={handleReactionChange}
