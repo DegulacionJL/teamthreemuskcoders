@@ -78,7 +78,6 @@ const en = {
         id: 'ID',
         name: 'Name',
         user_name: 'Username',
-        status: 'Status',
         country: 'Country',
         joined_date: 'Joined on',
         manage_users: 'Manage Users',
