@@ -203,6 +203,7 @@ const en = {
       calculate: 'calculate',
       memefeed: 'Meme Feed',
       userlist: 'Find Friends',
+      profile: 'Profile',
     },
     table: {
       no_data: 'No data.',
