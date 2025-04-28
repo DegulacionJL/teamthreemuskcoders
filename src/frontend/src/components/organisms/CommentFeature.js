@@ -19,6 +19,7 @@ import ImagePreview from 'components/atoms/ImagePreview';
 import ImageUploadButton from 'components/molecules/ImageUploadButton';
 import CommentSection from 'components/organisms/CommentSection';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
+import { toast } from 'react-toastify';
 
 const CommentFeature = ({
   postId,
@@ -79,8 +80,18 @@ const CommentFeature = ({
       setIsReportModalOpen(false);
       setReportReason('');
       setReportCommentId(null);
+
+      // Show success feedback
+      toast.success('Report submitted successfully.');
     } catch (error) {
-      setReportError('Failed to submit report. Please try again.');
+      // Check if the error is due to an already reported comment
+      if (error.response?.data?.error === 'You have already reported this comment.') {
+        setReportError('You have already reported this comment.');
+        toast.info('You have already reported this comment.');
+      } else {
+        setReportError('Failed to submit report. Please try again.');
+        toast.error('Failed to submit report. Please try again.');
+      }
     } finally {
       setIsReporting(false);
     }
