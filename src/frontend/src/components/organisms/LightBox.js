@@ -1,11 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import {
-  ChatBubbleOutline,
-  Close as CloseIcon,
-  Send as SendIcon,
-  Share as ShareIcon,
-} from '@mui/icons-material';
+import { ChatBubbleOutline, Close as CloseIcon, Send as SendIcon } from '@mui/icons-material';
 import {
   Avatar,
   Box,
@@ -201,7 +196,7 @@ export default function LightBox({
               >
                 Comment
               </Button>
-              <Button
+              {/* <Button
                 startIcon={<ShareIcon />}
                 size="small"
                 sx={{
@@ -211,7 +206,7 @@ export default function LightBox({
                 }}
               >
                 Share
-              </Button>
+              </Button> */}
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
