@@ -1,3 +1,5 @@
+'use client';
+
 import { useAuth } from 'hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
@@ -7,13 +9,10 @@ import {
   Avatar,
   Box,
   Button,
-  Card,
-  CardContent,
-  CardMedia,
   Chip,
   CircularProgress,
-  Grid,
   Pagination,
+  Paper,
   Snackbar,
   Typography,
 } from '@mui/material';
@@ -51,8 +50,6 @@ const HashtagPage = () => {
   };
 
   useEffect(() => {
-    console.log('Tag: ', tag);
-    console.log('Safe Tag: ', safeTag);
     if (tag && tag.trim()) {
       fetchPosts(tag.trim());
     }
@@ -120,55 +117,103 @@ const HashtagPage = () => {
         </Box>
       ) : (
         <>
-          <Grid container spacing={3}>
+          <Box sx={{ maxWidth: 600, mx: 'auto' }}>
             {posts.map((post) => (
-              <Grid item xs={12} sm={6} md={4} key={post.id}>
-                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  {post.image?.image_path && (
-                    <CardMedia
-                      component="img"
-                      image={post.image.image_path}
-                      alt="Post image"
-                      sx={{ height: 200, objectFit: 'cover' }}
+              <Paper
+                key={post.id}
+                sx={{
+                  mb: 3,
+                  overflow: 'hidden',
+                  borderRadius: 2,
+                  bgcolor: 'background.paper',
+                }}
+              >
+                {/* Post header with user info */}
+                <Box sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
+                  {post.user?.avatar && (
+                    <Avatar
+                      src={post.user.avatar}
+                      alt={post.user.name}
+                      sx={{ width: 40, height: 40, mr: 1.5 }}
                     />
                   )}
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography variant="body1" gutterBottom>
-                      {post.caption}
+                  <Box>
+                    <Typography variant="subtitle1">
+                      {post.user?.first_name || post.user?.name || 'Unknown'}
+                      {post.user?.id === user.id && ' (You)'}
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
-                      {post.user?.avatar && (
-                        <Avatar
-                          src={post.user.avatar}
-                          alt={post.user.name}
-                          sx={{ width: 32, height: 32, mr: 1 }}
-                        />
-                      )}
-                      <Typography variant="body2" color="text.secondary">
-                        Posted by: {post.user?.first_name || post.user?.name || 'Unknown'}
-                        {post.user?.id === user.id && ' (You)'}
-                      </Typography>
-                    </Box>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      display="block"
-                      sx={{ mt: 1 }}
-                    >
+                    <Typography variant="caption" color="text.secondary">
                       {new Date(post.created_at).toLocaleString()}
                     </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+                  </Box>
+                </Box>
+
+                {/* Post caption */}
+                {post.caption && (
+                  <Box sx={{ px: 2, pb: 1 }}>
+                    <Typography variant="body1">{post.caption}</Typography>
+                  </Box>
+                )}
+
+                {/* Post image */}
+                {post.image?.image_path && (
+                  <Box
+                    component="img"
+                    src={post.image.image_path}
+                    alt="Post image"
+                    sx={{
+                      width: '100%',
+                      display: 'block',
+                      maxHeight: 600,
+                      objectFit: 'contain',
+                      bgcolor: 'black',
+                    }}
+                  />
+                )}
+
+                {/* Post actions */}
+                <Box sx={{ p: 2, display: 'flex', gap: 2 }}>
+                  <Button
+                    size="small"
+                    startIcon={
+                      <span role="img" aria-label="laugh">
+                        😂
+                      </span>
+                    }
+                  >
+                    Laugh
+                  </Button>
+                  <Button
+                    size="small"
+                    startIcon={
+                      <span role="img" aria-label="comment">
+                        💬
+                      </span>
+                    }
+                  >
+                    Comments
+                  </Button>
+                  <Button
+                    size="small"
+                    startIcon={
+                      <span role="img" aria-label="share">
+                        📤
+                      </span>
+                    }
+                  >
+                    Share
+                  </Button>
+                </Box>
+              </Paper>
             ))}
-          </Grid>
+          </Box>
 
           {pagination.lastPage > 1 && (
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
               <Pagination
                 count={pagination.lastPage}
                 page={pagination.currentPage}
-                onChange={(e, page) => fetchPosts(page)}
+                onChange={(e, page) => fetchPosts(safeTag, page)}
                 color="primary"
               />
             </Box>
