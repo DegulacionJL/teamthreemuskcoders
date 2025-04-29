@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getDashboardStats } from 'services/admin.service';
@@ -41,7 +39,7 @@ function Dashboard() {
               const updated = {
                 ...prevStats,
                 ...Object.fromEntries(
-                  Object.entries(data).filter(([_, v]) => v !== null && v !== undefined)
+                  Object.entries(data).filter(([v]) => v !== null && v !== undefined)
                 ),
               };
               console.log('✅ Updated stats state:', updated);

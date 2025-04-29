@@ -1,11 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import {
-  ChatBubbleOutline,
-  Close as CloseIcon,
-  Send as SendIcon,
-  Share as ShareIcon,
-} from '@mui/icons-material';
+import { ChatBubbleOutline, Close as CloseIcon, Send as SendIcon } from '@mui/icons-material';
 import {
   Avatar,
   Box,
@@ -200,17 +195,6 @@ export default function LightBox({
                 }}
               >
                 Comment
-              </Button>
-              <Button
-                startIcon={<ShareIcon />}
-                size="small"
-                sx={{
-                  flex: 1,
-                  color: theme.palette.text.secondary,
-                  borderBottom: `1px solid ${theme.palette.divider}`,
-                }}
-              >
-                Share
               </Button>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>

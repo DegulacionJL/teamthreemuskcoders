@@ -6,7 +6,6 @@ import {
   Cake as CakeIcon,
   Edit as EditIcon,
   LocationOn as LocationIcon,
-  Message as MessageIcon,
   PhotoCamera as PhotoCameraIcon,
   School as SchoolIcon,
   Work as WorkIcon,
@@ -376,11 +375,6 @@ const UserTimeline = () => {
                 onClick={handleFollowToggle}
               >
                 {isFollowingUser ? 'Unfollow' : 'Follow'}
-              </Button>
-            )}
-            {!isCurrentUser && isAuthenticated && (
-              <Button variant="outlined" startIcon={<MessageIcon />}>
-                Message
               </Button>
             )}
             {isCurrentUser && (
