@@ -9,6 +9,7 @@ use App\Models\Image;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Exception;
 
 class PostService
@@ -20,8 +21,9 @@ class PostService
         $this->post = $post;
     }
 
-    public function createMemePost(string $caption, $image, int $user_id)
+    public function createMemePost(string $caption, $hashtag, $image, int $user_id)
     {
+        Log::info('Postservice.create hashtag: '. $hashtag);
         if (!$user_id) {
             throw new Exception('User ID is missing');
         }
@@ -30,6 +32,7 @@ class PostService
             // Create the post first
             $post = Post::create([
                 'caption' => $caption,
+                'hashtag' => $hashtag,
                 'user_id' => $user_id
             ]);
 
@@ -105,7 +108,7 @@ class PostService
         // Fetch posts with pagination, including related user and image data
         $posts = Post::with('user', 'image')
             ->latest()
-            ->paginate(5, ['*'], 'page', $page);
+            ->paginate(1, ['*'], 'page', $page);
         
         // Get the post IDs for efficient querying
         $postIds = [];
@@ -386,4 +389,51 @@ class PostService
             ];
         }
     }
+
+    public function getPostsByHashtag(string $hashtag, int $page = 1): LengthAwarePaginator
+    {
+        // Clean the hashtag (remove # if present)
+        $cleanHashtag = ltrim($hashtag, '#');
+        
+        // Get posts with this hashtag using word boundaries for accurate matching
+        return Post::where(function($query) use ($cleanHashtag) {
+                // Match exact hashtag with word boundaries
+                $query->where('caption', 'LIKE', '%#' . $cleanHashtag . ' %')
+                      ->orWhere('caption', 'LIKE', '%#' . $cleanHashtag . '.%')
+                      ->orWhere('caption', 'LIKE', '%#' . $cleanHashtag . ',%')
+                      ->orWhere('caption', 'LIKE', '%#' . $cleanHashtag . ';%')
+                      ->orWhere('caption', 'LIKE', '%#' . $cleanHashtag . '!%')
+                      ->orWhere('caption', 'LIKE', '%#' . $cleanHashtag . '?%')
+                      ->orWhere('caption', 'LIKE', '%#' . $cleanHashtag . "\n%")
+                      // Also match hashtags at the end of text
+                      ->orWhere('caption', 'LIKE', '%#' . $cleanHashtag);
+            })
+            ->with(['user', 'image', 'likes']) // Eager load relationships
+            ->orderByDesc('created_at')
+            ->paginate(10, ['*'], 'page', $page);
+    }
+
+    /**
+     * Get trending hashtags
+     * 
+     * @param int $limit Number of trending hashtags to return
+     * @return array
+     */
+    public function getTrendingMemes(int $limit = 10): array
+    {
+        $hashtags = Post::whereNotNull('caption')
+            ->whereRaw("caption LIKE '%#%'")
+            ->selectRaw("SUBSTRING_INDEX(SUBSTRING_INDEX(caption, '#', -1), ' ', 1) as hashtag")
+            ->groupBy('hashtag')
+            ->orderByRaw('COUNT(*) DESC')
+            ->limit($limit)
+            ->get()
+            ->map(function ($item) {
+                return ['hashtag' => '#' . $item->hashtag];
+            });
+            
+        return $hashtags->toArray();
+    }
+
+
 }

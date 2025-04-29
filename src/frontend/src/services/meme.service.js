@@ -3,6 +3,10 @@ import api from 'utils/api';
 // Service for Posts
 
 const createMemePost = async function (formData) {
+  for (const [key, value] of formData.entries()) {
+    console.log(`${key}: ${value}`);
+  }
+
   const req = api.post('/posts', formData).then(({ data }) => data);
   return await req;
 };
@@ -139,8 +143,19 @@ const getLikes = async (postId) => {
 };
 
 const getPostById = async (postId) => {
-  const response = await api.get(`/posts/${postId}`); // Replace with your backend endpoint
+  const response = await api.get(`/posts/${postId}`);
   return response.data;
+};
+
+const fetchPostsByHashtag = async (tag, page = 1) => {
+  console.log('tag from service: ', tag);
+  try {
+    const response = await api.get(`/posts/hashtag/${tag.replace('#', '')}?page=${page}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error in fetchPostsByHashtag:', error);
+    throw error;
+  }
 };
 
 export {
@@ -156,4 +171,5 @@ export {
   getLeaderboard,
   getTopPost,
   getPostById,
+  fetchPostsByHashtag,
 };

@@ -92,8 +92,8 @@ const routes = [
   },
 
   {
-    path: '/posts/:postId',
-    component: 'pages/PostDetails', // Route for PostDetails
+    path: '/hashtag/:tag',
+    component: 'pages/HashtagPage',
     auth: true,
   },
 

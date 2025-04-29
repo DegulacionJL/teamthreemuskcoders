@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('posts', function (Blueprint $table) {
             $table->id();
             $table->string('caption');
+            $table->json('hashtag')->nullable();
             $table->unsignedBigInteger('user_id');
             $table->timestamps();
 
@@ -29,6 +30,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('posts');
+        Schema::enableForeignKeyConstraints();
     }
 };

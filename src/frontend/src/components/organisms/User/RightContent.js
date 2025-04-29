@@ -1,16 +1,16 @@
+'use client';
+
 import { useAuth } from 'hooks/useAuth';
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { followUser } from 'services/follow.service';
-import { getSuggestedUsers, getTrendingMemes } from 'services/user.service';
+import { getSuggestedUsers } from 'services/user.service';
 import { Whatshot } from '@mui/icons-material';
 import {
   Avatar,
   Box,
   Button,
   Card,
-  CardContent,
   CardHeader,
   Chip,
   CircularProgress,
@@ -34,69 +34,39 @@ const RightContent = ({
 }) => {
   const { user } = useAuth({ middleware: 'auth' });
   const theme = useTheme();
-  const navigate = useNavigate();
 
   // State for Suggested User
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [loadingSuggestedUsers, setLoadingSuggestedUsers] = useState(true);
-
-  // State for Trending Hashtags
-  const [trendingHashtags, setTrendingHashtags] = useState([]);
-  const [loadingTrendingHashtags, setLoadingTrendingHashtags] = useState(true);
 
   // Fetch Suggested Users
   const fetchSuggestedUsers = async () => {
     const listSuggestedUsers = await getSuggestedUsers(user.id);
     if (!listSuggestedUsers) {
       setLoadingSuggestedUsers(true);
+      return;
     }
-    setLoadingSuggestedUsers(false);
-    setSuggestedUsers(listSuggestedUsers);
-    // console.log('Suggested users:', listSuggestedUsers);
 
-    // try {
-    //   console.log('Fetching suggested users...');
-    //   const token = localStorage.getItem('access_token');
-    //   console.log('Auth token available:', !!token);
-    //   const users = await getSuggestedUsers(user.id);
-    //   console.log('Suggested users response:', users);
-    //   setSuggestedUsers(users || []); // Fallback to an empty array
-    // } catch (error) {
-    //   console.error('Error fetching suggested users:', error);
-    //   // Log more details about the error
-    //   if (error.response) {
-    //     console.error('Error response:', error.response.data);
-    //     console.error('Error status:', error.response.status);
-    //   }
-    // } finally {
-    //   setLoadingSuggestedUsers(false);
-    // }
+    // Sort users by mutual_count in descending order (users with more mutual friends first)
+    const sortedUsers = [...listSuggestedUsers].sort((a, b) => {
+      // If mutual_count exists, sort by it (higher first)
+      if (a.mutual_count !== undefined && b.mutual_count !== undefined) {
+        return b.mutual_count - a.mutual_count;
+      }
+      // If only one has mutual_count, prioritize that one
+      if (a.mutual_count !== undefined) return -1;
+      if (b.mutual_count !== undefined) return 1;
+      // If neither has mutual_count, keep original order
+      return 0;
+    });
+
+    setLoadingSuggestedUsers(false);
+    setSuggestedUsers(sortedUsers);
   };
 
   useEffect(() => {
-    // console.log('user', user);
     fetchSuggestedUsers();
   }, [user]);
-
-  // Fetch Trending Hashtags
-  useEffect(() => {
-    const fetchTrendingHashtags = async () => {
-      try {
-        const hashtags = await getTrendingMemes();
-        setTrendingHashtags(hashtags || []); // Fallback to an empty array
-      } catch (error) {
-        console.error('Error fetching trending hashtags:', error);
-      } finally {
-        setLoadingTrendingHashtags(false);
-      }
-    };
-
-    fetchTrendingHashtags();
-  }, []);
-
-  const handleHashtagClick = (postId) => {
-    navigate(`/posts/${postId}`); // Redirect to the specific post
-  };
 
   const handleFollowUser = async (userId) => {
     try {
@@ -109,9 +79,21 @@ const RightContent = ({
       const newSuggestions = await getSuggestedUsers(currentUserId);
       const currentUserIds = suggestedUsers.map((u) => u.id);
 
+      // Find a new user that isn't already in the list
       const newUser = newSuggestions.find((u) => !currentUserIds.includes(u.id) && u.id !== userId);
       if (newUser) {
-        setSuggestedUsers((prevUsers) => [...prevUsers, newUser]);
+        // Add the new user and re-sort the list
+        setSuggestedUsers((prevUsers) => {
+          const updatedUsers = [...prevUsers, newUser];
+          return updatedUsers.sort((a, b) => {
+            if (a.mutual_count !== undefined && b.mutual_count !== undefined) {
+              return b.mutual_count - a.mutual_count;
+            }
+            if (a.mutual_count !== undefined) return -1;
+            if (b.mutual_count !== undefined) return 1;
+            return 0;
+          });
+        });
       }
     } catch (error) {
       console.error('Follow error: ', error);
@@ -214,55 +196,35 @@ const RightContent = ({
                       {`${suggestedUser.first_name} ${suggestedUser.last_name}`}
                     </Typography>
                   }
-                  secondary={`@${suggestedUser.username}`}
+                  secondary={
+                    <Box>
+                      <Typography variant="body2" component="span">
+                        {suggestedUser.username ? `@${suggestedUser.username}` : ''}
+                      </Typography>
+                      {suggestedUser.mutual_count > 0 && (
+                        <Typography
+                          variant="body2"
+                          component="div"
+                          sx={{
+                            color:
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(255, 255, 255, 0.7)'
+                                : 'rgba(0, 0, 0, 0.6)',
+                            fontSize: '0.75rem',
+                            mt: 0.5,
+                          }}
+                        >
+                          {suggestedUser.mutual_count} mutual friend
+                          {suggestedUser.mutual_count !== 1 ? 's' : ''}
+                        </Typography>
+                      )}
+                    </Box>
+                  }
                 />
               </ListItem>
             ))}
           </List>
         )}
-      </Card>
-
-      {/* Trending Hashtags Section */}
-      <Card sx={{ mb: 3 }}>
-        <CardHeader
-          title="Trending Hashtags"
-          sx={{
-            bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
-            color: '#ffffff',
-            py: 1.5,
-          }}
-        />
-        <CardContent>
-          {loadingTrendingHashtags ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-              <CircularProgress size={24} />
-            </Box>
-          ) : trendingHashtags.length === 0 ? (
-            <Box sx={{ p: 2, textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary" textAlign="center">
-                No trending memes available.
-              </Typography>
-            </Box>
-          ) : (
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {trendingHashtags.map((hashtag) => (
-                <Chip
-                  key={hashtag.hashtag}
-                  label={hashtag.hashtag}
-                  clickable
-                  onClick={() => handleHashtagClick(hashtag.post_id)}
-                  sx={{
-                    bgcolor: 'primary.main',
-                    color: '#ffffff',
-                    '&:hover': {
-                      bgcolor: 'primary.dark',
-                    },
-                  }}
-                />
-              ))}
-            </Box>
-          )}
-        </CardContent>
       </Card>
 
       {/* Leaderboard Section */}

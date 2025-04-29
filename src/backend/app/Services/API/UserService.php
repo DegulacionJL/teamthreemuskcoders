@@ -254,14 +254,66 @@ class UserService
     }
 
     public function getSuggestedUsers($currentUserId)
-    {
-        // $followedUsers = Follow::where('follower_id', $currentUserId)->get('following_id')->toArray();
-        $followedUserIds = Follow::where('follower_id', $currentUserId)
-        ->get('following_id')->toArray();
-        $followedUserIds[] = $currentUserId;
-
-        $suggestedUsers = User::whereNotIn('id', $followedUserIds)->inRandomOrder()->limit(5)->get()->toArray();
-        Log::info('Suggested Users', $suggestedUsers);
-        return $suggestedUsers;
+{
+    // Get IDs of users the current user follows
+    $followedUserIds = Follow::where('follower_id', $currentUserId)
+        ->pluck('following_id')
+        ->toArray();
+    
+    // Add current user's ID to exclude from suggestions
+    $excludeUserIds = $followedUserIds;
+    $excludeUserIds[] = $currentUserId;
+    
+    // Find mutual connections (users followed by users that current user follows)
+    $mutualConnectionsQuery = Follow::whereIn('follower_id', $followedUserIds)
+        ->whereNotIn('following_id', $excludeUserIds)
+        ->select('following_id')
+        ->selectRaw('COUNT(*) as mutual_count')
+        ->groupBy('following_id')
+        ->orderBy('mutual_count', 'desc')
+        ->limit(5);
+    
+    $mutualConnections = $mutualConnectionsQuery->get()->toArray();
+    
+    // Get IDs of users with mutual connections
+    $mutualUserIds = array_column($mutualConnections, 'following_id');
+    
+    // If we have fewer than 5 mutual connections, fill with random users
+    $suggestedUsers = [];
+    if (count($mutualConnections) < 5) {
+        $remainingCount = 5 - count($mutualConnections);
+        
+        // Get random users excluding already suggested and followed users
+        $excludeFromRandom = array_merge($excludeUserIds, $mutualUserIds);
+        $randomUsers = User::whereNotIn('id', $excludeFromRandom)
+            ->inRandomOrder()
+            ->limit($remainingCount)
+            ->get()
+            ->toArray();
+        
+        // Get full user details for mutual connections
+        $mutualUsers = User::whereIn('id', $mutualUserIds)->get()->toArray();
+        
+        // Add mutual count to each user
+        foreach ($mutualUsers as &$user) {
+            $mutualIndex = array_search($user['id'], array_column($mutualConnections, 'following_id'));
+            $user['mutual_count'] = $mutualConnections[$mutualIndex]['mutual_count'];
+        }
+        
+        // Combine mutual connections with random users
+        $suggestedUsers = array_merge($mutualUsers, $randomUsers);
+    } else {
+        // If we have 5 or more mutual connections, just use the top 5
+        $suggestedUsers = User::whereIn('id', $mutualUserIds)->get()->toArray();
+        
+        // Add mutual count to each user
+        foreach ($suggestedUsers as &$user) {
+            $mutualIndex = array_search($user['id'], array_column($mutualConnections, 'following_id'));
+            $user['mutual_count'] = $mutualConnections[$mutualIndex]['mutual_count'];
+        }
     }
+    
+    Log::info('Suggested Users', $suggestedUsers);
+    return $suggestedUsers;
+}
 }

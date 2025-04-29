@@ -10,10 +10,6 @@ function Router() {
   const UserLayout = lazy(() => import('templates/User'));
   const Logout = lazy(() => import('pages/guest/Logout'));
 
-  if (!user) {
-    console.log('User not logged in!');
-  }
-
   return (
     <Suspense fallback={<Loader />}>
       <Routes>
