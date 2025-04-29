@@ -16,6 +16,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Requests\HashtagPostRequest;
+use App\Http\Resources\HashtagResource;
 
 class PostController extends Controller
 {
@@ -32,12 +34,14 @@ class PostController extends Controller
     {
         try {
             $request->validated();
-
+            
             $caption = $request->input('caption');
+            // $hashtag = json_encode($request->input('hashtag'));
+            $hashtag = $request->input('hashtag');
             $image = $request->file('image');
             $user_id = auth()->id();
 
-            $post = $this->postService->createMemePost($caption, $image, $user_id);
+            $post = $this->postService->createMemePost($caption, $hashtag, $image, $user_id);
 
             return response()->json(['data' => new PostResource($post)], 200);
         } catch (Exception $e) {
@@ -213,14 +217,33 @@ class PostController extends Controller
             }
             
             // Fetch the latest 5-8 hashtags from posts
-            $hashtags = Post::select('id', 'caption')
-                ->whereNotNull('caption')
+            $hashtags = Post::select('id', 'hashtag')
+            ->whereNotNull('hashtag')
+            ->orderBy('created_at', 'desc')
+            ->limit(20)
+            ->get()
+            ->flatMap(function ($post) {
+                $tags = is_array($post->hashtag) ? $post->hashtag : json_decode($post->hashtag, true);
+                return collect($tags ?: [])->map(function ($hashtag) use ($post) {
+                    return [
+                        'hashtag' => $hashtag,
+                        'post_id' => $post->id,
+                    ];
+                });
+            })
+            ->unique('hashtag')
+            ->take(8)
+            ->values();
+        
+            /*
+             $hashtags = Post::select('id', 'hashtag')
+                ->whereNotNull('hashtag')
                 ->orderBy('created_at', 'desc')
-                ->limit(8)
+                ->limit(20)
                 ->get()
                 ->flatMap(function ($post) {
-                    preg_match_all('/#\w+/', $post->caption, $matches);
-                    return collect($matches[0])->map(function ($hashtag) use ($post) {
+                    $tags = is_array($post->hashtag) ? $post->hashtag : json_decode($post->hashtag, true);
+                    return collect($tags ?: [])->map(function ($hashtag) use ($post) {
                         return [
                             'hashtag' => $hashtag,
                             'post_id' => $post->id,
@@ -230,6 +253,7 @@ class PostController extends Controller
                 ->unique('hashtag')
                 ->take(8)
                 ->values();
+             */
 
             return response()->json([
                 'data' => $hashtags,
@@ -246,4 +270,60 @@ class PostController extends Controller
             ], 500);
         }
     }
+    public function getPostsByHashtag(HashtagPostRequest $request, $hashtag): JsonResponse
+    {
+        try {
+            // Handle empty or undefined hashtags
+            if ($hashtag === 'undefined' || empty($hashtag)) {
+                return $this->emptyResponse();
+            }
+
+            // Get posts from service
+            $posts = $this->postService->getPostsByHashtag($hashtag, $request->page ?? 1);
+            
+            // Return formatted response
+            return response()->json([
+                'posts' => HashtagResource::collection($posts),
+                'meta' => [
+                    'current_page' => $posts->currentPage(),
+                    'last_page' => $posts->lastPage(),
+                    'total' => $posts->total(),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            // Log the error
+            Log::error('Error fetching posts by hashtag: ' . $e->getMessage());
+            
+            // Return a friendly error response
+            return response()->json([
+                'error' => 'Failed to fetch posts by hashtag',
+                'posts' => [],
+                'meta' => [
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'total' => 0,
+                ]
+            ], 500);
+        }
+    }
+
+    /**
+     * Return empty response with proper structure
+     * 
+     * @return JsonResponse
+     */
+    private function emptyResponse(): JsonResponse
+    {
+        return response()->json([
+            'posts' => [],
+            'meta' => [
+                'current_page' => 1,
+                'last_page' => 1,
+                'total' => 0,
+            ]
+        ]);
+    }
+
+
+
 }

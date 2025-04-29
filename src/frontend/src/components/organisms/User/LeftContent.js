@@ -1,24 +1,16 @@
-'use client';
-
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getTopPost } from 'services/meme.service';
-import {
-  EmojiEvents,
-  LocalFireDepartment,
-  PhotoCamera,
-  Star,
-  TrendingUp,
-} from '@mui/icons-material';
+import { getTrendingMemes } from 'services/user.service';
+import { EmojiEvents, PhotoCamera } from '@mui/icons-material';
 import {
   Avatar,
   Box,
   Card,
   CardContent,
   CardHeader,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
+  Chip,
+  CircularProgress,
   Paper,
   Tab,
   Tabs,
@@ -34,6 +26,9 @@ const LeftContent = () => {
     weekly: null,
     monthly: null,
   });
+  const [trendingHashtags, setTrendingHashtags] = useState([]);
+  const [loadingTrendingHashtags, setLoadingTrendingHashtags] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTopPosts = async () => {
@@ -61,8 +56,26 @@ const LeftContent = () => {
     fetchTopPosts();
   }, []);
 
+  useEffect(() => {
+    const fetchTrendingHashtags = async () => {
+      try {
+        const hashtags = await getTrendingMemes();
+        setTrendingHashtags(hashtags || []);
+      } catch (error) {
+        console.error('Error fetching trending hastags: ', error);
+      } finally {
+        setLoadingTrendingHashtags(false);
+      }
+    };
+    fetchTrendingHashtags();
+  }, []);
+
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
+  };
+
+  const handleHashtagClick = (hashtag) => {
+    navigate(`/hashtag/${encodeURIComponent(hashtag.replace(/^#/, ''))}`); // removes leading '#' and safely encodes
   };
 
   const renderTopPost = (post) => {
@@ -208,7 +221,7 @@ const LeftContent = () => {
               ? '0 4px 20px rgba(0,0,0,0.3)'
               : '0 4px 20px rgba(0,0,0,0.08)',
           transition: 'all 0.3s ease',
-          bgcolor: theme.palette.mode === 'dark' ? '#2a2a3a' : '#ffffff', // White background for light mode
+          bgcolor: theme.palette.mode === 'dark' ? '#2a2a3a' : '#ffffff',
         }}
       >
         <CardHeader
@@ -258,7 +271,7 @@ const LeftContent = () => {
             sx={{
               p: 2.5,
               pb: 1.5,
-              bgcolor: theme.palette.mode === 'dark' ? '#2a2a3a' : '#ffffff', // White background for light mode
+              bgcolor: theme.palette.mode === 'dark' ? '#2a2a3a' : '#ffffff',
               color: theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.primary,
               borderBottomLeftRadius: 12,
               borderBottomRightRadius: 12,
@@ -268,6 +281,48 @@ const LeftContent = () => {
           >
             {renderTopPost(topPosts[activeTab])}
           </Paper>
+        </CardContent>
+      </Card>
+
+      <Card sx={{ mt: 3 }}>
+        <CardHeader
+          title="Trending Hashtags"
+          sx={{
+            bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
+            color: '#ffffff',
+            py: 1.5,
+          }}
+        />
+        <CardContent>
+          {loadingTrendingHashtags ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : trendingHashtags.length === 0 ? (
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary" textAlign="center">
+                No trending memes available.
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {trendingHashtags.map((hashtag) => (
+                <Chip
+                  key={hashtag.hashtag}
+                  label={hashtag.hashtag}
+                  clickable
+                  onClick={() => handleHashtagClick(hashtag.hashtag)}
+                  sx={{
+                    bgcolor: 'primary.main',
+                    color: '#ffffff',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                  }}
+                />
+              ))}
+            </Box>
+          )}
         </CardContent>
       </Card>
     </Box>

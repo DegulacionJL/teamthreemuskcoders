@@ -18,6 +18,7 @@ class PostResource extends JsonResource
             'id' => $this->id,
             'caption' => $this->caption,
             'image' => $this->image ? asset('storage/images/' . basename($this->image->image_path)) : null,
+            'likes_count' => $this->likes->count(),
             'user' => $this->user? [
                     'id' => $this->user->id,
                     'name' => trim($this->user->first_name. ''.$this->user->last_name), 

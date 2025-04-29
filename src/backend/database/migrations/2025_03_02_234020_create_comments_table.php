@@ -8,7 +8,7 @@ return new class extends Migration {
     public function up()
     {
         Schema::create('comments', function (Blueprint $table) {
-             $table->id();
+        $table->id();
         $table->foreignId('post_id')->constrained('posts')->onDelete('cascade');
         $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
         $table->foreignId('parent_id')->nullable()->constrained('comments')->onDelete('cascade');
@@ -21,6 +21,8 @@ return new class extends Migration {
 
     public function down()
     {
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('comments');
+        Schema::enableForeignKeyConstraints();
     }
 };

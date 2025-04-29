@@ -96,6 +96,7 @@ Route::prefix('users')
         Route::middleware('auth:api')->group(function () {
             Route::get('/users/suggested/{id}', [UserController::class, 'getSuggestedUsers']);
             Route::get('/posts/trending-memes', [PostController::class, 'getTrendingMemes']);
+            Route::get('/posts/hashtag/{hashtag}', [PostController::class, 'getPostsByHashtag']);
         });
 
     Route::prefix('userlist')

@@ -102,6 +102,10 @@ function MemeFeed() {
     try {
       const formData = new FormData();
       formData.append('caption', caption);
+      if (caption) {
+        const hashtags = caption.match(/#\w+/g) || [];
+        formData.append('hashtag', JSON.stringify(hashtags));
+      }
       formData.append('image', image);
       formData.append('user_id', '1');
 
