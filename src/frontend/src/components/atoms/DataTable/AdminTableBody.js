@@ -32,7 +32,9 @@ function AdminTableBody(props) {
                 let label = row;
                 // support nested value e.g., "status.name"
                 cell.id.split('.').forEach((key) => {
-                  label = label?.[key] ?? 'N/A';
+                  label =
+                    label?.[key] ??
+                    (cell.id === 'avatar' ? '/static/images/default-avatar.png' : 'N/A');
                 });
 
                 if (cell.id === 'avatar' && typeof label === 'string') {

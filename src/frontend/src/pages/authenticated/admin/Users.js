@@ -136,14 +136,32 @@ export default function Users() {
       id: 'avatar',
       label: '',
       width: 64,
-      render: (row) => (
-        <Avatar
-          src={row?.avatar ? row.avatar.replace(/\\/g, '') : 'https://via.placeholder.com/40'}
-          alt="Profile"
-          sx={{ width: 40, height: 40 }}
-        />
-      ),
+      render: (row) => {
+        const rawAvatar = row?.avatar?.replace(/\\/g, '');
+        const avatarUrl = rawAvatar
+          ? `${import.meta.env.VITE_API_BASE_URL}/${rawAvatar}`
+          : '/static/images/default-avatar.png';
+
+        return (
+          <Avatar
+            src={avatarUrl}
+            alt="Profile"
+            sx={{
+              width: 40,
+              height: 40,
+              mx: 'auto',
+              border: '2px solid #888',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+            }}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = '/static/images/default-avatar.png';
+            }}
+          />
+        );
+      },
     },
+
     {
       id: 'first_name',
       label: (
