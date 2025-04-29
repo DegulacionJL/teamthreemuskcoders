@@ -1,6 +1,7 @@
+import { useComments } from 'hooks/useComments';
 import PropTypes from 'prop-types';
-import React from 'react';
-import { ChatBubbleOutline, Close as CloseIcon, Send as SendIcon } from '@mui/icons-material';
+import React, { useEffect, useState } from 'react';
+import { Close as CloseIcon, Send as SendIcon } from '@mui/icons-material';
 import {
   Avatar,
   Box,
@@ -11,6 +12,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
+import PostReactions from 'components/organisms/User/PostReaction';
 
 export default function LightBox({
   isOpen,
@@ -19,19 +21,53 @@ export default function LightBox({
   caption,
   user,
   timestamp,
-  comments = [],
+  postId,
   reactionCount = 0,
-  onAddComment,
-  // darkMode,
+  darkMode,
 }) {
   const theme = useTheme();
-  // const isDarkMode = darkMode !== undefined ? darkMode : theme.palette.mode === 'dark';
+  const [likeCount, setLikeCount] = useState(reactionCount);
+  const [reactionType, setReactionType] = useState(null);
+  const [totalCommentsCount, setTotalCommentsCount] = useState(0);
+  const [replyInputVisible, setReplyInputVisible] = useState(false);
 
-  if (!isOpen) {
-    return null;
-  }
+  const {
+    comments,
+    isLoading: commentsLoading,
+    hasMore,
+    handleAddComment,
+    handleLoadMore,
+    handleAddReply,
+    handleLoadMoreReplies,
+    replyToComment,
+    setReplyToComment,
+    handleCommentReactionChange,
+  } = useComments(postId);
 
-  function getRelativeTime(timestamp) {
+  const handleReactionChange = async (postId, hasReacted, newReactionType, count) => {
+    try {
+      setLikeCount(count);
+      setReactionType(newReactionType);
+    } catch (error) {
+      console.error('Error toggling reaction:', error);
+    }
+  };
+
+  const fetchTotalCommentsCount = async () => {
+    try {
+      const response = await fetch(`/api/posts/${postId}/comments/count`);
+      const data = await response.json();
+      setTotalCommentsCount(data.total_with_replies || 0);
+    } catch (error) {
+      console.error('Error fetching total comments count:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTotalCommentsCount();
+  }, [postId]);
+
+  const getRelativeTime = (timestamp) => {
     const now = new Date();
     const postedTime = new Date(timestamp);
     const diff = Math.floor((now - postedTime) / 1000);
@@ -47,7 +83,7 @@ export default function LightBox({
     }
     const days = Math.floor(diff / 86400);
     return `${days} day${days === 1 ? '' : 's'} ago`;
-  }
+  };
 
   const formatCaption = (text) => {
     if (!text) return '';
@@ -59,6 +95,41 @@ export default function LightBox({
       </React.Fragment>
     ));
   };
+
+  // Function to handle replying to comments
+  const handleReplyClick = (comment) => {
+    setReplyToComment(comment);
+    setReplyInputVisible(true);
+  };
+
+  // Function to cancel reply
+  const handleCancelReply = () => {
+    setReplyToComment(null);
+    setReplyInputVisible(false);
+  };
+
+  // Function to submit a reply
+  const submitReply = (text) => {
+    if (replyToComment && text.trim()) {
+      handleAddReply(replyToComment.id, text);
+      setReplyInputVisible(false);
+      setReplyToComment(null);
+    }
+  };
+
+  // Function to load more replies
+  const loadReplies = (commentId) => {
+    handleLoadMoreReplies(commentId);
+  };
+
+  // Function to handle comment reactions
+  const toggleCommentReaction = (commentId, hasReacted, reactionType) => {
+    handleCommentReactionChange(commentId, hasReacted, reactionType);
+  };
+
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <Box
@@ -166,50 +237,18 @@ export default function LightBox({
           </Box>
 
           {/* Reactions */}
-          <Box sx={{ p: 0 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                pt: 1,
-              }}
-            >
-              <Button
-                startIcon={<Typography sx={{ fontSize: 16 }}>😂</Typography>}
-                size="small"
-                sx={{
-                  flex: 1,
-                  color: theme.palette.text.secondary,
-                  borderBottom: `1px solid ${theme.palette.divider}`,
-                }}
-              >
-                Laugh
-              </Button>
-              <Button
-                startIcon={<ChatBubbleOutline />}
-                size="small"
-                sx={{
-                  flex: 1,
-                  color: theme.palette.text.secondary,
-                  borderBottom: `1px solid ${theme.palette.divider}`,
-                }}
-              >
-                Comment
-              </Button>
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Box sx={{ bgcolor: theme.palette.primary.main, borderRadius: '50%', p: 0.5 }}>
-                  <Typography sx={{ fontSize: 10, color: 'white' }}>😂</Typography>
-                </Box>
-                <Typography variant="caption" color="text.secondary">
-                  {reactionCount}
-                </Typography>
-              </Box>
-              <Typography variant="caption" color="text.secondary">
-                {comments.length} comments
-              </Typography>
-            </Box>
+          <Box sx={{ p: 2 }}>
+            <PostReactions
+              postId={postId}
+              isDarkMode={darkMode}
+              onReactionChange={handleReactionChange}
+              initialReactionType={reactionType}
+              initialLikeCount={likeCount}
+            />
+            <Typography variant="caption" color="text.secondary">
+              {likeCount} {likeCount === 1 ? 'reaction' : 'reactions'} • {totalCommentsCount}{' '}
+              {totalCommentsCount === 1 ? 'comment' : 'comments'}
+            </Typography>
           </Box>
 
           {/* Comments section */}
@@ -224,42 +263,192 @@ export default function LightBox({
             }}
           >
             {comments.map((comment, index) => (
-              <Box key={index} sx={{ display: 'flex', gap: 1 }}>
-                <Avatar
-                  src={comment.user?.avatar || ''}
-                  alt={comment.user?.first_name || 'User'}
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    bgcolor:
-                      theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
-                  }}
-                >
-                  {comment.user
-                    ? `${comment.user.first_name?.charAt(0) || ''}${
-                        comment.user.last_name?.charAt(0) || ''
-                      }`
-                    : 'U'}
-                </Avatar>
-                <Box
-                  sx={{
-                    bgcolor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(255, 255, 255, 0.05)'
-                        : 'rgba(0, 0, 0, 0.05)',
-                    borderRadius: '16px',
-                    px: 1.5,
-                    py: 1,
-                    maxWidth: '85%',
-                  }}
-                >
-                  <Typography variant="subtitle2" sx={{ fontSize: '0.875rem' }}>
+              <Box key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {/* Main comment */}
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Avatar
+                    src={comment.user?.avatar || ''}
+                    alt={comment.user?.first_name || 'User'}
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      bgcolor:
+                        theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
+                    }}
+                  >
                     {comment.user
-                      ? `${comment.user.first_name} ${comment.user.last_name}`
-                      : 'Unknown User'}
-                  </Typography>
-                  <Typography variant="body2">{comment.text}</Typography>
+                      ? `${comment.user.first_name?.charAt(0) || ''}${
+                          comment.user.last_name?.charAt(0) || ''
+                        }`
+                      : 'U'}
+                  </Avatar>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, flexGrow: 1 }}>
+                    <Box
+                      sx={{
+                        bgcolor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255, 255, 255, 0.05)'
+                            : 'rgba(0, 0, 0, 0.05)',
+                        borderRadius: '16px',
+                        px: 1.5,
+                        py: 1,
+                        maxWidth: '85%',
+                      }}
+                    >
+                      <Typography variant="subtitle2" sx={{ fontSize: '0.875rem' }}>
+                        {comment.user
+                          ? `${comment.user.first_name} ${comment.user.last_name}`
+                          : 'Unknown User'}
+                      </Typography>
+                      <Typography variant="body2">{comment.text}</Typography>
+                    </Box>
+
+                    {/* Comment Actions */}
+                    <Box sx={{ display: 'flex', gap: 1, ml: 1 }}>
+                      <Button
+                        size="small"
+                        variant="text"
+                        sx={{ fontSize: '0.75rem', py: 0, minWidth: 'auto' }}
+                        onClick={() => handleReplyClick(comment)}
+                      >
+                        Reply
+                      </Button>
+
+                      <Button
+                        size="small"
+                        variant="text"
+                        sx={{ fontSize: '0.75rem', py: 0, minWidth: 'auto' }}
+                        onClick={() =>
+                          toggleCommentReaction(comment.id, comment.hasReacted, 'like')
+                        }
+                      >
+                        {comment.hasReacted ? 'Unlike' : 'Like'}
+                      </Button>
+                    </Box>
+                  </Box>
                 </Box>
+
+                {/* Comment Replies */}
+                {comment.replies && comment.replies.length > 0 && (
+                  <Box sx={{ pl: 4 }}>
+                    {comment.replies.map((reply, replyIndex) => (
+                      <Box key={replyIndex} sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                        <Avatar
+                          src={reply.user?.avatar || ''}
+                          alt={reply.user?.first_name || 'User'}
+                          sx={{
+                            width: 24,
+                            height: 24,
+                            bgcolor:
+                              theme.palette.mode === 'dark'
+                                ? '#4a3b6b'
+                                : theme.palette.primary.light,
+                          }}
+                        >
+                          {reply.user
+                            ? `${reply.user.first_name?.charAt(0) || ''}${
+                                reply.user.last_name?.charAt(0) || ''
+                              }`
+                            : 'U'}
+                        </Avatar>
+                        <Box
+                          sx={{
+                            bgcolor:
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(255, 255, 255, 0.05)'
+                                : 'rgba(0, 0, 0, 0.05)',
+                            borderRadius: '16px',
+                            px: 1.5,
+                            py: 1,
+                            maxWidth: '85%',
+                          }}
+                        >
+                          <Typography variant="subtitle2" sx={{ fontSize: '0.75rem' }}>
+                            {reply.user
+                              ? `${reply.user.first_name} ${reply.user.last_name}`
+                              : 'Unknown User'}
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                            {reply.text}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    ))}
+
+                    {comment.hasMoreReplies && (
+                      <Button
+                        size="small"
+                        onClick={() => loadReplies(comment.id)}
+                        sx={{ ml: 4, fontSize: '0.75rem' }}
+                      >
+                        Load more replies
+                      </Button>
+                    )}
+                  </Box>
+                )}
+
+                {/* Reply Input */}
+                {replyToComment && replyToComment.id === comment.id && replyInputVisible && (
+                  <Box sx={{ pl: 4, display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <Avatar
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        bgcolor:
+                          theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
+                      }}
+                    >
+                      {user?.first_name?.charAt(0) || 'U'}
+                    </Avatar>
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        borderRadius: '24px',
+                        pl: 2,
+                        pr: 1,
+                        py: 0.5,
+                        bgcolor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255, 255, 255, 0.05)'
+                            : 'rgba(0, 0, 0, 0.05)',
+                      }}
+                    >
+                      <InputBase
+                        placeholder="Write a reply..."
+                        sx={{ flex: 1, fontSize: '0.875rem' }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && e.target.value.trim()) {
+                            submitReply(e.target.value);
+                            e.target.value = '';
+                          } else if (e.key === 'Escape') {
+                            handleCancelReply();
+                          }
+                        }}
+                      />
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => {
+                          const input = document.querySelector(
+                            'input[placeholder="Write a reply..."]'
+                          );
+                          if (input && input.value.trim()) {
+                            submitReply(input.value);
+                            input.value = '';
+                          }
+                        }}
+                      >
+                        <SendIcon fontSize="small" />
+                      </IconButton>
+                    </Paper>
+                    <Button size="small" variant="text" onClick={handleCancelReply}>
+                      Cancel
+                    </Button>
+                  </Box>
+                )}
               </Box>
             ))}
 
@@ -269,6 +458,16 @@ export default function LightBox({
                   No comments yet. Be the first to comment!
                 </Typography>
               </Box>
+            )}
+
+            {hasMore && (
+              <Button
+                onClick={handleLoadMore}
+                sx={{ alignSelf: 'center', mt: 2 }}
+                disabled={commentsLoading}
+              >
+                Load More
+              </Button>
             )}
           </Box>
 
@@ -282,7 +481,7 @@ export default function LightBox({
                   bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
                 }}
               >
-                YO
+                {user?.first_name?.charAt(0) || 'U'}
               </Avatar>
               <Paper
                 variant="outlined"
@@ -304,8 +503,8 @@ export default function LightBox({
                   placeholder="Write a comment..."
                   sx={{ flex: 1, fontSize: '0.875rem' }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && onAddComment) {
-                      onAddComment(e.target.value);
+                    if (e.key === 'Enter' && e.target.value.trim() && handleAddComment) {
+                      handleAddComment(e.target.value);
                       e.target.value = '';
                     }
                   }}
@@ -315,8 +514,8 @@ export default function LightBox({
                   color="primary"
                   onClick={() => {
                     const input = document.querySelector('input[placeholder="Write a comment..."]');
-                    if (input && onAddComment) {
-                      onAddComment(input.value);
+                    if (input && input.value.trim() && handleAddComment) {
+                      handleAddComment(input.value);
                       input.value = '';
                     }
                   }}
@@ -343,17 +542,7 @@ LightBox.propTypes = {
     last_name: PropTypes.string,
   }),
   timestamp: PropTypes.string,
-  comments: PropTypes.arrayOf(
-    PropTypes.shape({
-      text: PropTypes.string,
-      user: PropTypes.shape({
-        avatar: PropTypes.string,
-        first_name: PropTypes.string,
-        last_name: PropTypes.string,
-      }),
-    })
-  ),
+  postId: PropTypes.number.isRequired,
   reactionCount: PropTypes.number,
-  onAddComment: PropTypes.func,
   darkMode: PropTypes.bool,
 };
