@@ -1,16 +1,10 @@
 import PropTypes from 'prop-types';
-import React from 'react';
-import { ChatBubbleOutline, Close as CloseIcon, Send as SendIcon } from '@mui/icons-material';
-import {
-  Avatar,
-  Box,
-  Button,
-  IconButton,
-  InputBase,
-  Paper,
-  Typography,
-  useTheme,
-} from '@mui/material';
+import React, { useState } from 'react';
+import { ChatBubbleOutline, Close as CloseIcon } from '@mui/icons-material';
+import { Avatar, Box, Button, IconButton, Typography, useTheme } from '@mui/material';
+import CommentFeature from 'components/organisms/CommentFeature';
+import PostReaction from 'components/organisms/User/PostReaction';
+import { useComments } from 'hooks/useComments';
 
 export default function LightBox({
   isOpen,
@@ -19,13 +13,50 @@ export default function LightBox({
   caption,
   user,
   timestamp,
-  comments = [],
-  reactionCount = 0,
-  onAddComment,
-  // darkMode,
+  postId,
+  darkMode,
+  onReactionChange,
+  initialReactionType,
+  initialReactionCount,
 }) {
   const theme = useTheme();
-  // const isDarkMode = darkMode !== undefined ? darkMode : theme.palette.mode === 'dark';
+  const isDarkMode = darkMode !== undefined ? darkMode : theme.palette.mode === 'dark';
+  const [showComments, setShowComments] = useState(false);
+
+  // Use the useComments hook to manage comments state
+  const {
+    comments,
+    isLoading: commentsLoading,
+    totalCommentsCount,
+    hasMore,
+    editingCommentId,
+    editingCommentText,
+    tempEditingText,
+    commentImage,
+    updateCommentImagePreview,
+    isUpdateModalOpen,
+    replyToComment,
+    commentToDelete,
+    isDeleteModalOpen,
+    replyLoading,
+    setReplyToComment,
+    setTempEditingText,
+    setCommentImage,
+    setUpdateCommentImagePreview,
+    setIsUpdateModalOpen,
+    setIsDeleteModalOpen,
+    handleAddComment,
+    handleAddReply,
+    confirmDeleteComment,
+    handleDeleteComment,
+    handleEditCommentClick,
+    handleUpdateCommentImage,
+    handleUpdateComment,
+    handleCancelUpdateComment,
+    handleLoadMore,
+    handleLoadMoreReplies,
+    handleCommentReactionChange,
+  } = useComments(postId);
 
   if (!isOpen) {
     return null;
@@ -58,6 +89,10 @@ export default function LightBox({
         {i < arr.length - 1 && <br />}
       </React.Fragment>
     ));
+  };
+
+  const handleToggleComments = () => {
+    setShowComments((prev) => !prev);
   };
 
   return (
@@ -140,7 +175,7 @@ export default function LightBox({
                 src={user?.avatar || ''}
                 alt={user?.first_name || 'User'}
                 sx={{
-                  bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
+                  bgcolor: isDarkMode ? '#4a3b6b' : theme.palette.primary.light,
                 }}
               >
                 {user
@@ -165,167 +200,72 @@ export default function LightBox({
             </Typography>
           </Box>
 
-          {/* Reactions */}
-          <Box sx={{ p: 0 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                pt: 1,
-              }}
-            >
-              <Button
-                startIcon={<Typography sx={{ fontSize: 16 }}>😂</Typography>}
-                size="small"
-                sx={{
-                  flex: 1,
-                  color: theme.palette.text.secondary,
-                  borderBottom: `1px solid ${theme.palette.divider}`,
-                }}
-              >
-                Laugh
-              </Button>
-              <Button
-                startIcon={<ChatBubbleOutline />}
-                size="small"
-                sx={{
-                  flex: 1,
-                  color: theme.palette.text.secondary,
-                  borderBottom: `1px solid ${theme.palette.divider}`,
-                }}
-              >
-                Comment
-              </Button>
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Box sx={{ bgcolor: theme.palette.primary.main, borderRadius: '50%', p: 0.5 }}>
-                  <Typography sx={{ fontSize: 10, color: 'white' }}>😂</Typography>
-                </Box>
-                <Typography variant="caption" color="text.secondary">
-                  {reactionCount}
-                </Typography>
-              </Box>
-              <Typography variant="caption" color="text.secondary">
-                {comments.length} comments
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Comments section */}
+          {/* Reactions and Comment Toggle */}
           <Box
             sx={{
-              flex: 1,
-              overflowY: 'auto',
-              p: 2,
+              p: 1,
+              borderBottom: `1px solid ${theme.palette.divider}`,
               display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            {comments.map((comment, index) => (
-              <Box key={index} sx={{ display: 'flex', gap: 1 }}>
-                <Avatar
-                  src={comment.user?.avatar || ''}
-                  alt={comment.user?.first_name || 'User'}
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    bgcolor:
-                      theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
-                  }}
-                >
-                  {comment.user
-                    ? `${comment.user.first_name?.charAt(0) || ''}${
-                        comment.user.last_name?.charAt(0) || ''
-                      }`
-                    : 'U'}
-                </Avatar>
-                <Box
-                  sx={{
-                    bgcolor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(255, 255, 255, 0.05)'
-                        : 'rgba(0, 0, 0, 0.05)',
-                    borderRadius: '16px',
-                    px: 1.5,
-                    py: 1,
-                    maxWidth: '85%',
-                  }}
-                >
-                  <Typography variant="subtitle2" sx={{ fontSize: '0.875rem' }}>
-                    {comment.user
-                      ? `${comment.user.first_name} ${comment.user.last_name}`
-                      : 'Unknown User'}
-                  </Typography>
-                  <Typography variant="body2">{comment.text}</Typography>
-                </Box>
-              </Box>
-            ))}
-
-            {comments.length === 0 && (
-              <Box sx={{ textAlign: 'center', py: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  No comments yet. Be the first to comment!
-                </Typography>
-              </Box>
-            )}
+            <PostReaction
+              postId={postId}
+              isDarkMode={isDarkMode}
+              onReactionChange={onReactionChange}
+              initialReactionType={initialReactionType}
+              initialReactionCount={initialReactionCount}
+            />
+            <Button
+              startIcon={<ChatBubbleOutline />}
+              size="small"
+              onClick={handleToggleComments}
+              sx={{ color: theme.palette.text.secondary }}
+            >
+              Comments {totalCommentsCount > 0 && `(${totalCommentsCount})`}
+            </Button>
           </Box>
 
-          {/* Comment input */}
-          <Box sx={{ p: 2, borderTop: `1px solid ${theme.palette.divider}`, mt: 'auto' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Avatar
-                sx={{
-                  width: 32,
-                  height: 32,
-                  bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : theme.palette.primary.light,
-                }}
-              >
-                YO
-              </Avatar>
-              <Paper
-                variant="outlined"
-                sx={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  borderRadius: '24px',
-                  pl: 2,
-                  pr: 1,
-                  py: 0.5,
-                  bgcolor:
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(255, 255, 255, 0.05)'
-                      : 'rgba(0, 0, 0, 0.05)',
-                }}
-              >
-                <InputBase
-                  placeholder="Write a comment..."
-                  sx={{ flex: 1, fontSize: '0.875rem' }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && onAddComment) {
-                      onAddComment(e.target.value);
-                      e.target.value = '';
-                    }
-                  }}
-                />
-                <IconButton
-                  size="small"
-                  color="primary"
-                  onClick={() => {
-                    const input = document.querySelector('input[placeholder="Write a comment..."]');
-                    if (input && onAddComment) {
-                      onAddComment(input.value);
-                      input.value = '';
-                    }
-                  }}
-                >
-                  <SendIcon fontSize="small" />
-                </IconButton>
-              </Paper>
+          {/* Comment Feature */}
+          {showComments && (
+            <Box sx={{ flex: 1, overflowY: 'auto' }}>
+              <CommentFeature
+                postId={postId}
+                user={user}
+                comments={comments}
+                isLoading={commentsLoading}
+                hasMore={hasMore}
+                editingCommentId={editingCommentId}
+                editingCommentText={editingCommentText}
+                tempEditingText={tempEditingText}
+                commentImage={commentImage}
+                updateCommentImagePreview={updateCommentImagePreview}
+                isUpdateModalOpen={isUpdateModalOpen}
+                replyToComment={replyToComment}
+                commentToDelete={commentToDelete}
+                isDeleteModalOpen={isDeleteModalOpen}
+                replyLoading={replyLoading}
+                setReplyToComment={setReplyToComment}
+                setTempEditingText={setTempEditingText}
+                setCommentImage={setCommentImage}
+                setUpdateCommentImagePreview={setUpdateCommentImagePreview}
+                setIsUpdateModalOpen={setIsUpdateModalOpen}
+                setIsDeleteModalOpen={setIsDeleteModalOpen}
+                handleAddComment={handleAddComment}
+                handleAddReply={handleAddReply}
+                confirmDeleteComment={confirmDeleteComment}
+                handleDeleteComment={handleDeleteComment}
+                handleEditCommentClick={handleEditCommentClick}
+                handleUpdateCommentImage={handleUpdateCommentImage}
+                handleUpdateComment={handleUpdateComment}
+                handleCancelUpdateComment={handleCancelUpdateComment}
+                handleLoadMore={handleLoadMore}
+                handleLoadMoreReplies={handleLoadMoreReplies}
+                handleCommentReactionChange={handleCommentReactionChange}
+              />
             </Box>
-          </Box>
+          )}
         </Box>
       </Box>
     </Box>
@@ -343,17 +283,9 @@ LightBox.propTypes = {
     last_name: PropTypes.string,
   }),
   timestamp: PropTypes.string,
-  comments: PropTypes.arrayOf(
-    PropTypes.shape({
-      text: PropTypes.string,
-      user: PropTypes.shape({
-        avatar: PropTypes.string,
-        first_name: PropTypes.string,
-        last_name: PropTypes.string,
-      }),
-    })
-  ),
-  reactionCount: PropTypes.number,
-  onAddComment: PropTypes.func,
+  postId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   darkMode: PropTypes.bool,
+  onReactionChange: PropTypes.func,
+  initialReactionType: PropTypes.string,
+  initialReactionCount: PropTypes.number,
 };
