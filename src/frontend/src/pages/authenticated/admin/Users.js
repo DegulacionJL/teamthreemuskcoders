@@ -330,6 +330,12 @@ export default function Users() {
                     <strong>{t('Joined')}:</strong>{' '}
                     {parseDate(detail.created_at)?.toLocaleDateString()}
                   </Typography>
+                  {detail.last_login && (
+                    <Typography variant="body1">
+                      <strong>{t('Last Login')}:</strong>{' '}
+                      {parseDate(detail.last_login)?.toLocaleString() || '—'}
+                    </Typography>
+                  )}
                 </Box>
               </Grid>
             </Grid>
