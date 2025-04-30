@@ -1,3 +1,5 @@
+'use client';
+
 import PropTypes from 'prop-types';
 import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +8,6 @@ import { useNavigate } from 'react-router-dom';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import MenuIcon from '@mui/icons-material/Menu';
-import { TextField } from '@mui/material';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
@@ -37,7 +38,7 @@ function Navbar(props) {
     menus.push({ label: t('menu.userlist'), url: '/userList' });
   }
 
-  const appName = process.env.REACT_APP_SITE_TITLE || '😂';
+  const appName = 'MemeMa 😂';
 
   const handleOpenNavMenu = (event) => setAnchorMobileNav(event.currentTarget);
   const handleCloseNavMenu = (url) => {
@@ -50,8 +51,6 @@ function Navbar(props) {
     { label: t('menu.logout'), url: '/logout' },
   ];
 
-  const [searchQuery, setSearchQuery] = useState('');
-
   return (
     <AppBar
       position="static"
@@ -63,10 +62,11 @@ function Navbar(props) {
         transition: 'background-color 0.3s ease',
       }}
     >
-      <Container maxWidth="lg">
+      {/** Desktop View */}
+      <Container maxWidth="lg" disableGutters>
         <Toolbar sx={{ flexWrap: 'wrap' }} disableGutters>
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            <Link to="/" style={{ marginRight: 8 }}>
+          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, justifyContent: 'start' }}>
+            <Link to="/" style={{ textDecoration: 'none' }}>
               <Typography
                 variant="h5"
                 noWrap
@@ -77,8 +77,6 @@ function Navbar(props) {
                   display: 'flex',
                   alignItems: 'center',
                   height: 48,
-                  marginLeft: 0,
-                  paddingLeft: 0,
                 }}
               >
                 {appName}
@@ -108,9 +106,10 @@ function Navbar(props) {
               sx={{
                 display: { xs: 'flex', md: 'none' },
                 flexGrow: 1,
-                justifyContent: 'flex-start',
+                justifyContent: 'center',
               }}
             >
+              {/* mobile view */}
               <Typography
                 variant="h5"
                 noWrap
@@ -120,8 +119,6 @@ function Navbar(props) {
                   textDecoration: 'none',
                   display: 'flex',
                   alignItems: 'center',
-                  marginLeft: 0,
-                  fontFamily: 'Roboto, "Segoe UI", "Arial", sans-serif', // Add font family here
                 }}
               >
                 {appName}
