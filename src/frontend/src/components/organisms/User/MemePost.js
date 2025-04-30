@@ -20,13 +20,13 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material';
 import CommentFeature from 'components/organisms/CommentFeature';
+import PostReaction from 'components/organisms/User/PostReaction';
 import { useTheme as useCustomTheme } from 'theme/ThemeContext';
+import { getRelativeTime } from 'utils/timeUtils';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import EditPostModal from '../EditPostModal';
 import LightBox from '../LightBox';
 import ReportPostConfirmationModal from '../ReportPostModal';
-import PostReaction from 'components/organisms/User/PostReaction';
-import { getRelativeTime } from 'utils/timeUtils';
 
 const MemePost = ({
   id,
