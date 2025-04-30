@@ -1,8 +1,5 @@
-// CommentFeature.js
 import PropTypes from 'prop-types';
 import React from 'react';
-import { toast } from 'react-toastify';
-import * as commentService from 'services/comment.service';
 import CloseIcon from '@mui/icons-material/Close';
 import {
   Box,
@@ -14,10 +11,10 @@ import {
   DialogTitle,
   IconButton,
   TextField,
-  Typography,
 } from '@mui/material';
 import ImagePreview from 'components/atoms/ImagePreview';
 import ImageUploadButton from 'components/molecules/ImageUploadButton';
+import ReportCommentModal from 'components/molecules/ReportCommentModal';
 import CommentSection from 'components/organisms/CommentSection';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 
@@ -57,51 +54,15 @@ const CommentFeature = ({
 }) => {
   const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
   const [reportCommentId, setReportCommentId] = React.useState(null);
-  const [reportReason, setReportReason] = React.useState('');
-  const [reportError, setReportError] = React.useState(null);
-  const [isReporting, setIsReporting] = React.useState(false);
 
   const handleReportClick = (commentId) => {
     setReportCommentId(commentId);
     setIsReportModalOpen(true);
   };
 
-  const handleReportSubmit = async () => {
-    if (!reportReason.trim()) {
-      setReportError('Please provide a reason for reporting.');
-      return;
-    }
-
-    setIsReporting(true);
-    setReportError(null);
-
-    try {
-      await commentService.reportComment(postId, reportCommentId, reportReason);
-      setIsReportModalOpen(false);
-      setReportReason('');
-      setReportCommentId(null);
-
-      // Show success feedback
-      toast.success('Report submitted successfully.');
-    } catch (error) {
-      // Check if the error is due to an already reported comment
-      if (error.response?.data?.error === 'You have already reported this comment.') {
-        setReportError('You have already reported this comment.');
-        toast.info('You have already reported this comment.');
-      } else {
-        setReportError('Failed to submit report. Please try again.');
-        toast.error('Failed to submit report. Please try again.');
-      }
-    } finally {
-      setIsReporting(false);
-    }
-  };
-
-  const handleReportCancel = () => {
+  const handleReportModalClose = () => {
     setIsReportModalOpen(false);
-    setReportReason('');
     setReportCommentId(null);
-    setReportError(null);
   };
 
   const deletingComment = comments.find((c) => c.id === commentToDelete) || {};
@@ -233,53 +194,12 @@ const CommentFeature = ({
         </DialogActions>
       </Dialog>
 
-      <Dialog open={isReportModalOpen} onClose={handleReportCancel} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          Report Comment
-          <IconButton
-            aria-label="close"
-            onClick={handleReportCancel}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" sx={{ mb: 2 }}>
-            Are you sure you want to report this comment? Please provide a reason.
-          </Typography>
-          <TextField
-            fullWidth
-            multiline
-            rows={4}
-            value={reportReason}
-            onChange={(e) => setReportReason(e.target.value)}
-            placeholder="Enter your reason for reporting..."
-            error={!!reportError}
-            helperText={reportError}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleReportCancel} disabled={isReporting}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleReportSubmit}
-            variant="contained"
-            color="warning"
-            disabled={isReporting}
-          >
-            {isReporting ? (
-              <>
-                <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
-                Reporting...
-              </>
-            ) : (
-              'Report'
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ReportCommentModal
+        open={isReportModalOpen}
+        onClose={handleReportModalClose}
+        postId={postId}
+        commentId={reportCommentId}
+      />
     </Box>
   );
 };

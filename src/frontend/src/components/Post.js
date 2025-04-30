@@ -1,18 +1,9 @@
+// Post.js
 import PropTypes from 'prop-types';
 import React from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Avatar, Box, IconButton, Menu, MenuItem, Typography } from '@mui/material';
-
-function getRelativeTime(timestamp) {
-  const now = new Date();
-  const postedTime = new Date(timestamp);
-  const diff = Math.floor((now - postedTime) / 1000);
-
-  if (diff < 60) return 'Just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
-  return `${Math.floor(diff / 86400)} days ago`;
-}
+import { getRelativeTime } from 'utils/timeUtils';
 
 function MemePost({
   id,
@@ -56,7 +47,6 @@ function MemePost({
           <Typography variant="caption" sx={{ color: 'gray' }}>
             {getRelativeTime(timestamp)}
           </Typography>
-
           <IconButton onClick={(event) => onMenuOpen(event, id)}>
             <MoreVertIcon />
           </IconButton>
@@ -78,7 +68,6 @@ function MemePost({
   );
 }
 
-// ✅ Add PropTypes to define prop validation
 MemePost.propTypes = {
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   caption: PropTypes.string.isRequired,
