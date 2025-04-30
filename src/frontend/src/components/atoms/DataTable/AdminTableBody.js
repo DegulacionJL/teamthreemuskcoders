@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import { TableBody as MuiTableBody } from '@mui/material';
+import Avatar from '@mui/material/Avatar';
 import IconButton from '@mui/material/IconButton';
 import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 
 /**
  * AdminTableBody – renders rows with optional action buttons and now supports
- * a row‑click event via `handleRowClick`.
+ * a row-click event via `handleRowClick`.
  */
 function AdminTableBody(props) {
   const { header, rows, handleDelete, handleEdit, handleRowClick, actions } = props;
@@ -24,7 +25,7 @@ function AdminTableBody(props) {
             role="checkbox"
             tabIndex={-1}
             key={row.id}
-            onClick={() => handleRowClick?.(row)} // ← NEW
+            onClick={() => handleRowClick?.(row)}
             sx={{ cursor: handleRowClick ? 'pointer' : 'default' }}
           >
             {header.map((cell) => {
@@ -32,21 +33,28 @@ function AdminTableBody(props) {
                 let label = row;
                 // support nested value e.g., "status.name"
                 cell.id.split('.').forEach((key) => {
-                  label =
-                    label?.[key] ??
-                    (cell.id === 'avatar' ? '/static/images/default-avatar.png' : 'N/A');
+                  label = label?.[key];
                 });
 
-                if (cell.id === 'avatar' && typeof label === 'string') {
+                if (cell.id === 'avatar') {
+                  const rawAvatar = label;
+                  const avatarUrl = rawAvatar ? rawAvatar.replace(/\\/g, '') : '';
                   return (
-                    <img
-                      src={label}
-                      alt="Avatar"
-                      style={{ width: 70, height: 70, objectFit: 'cover', borderRadius: '50%' }}
+                    <Avatar
+                      src={avatarUrl}
+                      alt="Profile"
+                      sx={{
+                        width: 70,
+                        height: 70,
+                        mx: 'auto',
+                        border: '2px solid #888',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+                      }}
                     />
                   );
                 }
-                return label;
+
+                return label ?? 'N/A';
               };
 
               return (
@@ -105,7 +113,7 @@ AdminTableBody.propTypes = {
   rows: PropTypes.array,
   handleDelete: PropTypes.func,
   handleEdit: PropTypes.func,
-  handleRowClick: PropTypes.func, // ← NEW
+  handleRowClick: PropTypes.func,
   actions: PropTypes.bool,
 };
 

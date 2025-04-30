@@ -141,7 +141,7 @@ export default function Users() {
         console.log('Raw Avatar:', rawAvatar); // Log to debug
 
         // Determine the avatar URL based on whether the user has uploaded an avatar or not
-        const avatarUrl = rawAvatar ? row.avatar : '/static/images/default-avatar.png';
+        const avatarUrl = rawAvatar ? row.avatar.replace(/\\/g, '') : undefined;
         console.log('Final Avatar URL:', avatarUrl); // Log the final avatar URL for debugging
 
         return (
@@ -156,10 +156,9 @@ export default function Users() {
               boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
             }}
             onError={(e) => {
-              // Fallback to default avatar if the image fails to load
+              // Fallback if the image fails to load, do nothing
               console.log('Image failed to load, falling back to default'); // Log when the image fails to load
               e.currentTarget.onerror = null;
-              e.currentTarget.src = '/static/images/default-avatar.png'; // Fallback image
             }}
           />
         );
@@ -317,52 +316,29 @@ export default function Users() {
                 </Typography>
               </Grid>
               <Grid item xs={12} md={8}>
-                <Box sx={{ display: 'flex', mb: 1 }}>
-                  <Email sx={{ mr: 1 }} />
-                  <Typography>{detail.email}</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', mb: 1 }}>
-                  <CalendarMonth sx={{ mr: 1 }} />
-                  <Typography>
-                    {t('Joined')}:&nbsp;
-                    {new Date(detail.created_at).toLocaleDateString()}
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                  <Typography variant="body1">
+                    <strong>{t('Email')}:</strong> {detail.email}
+                  </Typography>
+                  <Typography variant="body1">
+                    <strong>{t('Role')}:</strong> {detail.role}
+                  </Typography>
+                  <Typography variant="body1">
+                    <strong>{t('Status')}:</strong> {detail.status?.name}
+                  </Typography>
+                  <Typography variant="body1">
+                    <strong>{t('Joined')}:</strong>{' '}
+                    {parseDate(detail.created_at)?.toLocaleDateString()}
                   </Typography>
                 </Box>
-                {detail.last_login_at ? (
-                  <Box sx={{ display: 'flex', mb: 1 }}>
-                    <VerifiedUser sx={{ mr: 1 }} />
-                    <Typography>
-                      {t('Last login')}:&nbsp;
-                      {new Date(detail.last_login_at).toLocaleString() || t('Invalid Date')}
-                    </Typography>
-                  </Box>
-                ) : (
-                  <Box sx={{ display: 'flex', mb: 1 }}>
-                    <VerifiedUser sx={{ mr: 1 }} />
-                    <Typography>
-                      {t('Last login')}: {t('Never logged in')}
-                    </Typography>
-                  </Box>
-                )}
               </Grid>
             </Grid>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* -------------------- Add / Edit modal ----------------------- */}
-      <AddEditModal
-        open={openForm}
-        user={user}
-        handleSaveEvent={() => {
-          fetchUsers();
-          setOpenForm(false);
-          toast(user ? t('User updated successfully') : t('User created successfully'), {
-            type: 'success',
-          });
-        }}
-        handleClose={() => setOpenForm(false)}
-      />
+      {/* ---------------------- Add/Edit Modal ------------------------ */}
+      <AddEditModal open={openForm} onClose={() => setOpenForm(false)} user={user} />
     </Fragment>
   );
 }
