@@ -13,11 +13,11 @@ import {
   TextField,
 } from '@mui/material';
 import ImagePreview from 'components/atoms/ImagePreview';
+import FloatingEmojiPicker from 'components/molecules/FloatingEmojiPicker';
 import ImageUploadButton from 'components/molecules/ImageUploadButton';
 import ReportCommentModal from 'components/molecules/ReportCommentModal';
 import CommentSection from 'components/organisms/CommentSection';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
-import FloatingEmojiPicker from 'components/molecules/FloatingEmojiPicker';
 
 const CommentFeature = ({
   postId,

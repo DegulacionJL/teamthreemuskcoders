@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getTopMemeAndLeaderboard } from 'services/meme.service'; // Updated import
+import { getTopMemeAndLeaderboard } from 'services/meme.service';
+// Updated import
 import { getTrendingMemes } from 'services/user.service';
 import { EmojiEvents, PhotoCamera } from '@mui/icons-material';
 import {

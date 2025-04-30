@@ -1,6 +1,7 @@
 import { useAuth } from 'hooks/useAuth';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Added useNavigate import
+import { useNavigate } from 'react-router-dom';
+// Added useNavigate import
 import { followUser } from 'services/follow.service';
 import { getTopMemeAndLeaderboard } from 'services/meme.service';
 import { getSuggestedUsers } from 'services/user.service';
