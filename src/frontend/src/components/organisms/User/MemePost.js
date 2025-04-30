@@ -26,6 +26,7 @@ import EditPostModal from '../EditPostModal';
 import LightBox from '../LightBox';
 import ReportPostConfirmationModal from '../ReportPostModal';
 import PostReaction from 'components/organisms/User/PostReaction';
+import { getRelativeTime } from 'utils/timeUtils';
 
 const MemePost = ({
   id,
@@ -49,7 +50,6 @@ const MemePost = ({
   const { darkMode: contextDarkMode } = useCustomTheme();
   const { user } = useAuth({ middleware: 'auth' });
 
-  // State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentCaption, setCurrentCaption] = useState(caption);
   const [currentImage, setCurrentImage] = useState(image);
@@ -60,7 +60,6 @@ const MemePost = ({
   const [showComments, setShowComments] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
-  // Use the useComments hook to manage comments state
   const {
     comments,
     isLoading: commentsLoading,
@@ -110,7 +109,7 @@ const MemePost = ({
     if (savedLikeCount) {
       setLikeCount(Number.parseInt(savedLikeCount, 10));
     } else {
-      setLikeCount(5); // Default value or fetch from API
+      setLikeCount(5);
     }
   }, [id]);
 
@@ -178,24 +177,6 @@ const MemePost = ({
       setIsLightboxOpen(true);
     }
   };
-
-  function getRelativeTime(timestamp) {
-    const now = new Date();
-    const postedTime = new Date(timestamp);
-    const diff = Math.floor((now - postedTime) / 1000);
-
-    if (diff < 60) return 'Just now';
-    if (diff < 3600) {
-      const minutes = Math.floor(diff / 60);
-      return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
-    }
-    if (diff < 86400) {
-      const hours = Math.floor(diff / 3600);
-      return `${hours} hour${hours === 1 ? '' : 's'} ago`;
-    }
-    const days = Math.floor(diff / 86400);
-    return `${days} day${days === 1 ? '' : 's'} ago`;
-  }
 
   const formatCaption = (text) => {
     if (!text) return '';

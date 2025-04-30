@@ -1,9 +1,9 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
 import EmojiPicker from 'emoji-picker-react';
-import { Box, IconButton } from '@mui/material';
+import PropTypes from 'prop-types';
+import React from 'react';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
+import { Box, IconButton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
 const FloatingEmojiPicker = ({

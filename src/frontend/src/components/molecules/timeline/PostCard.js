@@ -23,7 +23,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { formatTimeAgo } from '../../../utils/date-utils';
+import { getRelativeTime } from 'utils/timeUtils';
 
 const PostCard = ({ post }) => {
   const [liked, setLiked] = useState(post.liked || false);
@@ -94,8 +94,8 @@ const PostCard = ({ post }) => {
           </Typography>
         }
         subheader={
-          <Typography variant="body2" color="text.secondary">
-            {post.createdAt ? formatTimeAgo(post.createdAt) : 'Unknown time'}
+          <Typography variant="caption" color="text.secondary">
+            {post.timestamp ? getRelativeTime(post.timestamp) : 'Unknown time'}
           </Typography>
         }
       />
@@ -219,7 +219,7 @@ const PostCard = ({ post }) => {
                 </Box>
                 <Box sx={{ display: 'flex', mt: 0.5, ml: 1 }}>
                   <Typography variant="caption" color="text.secondary" sx={{ mr: 1.5 }}>
-                    {formatTimeAgo(comment.createdAt)}
+                    {post.timestamp ? getRelativeTime(post.timestamp) : 'Unknown time'}
                   </Typography>
                   <Typography
                     variant="caption"
@@ -249,12 +249,23 @@ PostCard.propTypes = {
   post: PropTypes.shape({
     liked: PropTypes.bool,
     likesCount: PropTypes.number,
-    comments: PropTypes.array,
+    comments: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.number,
+        user: PropTypes.shape({
+          id: PropTypes.number,
+          name: PropTypes.string,
+          avatar: PropTypes.string,
+        }),
+        text: PropTypes.string,
+        createdAt: PropTypes.string,
+      })
+    ),
     user: PropTypes.shape({
       avatar: PropTypes.string,
       name: PropTypes.string,
     }),
-    createdAt: PropTypes.string,
+    timestamp: PropTypes.string,
     isOwnPost: PropTypes.bool,
     image: PropTypes.string,
     content: PropTypes.string,

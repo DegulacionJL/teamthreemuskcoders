@@ -1,5 +1,8 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
+import { toast } from 'react-toastify';
+import * as commentService from 'services/comment.service';
+import CloseIcon from '@mui/icons-material/Close';
 import {
   Button,
   CircularProgress,
@@ -11,9 +14,6 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import { toast } from 'react-toastify';
-import * as commentService from 'services/comment.service';
 
 const ReportCommentModal = ({ open, onClose, postId, commentId }) => {
   const [reportReason, setReportReason] = React.useState('');

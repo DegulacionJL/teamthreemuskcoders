@@ -2,8 +2,8 @@ import PropTypes from 'prop-types';
 import React, { useRef, useState } from 'react';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import { Box, Button, IconButton, InputAdornment, TextField } from '@mui/material';
-import ImagePreview from '../atoms/ImagePreview';
 import FloatingEmojiPicker from 'components/molecules/FloatingEmojiPicker';
+import ImagePreview from '../atoms/ImagePreview';
 
 const ReplyForm = ({ commentId, onSubmit, onCancel }) => {
   const [text, setText] = useState('');

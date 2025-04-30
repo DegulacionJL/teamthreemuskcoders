@@ -4,8 +4,8 @@ import { useSelector } from 'react-redux';
 import { Avatar, Box, Button, InputAdornment, TextField } from '@mui/material';
 import ImagePreview from 'components/atoms/ImagePreview';
 import CommentsList from 'components/molecules/CommentsList';
-import ImageUploadButton from 'components/molecules/ImageUploadButton';
 import FloatingEmojiPicker from 'components/molecules/FloatingEmojiPicker';
+import ImageUploadButton from 'components/molecules/ImageUploadButton';
 
 const CommentSection = ({
   comments,

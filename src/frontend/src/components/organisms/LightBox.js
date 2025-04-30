@@ -1,10 +1,12 @@
+// LightBox.js
+import { useComments } from 'hooks/useComments';
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import { ChatBubbleOutline, Close as CloseIcon } from '@mui/icons-material';
 import { Avatar, Box, Button, IconButton, Typography, useTheme } from '@mui/material';
 import CommentFeature from 'components/organisms/CommentFeature';
 import PostReaction from 'components/organisms/User/PostReaction';
-import { useComments } from 'hooks/useComments';
+import { getRelativeTime } from 'utils/timeUtils';
 
 export default function LightBox({
   isOpen,
@@ -23,7 +25,6 @@ export default function LightBox({
   const isDarkMode = darkMode !== undefined ? darkMode : theme.palette.mode === 'dark';
   const [showComments, setShowComments] = useState(false);
 
-  // Use the useComments hook to manage comments state
   const {
     comments,
     isLoading: commentsLoading,
@@ -60,24 +61,6 @@ export default function LightBox({
 
   if (!isOpen) {
     return null;
-  }
-
-  function getRelativeTime(timestamp) {
-    const now = new Date();
-    const postedTime = new Date(timestamp);
-    const diff = Math.floor((now - postedTime) / 1000);
-
-    if (diff < 60) return 'Just now';
-    if (diff < 3600) {
-      const minutes = Math.floor(diff / 60);
-      return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
-    }
-    if (diff < 86400) {
-      const hours = Math.floor(diff / 3600);
-      return `${hours} hour${hours === 1 ? '' : 's'} ago`;
-    }
-    const days = Math.floor(diff / 86400);
-    return `${days} day${days === 1 ? '' : 's'} ago`;
   }
 
   const formatCaption = (text) => {
@@ -118,7 +101,6 @@ export default function LightBox({
           bgcolor: theme.palette.background.paper,
         }}
       >
-        {/* Close button */}
         <IconButton
           onClick={onClose}
           sx={{
@@ -136,7 +118,6 @@ export default function LightBox({
           <CloseIcon />
         </IconButton>
 
-        {/* Image section */}
         <Box
           sx={{
             flex: 1,
@@ -158,7 +139,6 @@ export default function LightBox({
           />
         </Box>
 
-        {/* Comments and info section */}
         <Box
           sx={{
             width: { xs: '100%', md: '380px' },
@@ -168,7 +148,6 @@ export default function LightBox({
             height: '100%',
           }}
         >
-          {/* Post info */}
           <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
               <Avatar
@@ -200,7 +179,6 @@ export default function LightBox({
             </Typography>
           </Box>
 
-          {/* Reactions and Comment Toggle */}
           <Box
             sx={{
               p: 1,
@@ -227,7 +205,6 @@ export default function LightBox({
             </Button>
           </Box>
 
-          {/* Comment Feature */}
           {showComments && (
             <Box sx={{ flex: 1, overflowY: 'auto' }}>
               <CommentFeature

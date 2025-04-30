@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import CloseIcon from '@mui/icons-material/Close';
 import {
   Box,
   Button,
@@ -11,12 +12,11 @@ import {
   IconButton,
   TextField,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
 import ImagePreview from 'components/atoms/ImagePreview';
 import ImageUploadButton from 'components/molecules/ImageUploadButton';
+import ReportCommentModal from 'components/molecules/ReportCommentModal';
 import CommentSection from 'components/organisms/CommentSection';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
-import ReportCommentModal from 'components/molecules/ReportCommentModal';
 
 const CommentFeature = ({
   postId,
