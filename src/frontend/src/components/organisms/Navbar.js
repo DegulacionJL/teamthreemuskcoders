@@ -108,7 +108,7 @@ function Navbar(props) {
     >
       <Container maxWidth="lg">
         <Toolbar sx={{ flexWrap: 'wrap' }} disableGutters>
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, flexGrow: 0 }}>
             <Link to="/">
               <img src="/static/images/sprobe-icon.png" alt={appName} height={48} />
             </Link>

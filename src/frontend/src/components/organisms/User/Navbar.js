@@ -1,10 +1,9 @@
-'use client';
-
 import PropTypes from 'prop-types';
 import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -14,6 +13,7 @@ import Container from '@mui/material/Container';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { purple } from '@mui/material/colors';
@@ -28,8 +28,10 @@ function Navbar(props) {
   const { user = null } = props;
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [anchorMobileNav, setAnchorMobileNav] = useState(null);
   const { darkMode, toggleDarkMode } = useTheme();
+  const [searchQuery, setSearchQuery] = useState('');
 
   const menus = [];
 
@@ -63,10 +65,18 @@ function Navbar(props) {
       }}
     >
       {/** Desktop View */}
-      <Container maxWidth="lg" disableGutters>
-        <Toolbar sx={{ flexWrap: 'wrap' }} disableGutters>
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, justifyContent: 'start' }}>
-            <Link to="/" style={{ textDecoration: 'none' }}>
+      <Container maxWidth="100%" disableGutters>
+        <Toolbar sx={{ flexWrap: 'wrap', padding: 0 }} disableGutters>
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: { xs: 'none', md: 'flex' },
+              justifyContent: 'start',
+              alignItems: 'center',
+              padding: 0,
+            }}
+          >
+            <Link to="/" style={{ textDecoration: 'none', padding: 0, margin: 0 }}>
               <Typography
                 variant="h5"
                 noWrap
@@ -77,11 +87,45 @@ function Navbar(props) {
                   display: 'flex',
                   alignItems: 'center',
                   height: 48,
+                  padding: 0,
+                  margin: 0,
+                  marginLeft: 2,
+                  paddingLeft: 0,
                 }}
               >
                 {appName}
               </Typography>
             </Link>
+            {user && location.pathname === '/memefeed' && (
+              // Only render the search bar if the user is logged in
+              <Box
+                sx={{
+                  width: '100%',
+                  maxWidth: '80%',
+                  justifyContent: 'start',
+                  alignItems: 'start',
+                  pl: 2,
+                }}
+              >
+                <TextField
+                  fullWidth
+                  placeholder="Search memes..."
+                  variant="outlined"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      bgcolor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                      borderRadius: 1,
+                      '& input': {
+                        color: darkMode ? '#fff' : '#000',
+                      },
+                    },
+                  }}
+                />
+              </Box>
+            )}
           </Box>
 
           <Box component="nav" sx={{ display: { xs: 'none', md: 'flex' } }}>
@@ -107,6 +151,7 @@ function Navbar(props) {
                 display: { xs: 'flex', md: 'none' },
                 flexGrow: 1,
                 justifyContent: 'center',
+                padding: 0,
               }}
             >
               {/* mobile view */}
@@ -119,6 +164,8 @@ function Navbar(props) {
                   textDecoration: 'none',
                   display: 'flex',
                   alignItems: 'center',
+                  padding: 0,
+                  margin: 0,
                 }}
               >
                 {appName}
