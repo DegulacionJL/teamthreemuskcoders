@@ -108,7 +108,7 @@ class PostService
         // Fetch posts with pagination, including related user and image data
         $posts = Post::with('user', 'image')
             ->latest()
-            ->paginate(1, ['*'], 'page', $page);
+            ->paginate(10, ['*'], 'page', $page);
         
         // Get the post IDs for efficient querying
         $postIds = [];
@@ -215,134 +215,7 @@ class PostService
             'liked'=>false
         ];
     }
-
-    // For the "Top Meme" section
-    public function getTopPost($period = 'daily')
-    {
-        try {
-            // Determine the time range based on the period
-            $startDate = now();
-            if ($period === 'daily') {
-                $startDate = now()->subDay(); // Last 24 hours
-            } elseif ($period === 'weekly') {
-                $startDate = now()->subWeek(); // Last 7 days
-            } elseif ($period === 'monthly') {
-                $startDate = now()->subMonth(); // Last 30 days
-            } else {
-                throw new Exception('Invalid period specified. Use "daily", "weekly", or "monthly".');
-            }
-
-            // Fetch the single post with the most likes within the time range
-            $topPost = Post::select('posts.id', 'posts.caption', 'posts.user_id')
-                ->with(['user' => function ($query) {
-                    $query->select('id', 'first_name', 'last_name', 'avatar');
-                }, 'image'])
-                ->leftJoin('likes', 'posts.id', '=', 'likes.post_id')
-                ->where('likes.created_at', '>=', $startDate)
-                ->groupBy('posts.id', 'posts.caption', 'posts.user_id')
-                ->selectRaw('COUNT(likes.id) as laugh_votes')
-                ->orderByDesc('laugh_votes')
-                ->first();
-
-            // Log the query result for debugging
-            Log::info("Top Post query for period {$period}: ", [
-                'startDate' => $startDate,
-                'topPost' => $topPost ? $topPost->toArray() : null,
-            ]);
-
-            // Format the response
-            $result = $topPost ? [
-                'post' => [
-                    'id' => $topPost->id,
-                    'caption' => $topPost->caption,
-                    'image' => $topPost->image ? asset('storage/images/' . basename($topPost->image->image_path)) : null,
-                    'author' => $topPost->user ? trim($topPost->user->first_name . ' ' . $topPost->user->last_name) : 'Unknown',
-                    'author_avatar' => $topPost->user && $topPost->user->avatar ? asset('storage/avatars/' . basename($topPost->user->avatar)) : null,
-                    'laugh_votes' => (int) $topPost->laugh_votes,
-                    'is_king' => true
-                ]
-            ] : null;
-
-            return [
-                'top_post' => $result ? $result['post'] : null,
-                'period' => $period,
-            ];
-        } catch (\Exception $e) {
-            Log::error('Error in getTopPost: ' . $e->getMessage());
-            return [
-                'top_post' => null,
-                'period' => $period,
-                'error' => 'Failed to fetch top post'
-            ];
-        }
-    }
-
-    // Updated Leaderboard functionality for top users
-    public function getUserLeaderboard($period = 'daily')
-    {
-        try {
-            // Determine the time range based on the period
-            $startDate = now();
-            $endDate = now();
-
-            if ($period === 'daily') {
-                // Only count likes from the current day (midnight to 23:59:59)
-                $startDate = now()->startOfDay();
-                $endDate = now()->endOfDay();
-            } elseif ($period === 'weekly') {
-                // Only count likes from the current week (Monday to Sunday)
-                $startDate = now()->startOfWeek(); // Monday
-                $endDate = now()->endOfWeek(); // Sunday
-            } elseif ($period === 'monthly') {
-                // Only count likes from the current month
-                $startDate = now()->startOfMonth();
-                $endDate = now()->endOfMonth();
-            } else {
-                throw new Exception('Invalid period specified. Use "daily", "weekly", or "monthly".');
-            }
-
-            // Fetch users with the most likes on their posts within the specific time range
-            $leaderboard = Like::select('posts.user_id')
-                ->selectRaw('users.first_name, users.last_name, COUNT(*) as total_likes')
-                ->join('posts', 'likes.post_id', '=', 'posts.id')
-                ->join('users', 'posts.user_id', '=', 'users.id')
-                ->whereBetween('likes.created_at', [$startDate, $endDate])
-                ->groupBy('posts.user_id', 'users.first_name', 'users.last_name')
-                ->orderByDesc('total_likes')
-                ->take(3) // Get top 3 users
-                ->get();
-
-            // Log the query result for debugging
-            Log::info("User Leaderboard query for period {$period}: ", [
-                'startDate' => $startDate,
-                'endDate' => $endDate,
-                'leaderboard' => $leaderboard->toArray(),
-            ]);
-
-            // Format the leaderboard data
-            $result = $leaderboard->map(function ($item, $index) {
-                return [
-                    'id' => $item->user_id,
-                    'name' => "{$item->first_name} {$item->last_name}",
-                    'points' => $item->total_likes,
-                    'rank' => $index + 1,
-                ];
-            })->toArray();
-
-            return [
-                'leaderboard' => $result,
-                'period' => $period,
-            ];
-        } catch (\Exception $e) {
-            Log::error('Error in getUserLeaderboard: ' . $e->getMessage());
-            return [
-                'leaderboard' => [],
-                'period' => $period,
-                'error' => 'Failed to fetch leaderboard'
-            ];
-        }
-    }
-
+    
     public function getLikes($postId)
     {
         try {
@@ -373,7 +246,7 @@ class PostService
                 'likes' => $likes,
                 'like_count' => $likeCount,
                 'user_has_liked' => $userHasLiked,
-                'user_reaction' => $userReaction
+            'user_reaction' => $userReaction
             ];
         } catch (\Exception $e) {
             // Log the error
@@ -433,6 +306,100 @@ class PostService
             });
             
         return $hashtags->toArray();
+    }
+
+    /**
+     * Get top meme post and user leaderboard for a given period
+     *
+     * @param string $period ('daily', 'weekly', 'monthly')
+     * @return array
+     */
+    public function getTopMemeAndLeaderboard($period = 'daily')
+    {
+        try {
+            // Determine the time range based on the period
+            $startDate = now();
+            $endDate = now();
+
+            if ($period === 'daily') {
+                $startDate = now()->startOfDay();
+                $endDate = now()->endOfDay();
+            } elseif ($period === 'weekly') {
+                $startDate = now()->startOfWeek();
+                $endDate = now()->endOfWeek();
+            } elseif ($period === 'monthly') {
+                $startDate = now()->startOfMonth();
+                $endDate = now()->endOfMonth();
+            } else {
+                throw new Exception('Invalid period specified. Use "daily", "weekly", or "monthly".');
+            }
+
+            // Fetch the top post with the most likes within the time range
+            $topPost = Post::select('posts.id', 'posts.caption', 'posts.user_id')
+                ->with(['user' => function ($query) {
+                    $query->select('id', 'first_name', 'last_name', 'avatar');
+                }, 'image'])
+                ->leftJoin('likes', 'posts.id', '=', 'likes.post_id')
+                ->whereBetween('likes.created_at', [$startDate, $endDate])
+                ->groupBy('posts.id', 'posts.caption', 'posts.user_id')
+                ->selectRaw('COUNT(likes.id) as laugh_votes')
+                ->orderByDesc('laugh_votes')
+                ->first();
+
+            // Format the top post response
+            $topPostResult = $topPost ? [
+                'id' => $topPost->id,
+                'caption' => $topPost->caption,
+                'image' => $topPost->image ? asset('storage/images/' . basename($topPost->image->image_path)) : null,
+                'author' => $topPost->user ? trim($topPost->user->first_name . ' ' . $topPost->user->last_name) : 'Unknown',
+                'author_avatar' => $topPost->user && $topPost->user->avatar ? asset('storage/avatars/' . basename($topPost->user->avatar)) : null,
+                'laugh_votes' => (int) $topPost->laugh_votes,
+                'is_king' => true
+            ] : null;
+
+            // Fetch leaderboard (top 3 users by total likes)
+            $leaderboard = Like::select('posts.user_id')
+                ->selectRaw('users.first_name, users.last_name, COUNT(*) as total_likes')
+                ->join('posts', 'likes.post_id', '=', 'posts.id')
+                ->join('users', 'posts.user_id', '=', 'users.id')
+                ->whereBetween('likes.created_at', [$startDate, $endDate])
+                ->groupBy('posts.user_id', 'users.first_name', 'users.last_name')
+                ->orderByDesc('total_likes')
+                ->take(3)
+                ->get();
+
+            // Format the leaderboard response
+            $leaderboardResult = $leaderboard->map(function ($item, $index) {
+                return [
+                    'id' => $item->user_id,
+                    'name' => trim("{$item->first_name} {$item->last_name}"),
+                    'points' => (int) $item->total_likes,
+                    'rank' => $index + 1,
+                ];
+            })->toArray();
+
+            // Log the query result for debugging
+            Log::info("Top Meme and Leaderboard query for period {$period}: ", [
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+                'topPost' => $topPostResult,
+                'leaderboard' => $leaderboardResult,
+            ]);
+
+            return [
+                'top_post' => $topPostResult,
+                'leaderboard' => $leaderboardResult,
+                'period' => $period,
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error in getTopMemeAndLeaderboard: ' . $e->getMessage());
+            return [
+                'top_post' => null,
+                'leaderboard' => [],
+                'period' => $period,
+                'error' => 'Failed to fetch top meme and leaderboard'
+            ];
+        }
     }
 
 

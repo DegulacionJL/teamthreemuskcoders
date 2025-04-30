@@ -1,9 +1,8 @@
-'use client';
-
 import { useAuth } from 'hooks/useAuth';
-import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Added useNavigate import
 import { followUser } from 'services/follow.service';
+import { getTopMemeAndLeaderboard } from 'services/meme.service';
 import { getSuggestedUsers } from 'services/user.service';
 import { Whatshot } from '@mui/icons-material';
 import {
@@ -24,20 +23,55 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material';
 
-const RightContent = ({
-  leaderboard,
-  leaderboardLoading,
-  leaderboardError,
-  tabValue,
-  handleTabChange,
-  handleUserNameClick,
-}) => {
+const RightContent = () => {
   const { user } = useAuth({ middleware: 'auth' });
   const theme = useTheme();
+  const navigate = useNavigate(); // Define navigate using useNavigate
 
-  // State for Suggested User
+  // State for Leaderboard
+  const [leaderboard, setLeaderboard] = useState({
+    daily: [],
+    weekly: [],
+    monthly: [],
+  });
+  const [leaderboardLoading, setLeaderboardLoading] = useState(true);
+  const [leaderboardError, setLeaderboardError] = useState(null);
+  const [tabValue, setTabValue] = useState('daily');
+
+  // State for Suggested Users
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [loadingSuggestedUsers, setLoadingSuggestedUsers] = useState(true);
+
+  // Fetch Leaderboard
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        setLeaderboardLoading(true);
+        const periods = ['daily', 'weekly', 'monthly'];
+        const results = await Promise.all(
+          periods.map(async (period) => {
+            const data = await getTopMemeAndLeaderboard(period);
+            return { period, leaderboard: data.leaderboard };
+          })
+        );
+
+        const newLeaderboard = results.reduce((acc, { period, leaderboard }) => {
+          acc[period] = leaderboard;
+          return acc;
+        }, {});
+
+        setLeaderboard(newLeaderboard);
+        setLeaderboardError(null);
+      } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+        setLeaderboardError('Failed to load leaderboard');
+      } finally {
+        setLeaderboardLoading(false);
+      }
+    };
+
+    fetchLeaderboard();
+  }, []);
 
   // Fetch Suggested Users
   const fetchSuggestedUsers = async () => {
@@ -47,16 +81,12 @@ const RightContent = ({
       return;
     }
 
-    // Sort users by mutual_count in descending order (users with more mutual friends first)
     const sortedUsers = [...listSuggestedUsers].sort((a, b) => {
-      // If mutual_count exists, sort by it (higher first)
       if (a.mutual_count !== undefined && b.mutual_count !== undefined) {
         return b.mutual_count - a.mutual_count;
       }
-      // If only one has mutual_count, prioritize that one
       if (a.mutual_count !== undefined) return -1;
       if (b.mutual_count !== undefined) return 1;
-      // If neither has mutual_count, keep original order
       return 0;
     });
 
@@ -79,10 +109,8 @@ const RightContent = ({
       const newSuggestions = await getSuggestedUsers(currentUserId);
       const currentUserIds = suggestedUsers.map((u) => u.id);
 
-      // Find a new user that isn't already in the list
       const newUser = newSuggestions.find((u) => !currentUserIds.includes(u.id) && u.id !== userId);
       if (newUser) {
-        // Add the new user and re-sort the list
         setSuggestedUsers((prevUsers) => {
           const updatedUsers = [...prevUsers, newUser];
           return updatedUsers.sort((a, b) => {
@@ -98,6 +126,14 @@ const RightContent = ({
     } catch (error) {
       console.error('Follow error: ', error);
     }
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
+  const handleUserNameClick = (event, userId) => {
+    navigate(`/profile/${userId}`);
   };
 
   return (
@@ -174,12 +210,12 @@ const RightContent = ({
                 divider
               >
                 <ListItemAvatar>
-                  {/* <Avatar
-                    src={user.avatar}
+                  <Avatar
+                    src={suggestedUser.avatar}
                     sx={{ bgcolor: theme.palette.mode === 'dark' ? '#4a3b6b' : '#e0e0ff' }}
-                  > */}
-                  {suggestedUser.first_name?.[0] || suggestedUser.last_name?.[0] || 'U'}
-                  {/* </Avatar> */}
+                  >
+                    {suggestedUser.first_name?.[0] || suggestedUser.last_name?.[0] || 'U'}
+                  </Avatar>
                 </ListItemAvatar>
                 <ListItemText
                   primary={
@@ -239,9 +275,9 @@ const RightContent = ({
         />
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={tabValue} onChange={handleTabChange} variant="fullWidth">
-            <Tab label="Daily" />
-            <Tab label="Weekly" />
-            <Tab label="Monthly" />
+            <Tab label="Daily" value="daily" />
+            <Tab label="Weekly" value="weekly" />
+            <Tab label="Monthly" value="monthly" />
           </Tabs>
         </Box>
         {leaderboardLoading ? (
@@ -252,7 +288,7 @@ const RightContent = ({
           <Box sx={{ p: 2, textAlign: 'center' }}>
             <Typography color="error">{leaderboardError}</Typography>
           </Box>
-        ) : leaderboard.length === 0 ? (
+        ) : leaderboard[tabValue].length === 0 ? (
           <Box sx={{ p: 2, textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary">
               No data available for this period.
@@ -260,7 +296,7 @@ const RightContent = ({
           </Box>
         ) : (
           <List disablePadding>
-            {leaderboard.map((user) => (
+            {leaderboard[tabValue].map((user) => (
               <ListItem key={user.id} divider>
                 <ListItemAvatar>
                   <Avatar
@@ -310,23 +346,6 @@ const RightContent = ({
       </Card>
     </Box>
   );
-};
-
-RightContent.propTypes = {
-  leaderboard: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.number,
-      first_name: PropTypes.string,
-      last_name: PropTypes.string,
-      avatar: PropTypes.string,
-      // add more fields if needed
-    })
-  ).isRequired,
-  leaderboardLoading: PropTypes.bool.isRequired,
-  leaderboardError: PropTypes.bool,
-  tabValue: PropTypes.number.isRequired,
-  handleTabChange: PropTypes.func.isRequired,
-  handleUserNameClick: PropTypes.func.isRequired,
 };
 
 export default RightContent;

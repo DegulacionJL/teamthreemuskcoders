@@ -7,8 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   createMemePost,
   deletePost,
-  getLeaderboard,
   getMemePosts,
+  getTopMemeAndLeaderboard, // Updated import
   reportPost,
   updateImage,
   updatePost,
@@ -17,7 +17,6 @@ import { Box, CircularProgress, Typography } from '@mui/material';
 import { useTheme } from '@mui/material';
 import { useTheme as useCustomTheme } from '../../../theme/ThemeContext';
 import CreatePostCard from './CreatePostCard';
-// Import components
 import LeftSidebar from './LeftContent';
 import MemePost from './MemePost';
 import RightSidebar from './RightContent';
@@ -239,7 +238,7 @@ function MemeFeed() {
     setLeaderboardLoading(true);
     setLeaderboardError(null);
     try {
-      const response = await getLeaderboard(period);
+      const response = await getTopMemeAndLeaderboard(period); // Updated to use getTopMemeAndLeaderboard
       setLeaderboard(response.leaderboard || []);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);

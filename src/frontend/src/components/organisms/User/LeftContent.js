@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getTopPost } from 'services/meme.service';
+import { getTopMemeAndLeaderboard } from 'services/meme.service'; // Updated import
 import { getTrendingMemes } from 'services/user.service';
 import { EmojiEvents, PhotoCamera } from '@mui/icons-material';
 import {
@@ -36,8 +36,8 @@ const LeftContent = () => {
         const periods = ['daily', 'weekly', 'monthly'];
         const results = await Promise.all(
           periods.map(async (period) => {
-            const data = await getTopPost(period);
-            console.log(`Top Post data for ${period}:`, data);
+            const data = await getTopMemeAndLeaderboard(period);
+            console.log(`Top Meme and Leaderboard data for ${period}:`, data);
             return { period, post: data.top_post };
           })
         );
@@ -62,7 +62,7 @@ const LeftContent = () => {
         const hashtags = await getTrendingMemes();
         setTrendingHashtags(hashtags || []);
       } catch (error) {
-        console.error('Error fetching trending hastags: ', error);
+        console.error('Error fetching trending hashtags: ', error);
       } finally {
         setLoadingTrendingHashtags(false);
       }
@@ -75,7 +75,7 @@ const LeftContent = () => {
   };
 
   const handleHashtagClick = (hashtag) => {
-    navigate(`/hashtag/${encodeURIComponent(hashtag.replace(/^#/, ''))}`); // removes leading '#' and safely encodes
+    navigate(`/hashtag/${encodeURIComponent(hashtag.replace(/^#/, ''))}`);
   };
 
   const renderTopPost = (post) => {
