@@ -1,5 +1,3 @@
-'use client';
-
 import { useAuth } from 'hooks/useAuth';
 import { useEffect, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
@@ -135,6 +133,10 @@ function MemeFeed() {
 
       if (newCaption) {
         await updatePost(postId, { caption: newCaption });
+
+        setPosts((prevPosts) =>
+          prevPosts.map((post) => (post.id === postId ? { ...post, caption: newCaption } : post))
+        );
       }
 
       if (newImage) {

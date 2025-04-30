@@ -19,6 +19,7 @@ use App\Http\Controllers\UserListController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\UserTimelineController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\SearchController;
 
 /*
 |--------------------------------------------------------------------------
@@ -97,6 +98,9 @@ Route::prefix('users')
             Route::get('/posts/hashtag/{hashtag}', [PostController::class, 'getPostsByHashtag']);
             Route::get('/posts/top-meme-and-leaderboard', [PostController::class, 'getTopMemeAndLeaderboard']);
         });
+
+        Route::get('/search', [SearchController::class, 'search']);
+
 
     Route::prefix('userlist')
     ->group(function () {

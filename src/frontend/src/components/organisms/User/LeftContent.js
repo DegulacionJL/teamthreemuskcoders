@@ -60,7 +60,7 @@ const LeftContent = () => {
   useEffect(() => {
     const fetchTrendingHashtags = async () => {
       try {
-        const hashtags = await getTrendingMemes();
+        const hashtags = await getTrendingMemes({ cacheBust: Date.now() });
         setTrendingHashtags(hashtags || []);
       } catch (error) {
         console.error('Error fetching trending hashtags: ', error);
@@ -69,6 +69,8 @@ const LeftContent = () => {
       }
     };
     fetchTrendingHashtags();
+    const intervalId = setInterval(fetchTrendingHashtags, 10000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleTabChange = (event, newValue) => {
