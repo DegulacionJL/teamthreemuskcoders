@@ -175,36 +175,6 @@ class PostController extends Controller
         }
     }
 
-    // Endpoint for the Leaderboard (top users)
-    public function getUserLeaderboard(Request $request)
-    {
-        try {
-            $period = $request->query('period', 'daily'); // Default to 'daily'
-            $result = $this->postService->getUserLeaderboard($period);
-            return response()->json($result);
-        } catch (Exception $e) {
-            return response()->json([
-                'error' => 'Failed to fetch leaderboard',
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    // Endpoint for the Top Meme section (top post)
-    public function getTopPost(PostRequest $request)
-    {
-        try {
-            $period = $request->query('period', 'daily'); // Default to 'daily'
-            $result = $this->postService->getTopPost($period);
-            return response()->json($result);
-        } catch (Exception $e) {
-            return response()->json([
-                'error' => 'Failed to fetch top post',
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
     public function getTrendingMemes()
     {
         try {
@@ -333,6 +303,21 @@ class PostController extends Controller
         ]);
     }
 
-
+    /**
+     * Get top meme post and user leaderboard
+     */
+    public function getTopMemeAndLeaderboard(Request $request): JsonResponse
+    {
+        try {
+            $period = $request->query('period', 'daily'); // Default to 'daily'
+            $result = $this->postService->getTopMemeAndLeaderboard($period);
+            return response()->json($result);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch top meme and leaderboard',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
 }

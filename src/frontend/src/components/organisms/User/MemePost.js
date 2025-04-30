@@ -20,12 +20,13 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material';
 import CommentFeature from 'components/organisms/CommentFeature';
+import PostReaction from 'components/organisms/User/PostReaction';
 import { useTheme as useCustomTheme } from 'theme/ThemeContext';
+import { getRelativeTime } from 'utils/timeUtils';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import EditPostModal from '../EditPostModal';
 import LightBox from '../LightBox';
 import ReportPostConfirmationModal from '../ReportPostModal';
-import PostReactions from './PostReaction';
 
 const MemePost = ({
   id,
@@ -49,7 +50,6 @@ const MemePost = ({
   const { darkMode: contextDarkMode } = useCustomTheme();
   const { user } = useAuth({ middleware: 'auth' });
 
-  // State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentCaption, setCurrentCaption] = useState(caption);
   const [currentImage, setCurrentImage] = useState(image);
@@ -57,10 +57,9 @@ const MemePost = ({
   const [isReportPostModalOpen, setIsReportPostModalOpen] = useState(false);
   const [reactionType, setReactionType] = useState(null);
   const [likeCount, setLikeCount] = useState(0);
-  const [showComments, setShowComments] = useState(false); // Controls visibility of the comment section
+  const [showComments, setShowComments] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
-  // Use the useComments hook to manage comments state
   const {
     comments,
     isLoading: commentsLoading,
@@ -110,7 +109,7 @@ const MemePost = ({
     if (savedLikeCount) {
       setLikeCount(Number.parseInt(savedLikeCount, 10));
     } else {
-      setLikeCount(5); // Default value or fetch from API
+      setLikeCount(5);
     }
   }, [id]);
 
@@ -166,7 +165,6 @@ const MemePost = ({
   const handleToggleComments = useCallback(() => {
     setShowComments((prev) => {
       const newShowComments = !prev;
-      // Fetch comments only if they haven't been fetched yet and the comment section is being opened
       if (newShowComments && !hasFetchedComments) {
         fetchComments(1);
       }
@@ -179,24 +177,6 @@ const MemePost = ({
       setIsLightboxOpen(true);
     }
   };
-
-  function getRelativeTime(timestamp) {
-    const now = new Date();
-    const postedTime = new Date(timestamp);
-    const diff = Math.floor((now - postedTime) / 1000);
-
-    if (diff < 60) return 'Just now';
-    if (diff < 3600) {
-      const minutes = Math.floor(diff / 60);
-      return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
-    }
-    if (diff < 86400) {
-      const hours = Math.floor(diff / 3600);
-      return `${hours} hour${hours === 1 ? '' : 's'} ago`;
-    }
-    const days = Math.floor(diff / 86400);
-    return `${days} day${days === 1 ? '' : 's'} ago`;
-  }
 
   const formatCaption = (text) => {
     if (!text) return '';
@@ -338,14 +318,15 @@ const MemePost = ({
         caption={currentCaption}
         user={postUsers}
         timestamp={timestamp}
-        comments={comments} // Pass comments to LightBox
-        reactionCount={likeCount}
-        onAddComment={handleAddComment}
+        postId={id}
         darkMode={isDarkMode}
+        onReactionChange={handleReactionChange}
+        initialReactionType={reactionType}
+        initialReactionCount={likeCount}
       />
 
       <CardActions disableSpacing sx={{ p: 0 }}>
-        <PostReactions
+        <PostReaction
           postId={id}
           isDarkMode={isDarkMode}
           onReactionChange={handleReactionChange}
@@ -354,7 +335,7 @@ const MemePost = ({
         <Button
           startIcon={<ChatBubbleOutline />}
           size="small"
-          onClick={handleToggleComments} // Toggle comment section visibility
+          onClick={handleToggleComments}
           sx={{ color: theme.palette.text.secondary }}
         >
           Comments {totalCommentsCount > 0 && `(${totalCommentsCount})`}
@@ -388,7 +369,6 @@ const MemePost = ({
         )}
       </Box>
 
-      {/* Render the comment section only when showComments is true */}
       {showComments && (
         <CommentFeature
           postId={id}

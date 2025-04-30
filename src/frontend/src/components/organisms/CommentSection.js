@@ -1,13 +1,10 @@
-import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
-import EmojiPicker from 'emoji-picker-react';
 import PropTypes from 'prop-types';
 import React, { useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
-import { Avatar, Box, Button, IconButton, InputAdornment, TextField } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { Avatar, Box, Button, InputAdornment, TextField } from '@mui/material';
 import ImagePreview from 'components/atoms/ImagePreview';
 import CommentsList from 'components/molecules/CommentsList';
+import FloatingEmojiPicker from 'components/molecules/FloatingEmojiPicker';
 import ImageUploadButton from 'components/molecules/ImageUploadButton';
 
 const CommentSection = ({
@@ -32,21 +29,10 @@ const CommentSection = ({
   const [newCommentImagePreview, setNewCommentImagePreview] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
-  const theme = useTheme();
-  const isDarkMode = theme.palette.mode === 'dark';
+  const emojiButtonRef = useRef(null);
 
   const reduxUser = useSelector((state) => state.profile.user);
   const currentUser = propUser || reduxUser;
-
-  const emojiButtonRef = useRef(null);
-
-  const { refs, floatingStyles } = useFloating({
-    open: showEmojiPicker,
-    placement: 'bottom-end',
-    middleware: [offset(12), flip(), shift({ padding: 12 })],
-    whileElementsMounted: autoUpdate,
-    elements: { reference: emojiButtonRef.current },
-  });
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && e.shiftKey) {
@@ -132,33 +118,16 @@ const CommentSection = ({
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton
-                    ref={emojiButtonRef}
-                    onClick={() => setShowEmojiPicker((prev) => !prev)}
-                    edge="end"
-                  >
-                    <EmojiEmotionsIcon />
-                  </IconButton>
+                  <FloatingEmojiPicker
+                    onEmojiClick={handleEmojiClick}
+                    showEmojiPicker={showEmojiPicker}
+                    setShowEmojiPicker={setShowEmojiPicker}
+                    emojiButtonRef={emojiButtonRef}
+                  />
                 </InputAdornment>
               ),
             }}
           />
-          {showEmojiPicker && (
-            <Box
-              ref={refs.setFloating}
-              style={{ ...floatingStyles, zIndex: 1500, position: 'absolute' }}
-              sx={{
-                '& .emoji-picker-react': {
-                  backgroundColor: isDarkMode ? '#1a2235' : '#ffffff',
-                  boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
-                  borderRadius: 8,
-                  overflow: 'visible',
-                },
-              }}
-            >
-              <EmojiPicker onEmojiClick={handleEmojiClick} theme={isDarkMode ? 'dark' : 'light'} />
-            </Box>
-          )}
           {newCommentImagePreview && (
             <ImagePreview
               src={newCommentImagePreview}

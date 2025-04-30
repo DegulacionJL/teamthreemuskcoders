@@ -1,8 +1,5 @@
-// CommentFeature.js
 import PropTypes from 'prop-types';
-import React from 'react';
-import { toast } from 'react-toastify';
-import * as commentService from 'services/comment.service';
+import React, { useRef, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import {
   Box,
@@ -14,10 +11,11 @@ import {
   DialogTitle,
   IconButton,
   TextField,
-  Typography,
 } from '@mui/material';
 import ImagePreview from 'components/atoms/ImagePreview';
+import FloatingEmojiPicker from 'components/molecules/FloatingEmojiPicker';
 import ImageUploadButton from 'components/molecules/ImageUploadButton';
+import ReportCommentModal from 'components/molecules/ReportCommentModal';
 import CommentSection from 'components/organisms/CommentSection';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 
@@ -55,53 +53,45 @@ const CommentFeature = ({
   handleLoadMoreReplies,
   handleCommentReactionChange,
 }) => {
-  const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
-  const [reportCommentId, setReportCommentId] = React.useState(null);
-  const [reportReason, setReportReason] = React.useState('');
-  const [reportError, setReportError] = React.useState(null);
-  const [isReporting, setIsReporting] = React.useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportCommentId, setReportCommentId] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiButtonRef = useRef(null);
+  const textFieldRef = useRef(null);
 
   const handleReportClick = (commentId) => {
     setReportCommentId(commentId);
     setIsReportModalOpen(true);
   };
 
-  const handleReportSubmit = async () => {
-    if (!reportReason.trim()) {
-      setReportError('Please provide a reason for reporting.');
+  const handleReportModalClose = () => {
+    setIsReportModalOpen(false);
+    setReportCommentId(null);
+  };
+
+  const handleEmojiClick = (emojiObject) => {
+    const textField = textFieldRef.current?.querySelector('textarea');
+    if (!textField) {
+      // Fallback: append emoji to the end
+      setTempEditingText((prev) => prev + emojiObject.emoji);
       return;
     }
 
-    setIsReporting(true);
-    setReportError(null);
+    const start = textField.selectionStart;
+    const end = textField.selectionEnd;
+    const textBefore = tempEditingText.substring(0, start);
+    const textAfter = tempEditingText.substring(end);
 
-    try {
-      await commentService.reportComment(postId, reportCommentId, reportReason);
-      setIsReportModalOpen(false);
-      setReportReason('');
-      setReportCommentId(null);
+    // Insert emoji at cursor position
+    const newText = textBefore + emojiObject.emoji + textAfter;
+    setTempEditingText(newText);
 
-      // Show success feedback
-      toast.success('Report submitted successfully.');
-    } catch (error) {
-      // Check if the error is due to an already reported comment
-      if (error.response?.data?.error === 'You have already reported this comment.') {
-        setReportError('You have already reported this comment.');
-        toast.info('You have already reported this comment.');
-      } else {
-        setReportError('Failed to submit report. Please try again.');
-        toast.error('Failed to submit report. Please try again.');
-      }
-    } finally {
-      setIsReporting(false);
-    }
-  };
+    // Restore cursor position after emoji
+    setTimeout(() => {
+      textField.selectionStart = textField.selectionEnd = start + emojiObject.emoji.length;
+    }, 0);
 
-  const handleReportCancel = () => {
-    setIsReportModalOpen(false);
-    setReportReason('');
-    setReportCommentId(null);
-    setReportError(null);
+    setShowEmojiPicker(false);
   };
 
   const deletingComment = comments.find((c) => c.id === commentToDelete) || {};
@@ -169,6 +159,14 @@ const CommentFeature = ({
         fullWidth
         disableAutoFocus
         disableEnforceFocus
+        sx={{
+          '& .MuiDialog-paper': {
+            overflow: 'visible', // Ensure the dialog paper doesn't clip the emoji picker
+          },
+          '& .MuiDialog-container': {
+            alignItems: 'center', // Center the dialog vertically
+          },
+        }}
       >
         <DialogTitle>
           Edit Comment
@@ -180,18 +178,41 @@ const CommentFeature = ({
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent>
-          <TextField
-            margin="dense"
-            fullWidth
-            multiline
-            rows={3}
-            value={tempEditingText}
-            onChange={(e) => setTempEditingText(e.target.value)}
-            placeholder="Edit your comment here...."
-            sx={{ mb: 2 }}
-            disabled={isLoading}
-          />
+        <DialogContent
+          sx={{
+            overflow: 'visible', // Prevent clipping of the emoji picker
+            paddingBottom: 2,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              mb: 2,
+              position: 'relative',
+            }}
+          >
+            <TextField
+              margin="dense"
+              fullWidth
+              multiline
+              rows={3}
+              value={tempEditingText}
+              onChange={(e) => setTempEditingText(e.target.value)}
+              placeholder="Edit your comment here...."
+              disabled={isLoading}
+              inputRef={textFieldRef}
+              sx={{ pr: 5 }}
+            />
+            <Box sx={{ position: 'absolute', right: 8, top: 12 }}>
+              <FloatingEmojiPicker
+                onEmojiClick={handleEmojiClick}
+                showEmojiPicker={showEmojiPicker}
+                setShowEmojiPicker={setShowEmojiPicker}
+                emojiButtonRef={emojiButtonRef}
+              />
+            </Box>
+          </Box>
           {updateCommentImagePreview && (
             <Box sx={{ mb: 2 }}>
               <ImagePreview
@@ -233,53 +254,12 @@ const CommentFeature = ({
         </DialogActions>
       </Dialog>
 
-      <Dialog open={isReportModalOpen} onClose={handleReportCancel} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          Report Comment
-          <IconButton
-            aria-label="close"
-            onClick={handleReportCancel}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" sx={{ mb: 2 }}>
-            Are you sure you want to report this comment? Please provide a reason.
-          </Typography>
-          <TextField
-            fullWidth
-            multiline
-            rows={4}
-            value={reportReason}
-            onChange={(e) => setReportReason(e.target.value)}
-            placeholder="Enter your reason for reporting..."
-            error={!!reportError}
-            helperText={reportError}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleReportCancel} disabled={isReporting}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleReportSubmit}
-            variant="contained"
-            color="warning"
-            disabled={isReporting}
-          >
-            {isReporting ? (
-              <>
-                <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
-                Reporting...
-              </>
-            ) : (
-              'Report'
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ReportCommentModal
+        open={isReportModalOpen}
+        onClose={handleReportModalClose}
+        postId={postId}
+        commentId={reportCommentId}
+      />
     </Box>
   );
 };
