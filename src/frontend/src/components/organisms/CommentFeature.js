@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import {
   Box,
@@ -17,6 +17,7 @@ import ImageUploadButton from 'components/molecules/ImageUploadButton';
 import ReportCommentModal from 'components/molecules/ReportCommentModal';
 import CommentSection from 'components/organisms/CommentSection';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
+import FloatingEmojiPicker from 'components/molecules/FloatingEmojiPicker';
 
 const CommentFeature = ({
   postId,
@@ -52,8 +53,11 @@ const CommentFeature = ({
   handleLoadMoreReplies,
   handleCommentReactionChange,
 }) => {
-  const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
-  const [reportCommentId, setReportCommentId] = React.useState(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportCommentId, setReportCommentId] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiButtonRef = useRef(null);
+  const textFieldRef = useRef(null);
 
   const handleReportClick = (commentId) => {
     setReportCommentId(commentId);
@@ -63,6 +67,31 @@ const CommentFeature = ({
   const handleReportModalClose = () => {
     setIsReportModalOpen(false);
     setReportCommentId(null);
+  };
+
+  const handleEmojiClick = (emojiObject) => {
+    const textField = textFieldRef.current?.querySelector('textarea');
+    if (!textField) {
+      // Fallback: append emoji to the end
+      setTempEditingText((prev) => prev + emojiObject.emoji);
+      return;
+    }
+
+    const start = textField.selectionStart;
+    const end = textField.selectionEnd;
+    const textBefore = tempEditingText.substring(0, start);
+    const textAfter = tempEditingText.substring(end);
+
+    // Insert emoji at cursor position
+    const newText = textBefore + emojiObject.emoji + textAfter;
+    setTempEditingText(newText);
+
+    // Restore cursor position after emoji
+    setTimeout(() => {
+      textField.selectionStart = textField.selectionEnd = start + emojiObject.emoji.length;
+    }, 0);
+
+    setShowEmojiPicker(false);
   };
 
   const deletingComment = comments.find((c) => c.id === commentToDelete) || {};
@@ -130,6 +159,14 @@ const CommentFeature = ({
         fullWidth
         disableAutoFocus
         disableEnforceFocus
+        sx={{
+          '& .MuiDialog-paper': {
+            overflow: 'visible', // Ensure the dialog paper doesn't clip the emoji picker
+          },
+          '& .MuiDialog-container': {
+            alignItems: 'center', // Center the dialog vertically
+          },
+        }}
       >
         <DialogTitle>
           Edit Comment
@@ -141,18 +178,41 @@ const CommentFeature = ({
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent>
-          <TextField
-            margin="dense"
-            fullWidth
-            multiline
-            rows={3}
-            value={tempEditingText}
-            onChange={(e) => setTempEditingText(e.target.value)}
-            placeholder="Edit your comment here...."
-            sx={{ mb: 2 }}
-            disabled={isLoading}
-          />
+        <DialogContent
+          sx={{
+            overflow: 'visible', // Prevent clipping of the emoji picker
+            paddingBottom: 2,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              mb: 2,
+              position: 'relative',
+            }}
+          >
+            <TextField
+              margin="dense"
+              fullWidth
+              multiline
+              rows={3}
+              value={tempEditingText}
+              onChange={(e) => setTempEditingText(e.target.value)}
+              placeholder="Edit your comment here...."
+              disabled={isLoading}
+              inputRef={textFieldRef}
+              sx={{ pr: 5 }}
+            />
+            <Box sx={{ position: 'absolute', right: 8, top: 12 }}>
+              <FloatingEmojiPicker
+                onEmojiClick={handleEmojiClick}
+                showEmojiPicker={showEmojiPicker}
+                setShowEmojiPicker={setShowEmojiPicker}
+                emojiButtonRef={emojiButtonRef}
+              />
+            </Box>
+          </Box>
           {updateCommentImagePreview && (
             <Box sx={{ mb: 2 }}>
               <ImagePreview
