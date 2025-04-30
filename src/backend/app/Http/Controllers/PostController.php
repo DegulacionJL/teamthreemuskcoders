@@ -217,24 +217,27 @@ class PostController extends Controller
             }
             
             // Fetch the latest 5-8 hashtags from posts
-            $hashtags = Post::select('id', 'hashtag')
-            ->whereNotNull('hashtag')
-            ->orderBy('created_at', 'desc')
-            ->limit(20)
-            ->get()
-            ->flatMap(function ($post) {
-                $tags = is_array($post->hashtag) ? $post->hashtag : json_decode($post->hashtag, true);
-                return collect($tags ?: [])->map(function ($hashtag) use ($post) {
-                    return [
-                        'hashtag' => $hashtag,
-                        'post_id' => $post->id,
-                    ];
-                });
-            })
-            ->unique('hashtag')
-            ->take(8)
-            ->values();
-        
+           
+            $hashtags = Post::select('id', 'caption')
+    ->whereNotNull('caption')
+    ->orderBy('created_at', 'desc')
+    ->limit(20)
+    ->get()
+    ->flatMap(function ($post) {
+        // Extract hashtags using a regex that matches hashtags followed by word boundaries
+        preg_match_all('/#\w+/', $post->caption, $matches);
+
+        return collect($matches[0])->map(function ($hashtag) use ($post) {
+            return [
+                'hashtag' => $hashtag,
+                'post_id' => $post->id,
+            ];
+        });
+    })
+    ->unique('hashtag')
+    ->take(8)
+    ->values();
+                // Note: The above code assumes that the hashtags are stored in a way that they can be decoded or split.                
             /*
              $hashtags = Post::select('id', 'hashtag')
                 ->whereNotNull('hashtag')
@@ -271,41 +274,47 @@ class PostController extends Controller
         }
     }
     public function getPostsByHashtag(HashtagPostRequest $request, $hashtag): JsonResponse
-    {
-        try {
-            // Handle empty or undefined hashtags
-            if ($hashtag === 'undefined' || empty($hashtag)) {
-                return $this->emptyResponse();
-            }
-
-            // Get posts from service
-            $posts = $this->postService->getPostsByHashtag($hashtag, $request->page ?? 1);
-            
-            // Return formatted response
-            return response()->json([
-                'posts' => HashtagResource::collection($posts),
-                'meta' => [
-                    'current_page' => $posts->currentPage(),
-                    'last_page' => $posts->lastPage(),
-                    'total' => $posts->total(),
-                ]
-            ]);
-        } catch (\Exception $e) {
-            // Log the error
-            Log::error('Error fetching posts by hashtag: ' . $e->getMessage());
-            
-            // Return a friendly error response
-            return response()->json([
-                'error' => 'Failed to fetch posts by hashtag',
-                'posts' => [],
-                'meta' => [
-                    'current_page' => 1,
-                    'last_page' => 1,
-                    'total' => 0,
-                ]
-            ], 500);
+{
+    try {
+        // Handle empty or undefined hashtags
+        if ($hashtag === 'undefined' || empty($hashtag)) {
+            return $this->emptyResponse();
         }
+
+        // Clean the hashtag by removing the leading '#' for matching
+        $cleanHashtag = ltrim($hashtag, '#');
+
+        // Query posts that contain the hashtag using a REGEXP match and eager-load the image relationship
+        $posts = Post::with('image') // Eager-load the image relationship
+            ->where('caption', 'REGEXP', '(^|[^a-zA-Z0-9_])#' . preg_quote($cleanHashtag) . '($|[^a-zA-Z0-9_])')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10, ['*'], 'page', $request->page ?? 1);
+
+        // Return the formatted response
+        return response()->json([
+            'posts' => HashtagResource::collection($posts),
+            'meta' => [
+                'current_page' => $posts->currentPage(),
+                'last_page' => $posts->lastPage(),
+                'total' => $posts->total(),
+            ]
+        ]);
+    } catch (\Exception $e) {
+        // Log the error for debugging
+        Log::error('Error fetching posts by hashtag: ' . $e->getMessage());
+
+        // Return a friendly error response
+        return response()->json([
+            'error' => 'Failed to fetch posts by hashtag',
+            'posts' => [],
+            'meta' => [
+                'current_page' => 1,
+                'last_page' => 1,
+                'total' => 0,
+            ]
+        ], 500);
     }
+}
 
     /**
      * Return empty response with proper structure
