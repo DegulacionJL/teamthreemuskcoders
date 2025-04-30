@@ -42,7 +42,7 @@ function AdminTableBody(props) {
                     <img
                       src={label}
                       alt="Avatar"
-                      style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: '50%' }}
+                      style={{ width: 70, height: 70, objectFit: 'cover', borderRadius: '50%' }}
                     />
                   );
                 }

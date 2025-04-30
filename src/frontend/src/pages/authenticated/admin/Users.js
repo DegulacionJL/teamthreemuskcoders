@@ -137,14 +137,16 @@ export default function Users() {
       label: '',
       width: 64,
       render: (row) => {
-        const rawAvatar = row?.avatar?.replace(/\\/g, '');
-        const avatarUrl = rawAvatar
-          ? `${import.meta.env.VITE_API_BASE_URL}/${rawAvatar}`
-          : '/static/images/default-avatar.png';
+        const rawAvatar = row?.avatar ?? ''; // If avatar is null or undefined, use an empty string
+        console.log('Raw Avatar:', rawAvatar); // Log to debug
+
+        // Determine the avatar URL based on whether the user has uploaded an avatar or not
+        const avatarUrl = rawAvatar ? row.avatar : '/static/images/default-avatar.png';
+        console.log('Final Avatar URL:', avatarUrl); // Log the final avatar URL for debugging
 
         return (
           <Avatar
-            src={avatarUrl}
+            src={avatarUrl} // Use the avatarUrl here
             alt="Profile"
             sx={{
               width: 40,
@@ -154,8 +156,10 @@ export default function Users() {
               boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
             }}
             onError={(e) => {
+              // Fallback to default avatar if the image fails to load
+              console.log('Image failed to load, falling back to default'); // Log when the image fails to load
               e.currentTarget.onerror = null;
-              e.currentTarget.src = '/static/images/default-avatar.png';
+              e.currentTarget.src = '/static/images/default-avatar.png'; // Fallback image
             }}
           />
         );
