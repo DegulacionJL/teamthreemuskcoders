@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { fetchPostsByHashtag, fetchPostsByKeyword } from 'services/meme.service';
+import { fetchPostsByHashtag } from 'services/meme.service';
+import { searchPosts } from 'services/search.service';
 import { unifiedSearch } from 'services/search.service';
 import VerifiedIcon from '@mui/icons-material/CheckCircle';
 // Material UI imports
@@ -86,7 +87,7 @@ function SearchResultsPage() {
         resultsData = await unifiedSearch(query, searchTypes[tabIndex]);
       } else if (tabIndex === 2) {
         // Posts tab
-        resultsData = await fetchPostsByKeyword(term);
+        resultsData = await searchPosts(term);
       } else if (tabIndex === 3) {
         // Hashtags tab
         try {
@@ -522,7 +523,7 @@ function SearchResultsPage() {
                   variant="body1"
                   sx={{ color: darkMode ? 'text.secondary' : 'text.disabled' }} // Adjust text color
                 >
-                  {t('search.noResults')} "{keyword}"
+                  {t('search.noResults')} &quot;{keyword}&quot;
                 </Typography>
               </Paper>
             )}
