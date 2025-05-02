@@ -56,6 +56,9 @@ const en = {
       noResults: 'No results found.',
       recent: 'Recent Searches',
       noRecent: 'No recent searches.',
+      resultsFor: 'Results for',
+      filters: 'Filters',
+      viewProfile: 'View Profile',
     },
 
     pages: {

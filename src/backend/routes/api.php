@@ -101,6 +101,9 @@ Route::prefix('users')
 
         Route::get('/search', [SearchController::class, 'search']);
 
+        Route::prefix('posts')->group(function () {
+            Route::get('/search', [PostController::class, 'searchPosts']); // Fetch posts by keyword
+        });
 
     Route::prefix('userlist')
     ->group(function () {

@@ -319,6 +319,30 @@ class PostController extends Controller
             ], 500);
         }
     }
+
+    public function searchPosts(Request $request): JsonResponse
+    {
+        try {
+            $keyword = $request->get('keyword', '');
+            $queryParams = $request->all(); // Get additional query parameters like pagination
+
+            $posts = $this->postService->searchPostsByKeyword($keyword, $queryParams);
+
+            return response()->json([
+                'meta' => $posts['meta'],
+                'data' => $posts['data'],
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error fetching posts by keyword: ' . $e->getMessage());
+
+            return response()->json([
+                'error' => 'Failed to fetch posts by keyword',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+   
     
 
 }

@@ -11,23 +11,25 @@ class SearchService
     {
         $results = collect();
 
-        if (in_array('user', $types)) {
-            $users = User::where('name', 'LIKE', "%{$keyword}%")
-                ->orWhere('username', 'LIKE', "%{$keyword}%")
+        if (in_array('hashtag', $types)) {
+            $hashtag = $keyword; // Use the provided keyword as the hashtag
+            $hashtags = Post::whereNotNull('caption')
+                ->where('caption', 'LIKE', "%#{$hashtag}%") // Match the specific hashtag
+                ->selectRaw("SUBSTRING_INDEX(SUBSTRING_INDEX(caption, '#', -1), ' ', 1) as hashtag, COUNT(*) as posts_count")
+                ->groupBy('hashtag')
+                ->orderByDesc('posts_count')
                 ->limit($limit)
                 ->offset(($page - 1) * $limit)
                 ->get()
-                ->map(function ($user) {
+                ->map(function ($item) {
                     return [
-                        'type' => 'user',
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'username' => $user->username,
-                        'avatar' => $user->avatar,
+                        'type' => 'hashtag',
+                        'name' => '#' . $item->hashtag,
+                        'posts_count' => $item->posts_count,
                     ];
                 });
-
-            $results = $results->merge($users);
+        
+            $results = $results->merge($hashtags);
         }
 
         if (in_array('post', $types)) {

@@ -67,9 +67,10 @@ const searchPosts = async (query) => {
 };
 
 const searchHashtags = async (query) => {
+  const hashtag = query.hashtag || '';
   const req = retryWithBackoff(() =>
     api
-      .get(`/posts/hashtag/{hashtag}?${new URLSearchParams(query).toString()}`)
+      .get(`/posts/hashtag/${encodeURIComponent(hashtag)}?${new URLSearchParams(query).toString()}`)
       .then(({ data }) => data)
   );
   const { meta, data } = await req;

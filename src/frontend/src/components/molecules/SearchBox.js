@@ -119,7 +119,7 @@ function SearchBox({ onResultSelect, initialTypes = ['user', 'post', 'hashtag'],
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      debouncedSearch(searchTerm);
+      navigate(`/search-results?keyword=${encodeURIComponent(searchTerm)}`);
     }
   };
 
@@ -129,11 +129,11 @@ function SearchBox({ onResultSelect, initialTypes = ['user', 'post', 'hashtag'],
     }
 
     if (result.type === 'user') {
-      navigate(`/usertimeline/${result.id}`);
+      navigate(`/users/${result.id}`);
     } else if (result.type === 'post') {
       navigate(`/posts/${result.id}`);
     } else if (result.type === 'hashtag') {
-      navigate(`/hashtagpage/${result.name || result.tag}`);
+      navigate(`/hashtag/${result.name || result.tag}`);
     }
 
     setSearchOpen(false);
@@ -149,6 +149,12 @@ function SearchBox({ onResultSelect, initialTypes = ['user', 'post', 'hashtag'],
   const handleRecentSearchClick = (term) => {
     setSearchTerm(term);
     performSearch(term);
+  };
+
+  const handleSearchClick = () => {
+    if (searchTerm.trim()) {
+      navigate(`/search-results?keyword=${encodeURIComponent(searchTerm)}`);
+    }
   };
 
   const handleTabChange = (event, newValue) => {
@@ -271,7 +277,7 @@ function SearchBox({ onResultSelect, initialTypes = ['user', 'post', 'hashtag'],
           transition: 'box-shadow 0.2s ease-in-out',
         }}
       >
-        <Box
+        {/* <Box
           sx={{
             padding: '0 16px',
             height: '100%',
@@ -283,7 +289,7 @@ function SearchBox({ onResultSelect, initialTypes = ['user', 'post', 'hashtag'],
           }}
         >
           {isLoading ? <CircularProgress size={20} /> : <SearchIcon />}
-        </Box>
+        </Box> */}
         <InputBase
           placeholder={t('labels.search')}
           inputProps={{ 'aria-label': t('labels.search') }}
@@ -299,7 +305,7 @@ function SearchBox({ onResultSelect, initialTypes = ['user', 'post', 'hashtag'],
             color: 'inherit',
             width: '100%',
             '& .MuiInputBase-input': {
-              padding: '8px 8px 8px 48px',
+              padding: '8px 8px 8px 16px',
               width: searchTerm ? 'calc(100% - 40px)' : '100%',
             },
           }}
@@ -319,6 +325,19 @@ function SearchBox({ onResultSelect, initialTypes = ['user', 'post', 'hashtag'],
             <CloseIcon fontSize="small" />
           </IconButton>
         )}
+        <IconButton
+          size="small"
+          aria-label="search"
+          onClick={handleSearchClick}
+          sx={{
+            position: 'absolute',
+            right: 40,
+            top: '50%',
+            transform: 'translateY(-50%)',
+          }}
+        >
+          <SearchIcon fontSize="small" />
+        </IconButton>
       </Box>
 
       <Popper

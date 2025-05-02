@@ -401,6 +401,36 @@ class PostService
             ];
         }
     }
+    public function searchPostsByKeyword(string $keyword, array $queryParams): array
+    {
+        try {
+            $limit = $queryParams['limit'] ?? 10;
+            $page = $queryParams['page'] ?? 1;
+
+            $posts = Post::where('caption', 'LIKE', "%{$keyword}%")
+                ->orWhereHas('user', function ($query) use ($keyword) {
+                    $query->where('name', 'LIKE', "%{$keyword}%");
+                })
+                ->orderBy('created_at', 'desc')
+                ->paginate($limit, ['*'], 'page', $page);
+
+            return [
+                'meta' => [
+                    'current_page' => $posts->currentPage(),
+                    'last_page' => $posts->lastPage(),
+                    'total' => $posts->total(),
+                    'per_page' => $posts->perPage(),
+                ],
+                'data' => $posts->items(),
+            ];
+        } catch (Exception $e) {
+            Log::error('Error in searchPostsByKeyword: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+ 
+    
 
 
 }

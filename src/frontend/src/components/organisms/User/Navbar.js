@@ -35,7 +35,9 @@ function Navbar(props) {
   const menus = [];
 
   if (user) {
-    menus.push({ label: t('menu.memefeed'), url: '/memefeed' });
+    if (location.pathname !== '/memefeed') {
+      menus.push({ label: t('menu.memefeed'), url: '/memefeed' });
+    }
     menus.push({ label: t('menu.userlist'), url: '/userList' });
   }
 
