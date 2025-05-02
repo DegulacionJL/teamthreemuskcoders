@@ -13,7 +13,6 @@ import Container from '@mui/material/Container';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import TextField from '@mui/material/TextField';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { purple } from '@mui/material/colors';
@@ -22,6 +21,7 @@ import LanguageSelect from 'components/atoms/LanguageSelect';
 import MenuLinks from 'components/atoms/MenuLinks';
 import AvatarNavDropdown from 'components/molecules/AvatarNavDropdown';
 import NotificationIcon from 'components/molecules/NotificationIcon';
+import SearchComponent from 'components/molecules/SearchBox';
 import { useTheme } from '../../../theme/ThemeContext';
 
 function Navbar(props) {
@@ -31,7 +31,6 @@ function Navbar(props) {
   const location = useLocation();
   const [anchorMobileNav, setAnchorMobileNav] = useState(null);
   const { darkMode, toggleDarkMode } = useTheme();
-  const [searchQuery, setSearchQuery] = useState('');
 
   const menus = [];
 
@@ -100,30 +99,15 @@ function Navbar(props) {
               // Only render the search bar if the user is logged in
               <Box
                 sx={{
-                  width: '100%',
-                  maxWidth: '80%',
+                  width: { xs: '100%', md: '300px' },
+                  maxWidth: '300px',
                   justifyContent: 'start',
                   alignItems: 'start',
                   pl: 2,
+                  display: { xs: 'none', sm: 'flex' },
                 }}
               >
-                <TextField
-                  fullWidth
-                  placeholder="Search memes..."
-                  variant="outlined"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  size="small"
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      bgcolor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-                      borderRadius: 1,
-                      '& input': {
-                        color: darkMode ? '#fff' : '#000',
-                      },
-                    },
-                  }}
-                />
+                <SearchComponent />
               </Box>
             )}
           </Box>
@@ -191,7 +175,7 @@ function Navbar(props) {
               }}
               MenuListProps={{
                 style: {
-                  width: 200,
+                  width: '100%',
                 },
               }}
             >
