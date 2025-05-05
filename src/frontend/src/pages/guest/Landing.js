@@ -34,26 +34,6 @@ function Landing() {
     },
   ];
 
-  {
-    /** dummy client data */
-  }
-  const clients = [...Array(6)].map((item, index) => {
-    index++;
-    return {
-      name: `Client ${index}`,
-      logo: `/static/images/client-logo-${index}.png`,
-    };
-  });
-
-  {
-    /** dummy reviews data */
-  }
-  const reviews = [...Array(9)].map(() => ({
-    avatar: faker.image.people(120, 120, true),
-    name: `${faker.name.firstName()} ${faker.name.lastName()}`,
-    comment: faker.lorem.words(15),
-    rating: Math.random() * (5 - 1) + 1,
-  }));
   return (
     <>
       <Seo
@@ -115,7 +95,7 @@ function Landing() {
       </Section>
 
       {/** Our Clients */}
-      <Section heading={t('pages.landing.our_customers_heading')} background="white">
+      {/* <Section heading={t('pages.landing.our_customers_heading')} background="white">
         <Container maxWidth="lg" sx={{ py: 8 }}>
           <Grid container spacing={8}>
             {clients.map((client, key) => (
@@ -130,16 +110,16 @@ function Landing() {
             ))}
           </Grid>
         </Container>
-      </Section>
+      </Section> */}
 
       {/** Reviews */}
-      <Section heading={t('pages.landing.reviews_heading')} fullWidth={true}>
+      {/* <Section heading={t('pages.landing.reviews_heading')} fullWidth={true}>
         <ReviewSlider reviews={reviews} sx={{ mt: 6, p: 4 }} />
 
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
           <MuiButton variant="outlined">{t('pages.landing.see_all_reviews')}</MuiButton>
         </Box>
-      </Section>
+      </Section> */}
 
       {/** CTA */}
       <CallToAction />

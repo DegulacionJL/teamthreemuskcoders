@@ -266,7 +266,7 @@ const CommentFeature = ({
 
 CommentFeature.propTypes = {
   postId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  user: PropTypes.object.isRequired,
+  user: PropTypes.object,
   comments: PropTypes.array.isRequired,
   isLoading: PropTypes.bool.isRequired,
   hasMore: PropTypes.bool.isRequired,
