@@ -234,28 +234,28 @@ const RightContent = () => {
                     </Typography>
                   }
                   secondary={
-                    <Box>
+                    <>
                       <Typography variant="body2" component="span">
                         {suggestedUser.username ? `@${suggestedUser.username}` : ''}
                       </Typography>
                       {suggestedUser.mutual_count > 0 && (
                         <Typography
                           variant="body2"
-                          component="div"
+                          component="span"
                           sx={{
                             color:
                               theme.palette.mode === 'dark'
                                 ? 'rgba(255, 255, 255, 0.7)'
                                 : 'rgba(0, 0, 0, 0.6)',
                             fontSize: '0.75rem',
-                            mt: 0.5,
+                            ml: 1, // Add spacing instead of margin-top
                           }}
                         >
                           {suggestedUser.mutual_count} mutual friend
                           {suggestedUser.mutual_count !== 1 ? 's' : ''}
                         </Typography>
                       )}
-                    </Box>
+                    </>
                   }
                 />
               </ListItem>
