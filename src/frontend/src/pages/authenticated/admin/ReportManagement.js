@@ -1,4 +1,5 @@
-import React from 'react';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import { CheckCircle, Delete, Visibility } from '@mui/icons-material';
 import {
   Box,
@@ -18,127 +19,30 @@ import {
 } from '@mui/material';
 
 const ReportManagement = () => {
-  const [activeTab, setActiveTab] = React.useState(0);
+  const [activeTab, setActiveTab] = useState(0);
+  const [reports, setReports] = useState([]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
-  const reports = [
-    {
-      id: 1,
-      type: 'Meme',
-      reportedBy: 'User123',
-      reason: 'Offensive Content',
-      date: '2025-04-01',
-      status: 'Pending',
-    },
-    {
-      id: 2,
-      type: 'Meme',
-      reportedBy: 'User456',
-      reason: 'Spam',
-      date: '2025-04-02',
-      status: 'Resolved',
-    },
-    {
-      id: 3,
-      type: 'Meme',
-      reportedBy: 'User789',
-      reason: 'Copyright Violation',
-      date: '2025-04-03',
-      status: 'Pending',
-    },
-    {
-      id: 4,
-      type: 'Meme',
-      reportedBy: 'User321',
-      reason: 'Misinformation',
-      date: '2025-04-04',
-      status: 'Pending',
-    },
-    {
-      id: 5,
-      type: 'Meme',
-      reportedBy: 'User654',
-      reason: 'Hate Speech',
-      date: '2025-04-05',
-      status: 'Resolved',
-    },
-    {
-      id: 6,
-      type: 'Comment',
-      reportedBy: 'User111',
-      reason: 'Harassment',
-      date: '2025-04-06',
-      status: 'Pending',
-    },
-    {
-      id: 7,
-      type: 'Comment',
-      reportedBy: 'User222',
-      reason: 'Offensive Language',
-      date: '2025-04-07',
-      status: 'Resolved',
-    },
-    {
-      id: 8,
-      type: 'Comment',
-      reportedBy: 'User333',
-      reason: 'Threats',
-      date: '2025-04-08',
-      status: 'Pending',
-    },
-    {
-      id: 9,
-      type: 'Comment',
-      reportedBy: 'User444',
-      reason: 'Spam',
-      date: '2025-04-09',
-      status: 'Resolved',
-    },
-    {
-      id: 10,
-      type: 'User',
-      reportedBy: 'User555',
-      reason: 'Impersonation',
-      date: '2025-04-10',
-      status: 'Pending',
-    },
-    {
-      id: 11,
-      type: 'User',
-      reportedBy: 'User666',
-      reason: 'Harassment',
-      date: '2025-04-11',
-      status: 'Resolved',
-    },
-    {
-      id: 12,
-      type: 'User',
-      reportedBy: 'User777',
-      reason: 'Fake Account',
-      date: '2025-04-12',
-      status: 'Pending',
-    },
-    {
-      id: 13,
-      type: 'User',
-      reportedBy: 'User888',
-      reason: 'Hate Speech',
-      date: '2025-04-13',
-      status: 'Resolved',
-    },
-  ];
+  useEffect(() => {
+    axios
+      .get('http://localhost:8000/api/reports') // Update if your backend URL/port is different
+      .then((response) => {
+        setReports(response.data);
+      })
+      .catch((error) => {
+        console.error('Error fetching reports:', error);
+      });
+  }, []);
 
-  const filteredReports = reports
-    .filter((report) => {
-      if (activeTab === 0) return report.type === 'Meme';
-      if (activeTab === 1) return report.type === 'Comment';
-      if (activeTab === 2) return report.type === 'User';
-      return false;
-    })
-    .map((report, index) => ({ ...report, id: index + 1 }));
+  const filteredReports = reports.filter((report) => {
+    if (activeTab === 0) return report.type === 'Meme';
+    if (activeTab === 1) return report.type === 'Comment';
+    if (activeTab === 2) return report.type === 'User';
+    return false;
+  });
 
   return (
     <Container
@@ -177,7 +81,7 @@ const ReportManagement = () => {
               filteredReports.map((report) => (
                 <TableRow key={report.id} hover>
                   <TableCell align="center">{report.id}</TableCell>
-                  <TableCell align="center">{report.reportedBy}</TableCell>
+                  <TableCell align="center">{report.reported_by}</TableCell>
                   <TableCell align="center">{report.reason}</TableCell>
                   <TableCell align="center">{report.date}</TableCell>
                   <TableCell align="center">

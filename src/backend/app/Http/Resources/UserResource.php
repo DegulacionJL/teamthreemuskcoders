@@ -23,7 +23,7 @@ class UserResource extends JsonResource
             'status' => $this->status,
             'role' => count($this->roles) > 0 ? $this->roles[0]->name : null,
             'created_at' => $this->created_at,
-        'last_login' => $this->last_login, // ✅ this line is critical
+            'last_login' => $this->last_login,
         ];
     }
 }

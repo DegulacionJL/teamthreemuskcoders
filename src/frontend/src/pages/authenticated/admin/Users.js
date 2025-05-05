@@ -330,10 +330,14 @@ export default function Users() {
                     <strong>{t('Joined')}:</strong>{' '}
                     {parseDate(detail.created_at)?.toLocaleDateString()}
                   </Typography>
-                  {detail.last_login && (
+                  {detail.last_login ? (
                     <Typography variant="body1">
                       <strong>{t('Last Login')}:</strong>{' '}
                       {parseDate(detail.last_login)?.toLocaleString() || '—'}
+                    </Typography>
+                  ) : (
+                    <Typography variant="body1">
+                      <strong>{t('Last Login')}:</strong> {t('Never logged in')}
                     </Typography>
                   )}
                 </Box>

@@ -19,6 +19,7 @@ use App\Http\Controllers\UserListController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\UserTimelineController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\ReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -158,4 +159,5 @@ Route::prefix('timeline')->group(function () {
     Route::post('/users/{id}/cover-photo', [UserTimelineController::class, 'uploadCoverPhoto'])->middleware('auth:api');
     Route::get('/users/{id}/friends', [UserTimelineController::class, 'getFriends']);
     Route::get('/users/{id}/photos', [UserTimelineController::class, 'getPhotos']);
+    Route::post('/reports', [ReportController::class, 'create']);
 });

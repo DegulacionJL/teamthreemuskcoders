@@ -44,13 +44,6 @@ const SidebarMenu = () => {
         </ListItemIcon>
         <ListItemText primary="Activity Feed" />
       </ListItemButton>
-
-      <ListItemButton component={Link} to="/admin/integrations">
-        <ListItemIcon>
-          <LayersIcon />
-        </ListItemIcon>
-        <ListItemText primary="Integrations" />
-      </ListItemButton>
     </List>
   );
 };

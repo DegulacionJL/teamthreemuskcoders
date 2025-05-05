@@ -13,12 +13,18 @@ class Report extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<string>
      */
-    protected $fillable = ['user_id', 'reportable_id', 'reportable_type', 'reason', 'status'];
+    protected $fillable = [
+        'user_id',
+        'reportable_id',
+        'reportable_type',
+        'reason',
+        'status',
+    ];
 
     /**
-     * Get the reportable model (Post or Comment)
+     * Get the reportable model (meme, comment, user, etc.)
      */
     public function reportable()
     {
@@ -26,7 +32,7 @@ class Report extends Model
     }
 
     /**
-     * Get the user who made the report
+     * Get the user who made the report.
      */
     public function user()
     {
@@ -34,9 +40,12 @@ class Report extends Model
     }
 
     /**
-     * Log debug information for the report creation
+     * Log debug information for the report creation.
+     *
+     * @param \App\Models\Report $report
+     * @return void
      */
-    public static function logReportCreation($report)
+    public static function logReportCreation(self $report): void
     {
         Log::debug('Report Created:', [
             'user_id' => $report->user_id,
