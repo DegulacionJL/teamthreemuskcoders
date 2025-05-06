@@ -102,6 +102,12 @@ const NotificationIcon = (props) => {
     // Increment unread count
     setUnread((prev) => prev + 1);
     toast(t('labels.newNotification'), { type: 'info' });
+
+    // Play notification sound
+    const audio = new Audio('/sounds/notification-sound.mp3');
+    audio.play().catch((error) => {
+      console.error('Error playing notification sound:', error);
+    });
   };
 
   useEffect(() => {
