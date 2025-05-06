@@ -1,7 +1,6 @@
-// LightBox.js
 import { useComments } from 'hooks/useComments';
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ChatBubbleOutline, Close as CloseIcon } from '@mui/icons-material';
 import { Avatar, Box, Button, IconButton, Typography, useTheme } from '@mui/material';
 import CommentFeature from 'components/organisms/CommentFeature';
@@ -23,7 +22,8 @@ export default function LightBox({
 }) {
   const theme = useTheme();
   const isDarkMode = darkMode !== undefined ? darkMode : theme.palette.mode === 'dark';
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(true);
+  const hasFetchedComments = useRef(false);
 
   const {
     comments,
@@ -57,7 +57,15 @@ export default function LightBox({
     handleLoadMore,
     handleLoadMoreReplies,
     handleCommentReactionChange,
+    fetchComments,
   } = useComments(postId);
+
+  // Fetch comments when LightBox opens
+  React.useEffect(() => {
+    if (isOpen && !hasFetchedComments.current) {
+      fetchComments(1);
+    }
+  }, [isOpen, fetchComments]);
 
   if (!isOpen) {
     return null;
@@ -75,7 +83,13 @@ export default function LightBox({
   };
 
   const handleToggleComments = () => {
-    setShowComments((prev) => !prev);
+    setShowComments((prev) => {
+      const newValue = !prev;
+      if (newValue && !hasFetchedComments.current) {
+        fetchComments(1);
+      }
+      return newValue;
+    });
   };
 
   return (
