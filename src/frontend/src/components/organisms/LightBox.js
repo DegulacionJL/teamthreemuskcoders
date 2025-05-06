@@ -1,6 +1,6 @@
 import { useComments } from 'hooks/useComments';
 import PropTypes from 'prop-types';
-import React, { useState, useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { ChatBubbleOutline, Close as CloseIcon } from '@mui/icons-material';
 import { Avatar, Box, Button, IconButton, Typography, useTheme } from '@mui/material';
 import CommentFeature from 'components/organisms/CommentFeature';
