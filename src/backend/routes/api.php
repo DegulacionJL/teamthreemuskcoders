@@ -159,6 +159,7 @@ Route::get('permissions', [PermissionController::class, 'index']);
 
 Route::get('notifications', [NotificationController::class, 'index']);
 Route::put('notifications/{id}/seen', [NotificationController::class, 'seen']);
+Route::delete('notifications/clear-all', [NotificationController::class, 'clearAll']);
 
 // Admin Dashboard Route
 Route::prefix('admin')->middleware(['auth:api'])->group(function () {

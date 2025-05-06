@@ -1,12 +1,14 @@
-'use client';
-
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
 import { Fragment, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { markNotificationSeen, searchNotifications } from 'services/notification.service';
+import {
+  markNotificationSeen,
+  searchNotifications,
+  clearNotifications as clearNotifications,
+} from 'services/notification.service';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
@@ -16,6 +18,7 @@ import Popover from '@mui/material/Popover';
 import BodyText from 'components/atoms/BodyText';
 import NotificationItem from 'components/atoms/NotificationItem';
 import { criteria, meta as defaultMeta } from 'config/search';
+import Button from '@mui/material/Button';
 
 const NotificationIcon = (props) => {
   const { user, darkMode = false } = props;
@@ -27,6 +30,8 @@ const NotificationIcon = (props) => {
   const [unread, setUnread] = useState(0);
   const [query, setQuery] = useState(criteria);
   const [meta, setMeta] = useState(defaultMeta);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   const open = Boolean(anchorEl);
   const id = open ? 'simple-popover' : undefined;
@@ -73,13 +78,22 @@ const NotificationIcon = (props) => {
     }
   };
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (pageToFetch = 1) => {
     try {
       setLoading(true);
-      const { data, meta, unread } = await searchNotifications(query);
-      setNotifications((prev) => [...prev, ...data]);
+      const { data, meta, unread } = await searchNotifications({
+        ...query,
+        page: pageToFetch,
+        limit: 5,
+      });
+      if (pageToFetch === 1) {
+        setNotifications(data);
+      } else {
+        setNotifications((prev) => [...prev, ...data]);
+      }
       setUnread(unread);
       setMeta(meta);
+      setHasMore(meta.currentPage < meta.lastPage);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
@@ -110,9 +124,29 @@ const NotificationIcon = (props) => {
     });
   };
 
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchNotifications(nextPage);
+  };
+
+  const handleClearNotifications = async () => {
+    try {
+      await clearNotifications();
+      setNotifications([]);
+      setUnread(0);
+      setHasMore(false);
+      toast.success('All notifications cleared!');
+    } catch (error) {
+      toast.error('Failed to clear notifications.');
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
-    fetchNotifications();
-  }, [query]);
+    fetchNotifications(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   useEffect(() => {
     // Fix the condition: use AND instead of OR
@@ -162,10 +196,27 @@ const NotificationIcon = (props) => {
         }}
       >
         <Box sx={{ width: 300 }}>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', p: 2 }}>
+          <Box
+            sx={{
+              borderBottom: 1,
+              borderColor: 'divider',
+              p: 2,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
             <BodyText disableGutter sx={{ fontWeight: 700 }}>
               {t('labels.notifications')}
             </BodyText>
+            <Button
+              color="error"
+              size="small"
+              onClick={handleClearNotifications}
+              sx={{ minWidth: 0, fontWeight: 600 }}
+            >
+              Clear All
+            </Button>
           </Box>
 
           <Box sx={{ maxHeight: 400, overflowY: 'auto' }} onScroll={handleOnScroll}>
@@ -194,6 +245,24 @@ const NotificationIcon = (props) => {
               <BodyText disableGutter align="center" sx={{ p: 2 }}>
                 {t('labels.noNotifications')}
               </BodyText>
+            )}
+
+            {hasMore && !loading && (
+              <Box sx={{ p: 2, textAlign: 'center' }}>
+                <button
+                  onClick={handleLoadMore}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 4,
+                    border: 'none',
+                    background: '#1976d2',
+                    color: '#fff',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {t('labels.loadMore') || 'Load More'}
+                </button>
+              </Box>
             )}
           </Box>
         </Box>
