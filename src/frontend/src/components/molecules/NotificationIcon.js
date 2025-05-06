@@ -5,20 +5,20 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import {
+  clearNotifications,
   markNotificationSeen,
   searchNotifications,
-  clearNotifications as clearNotifications,
 } from 'services/notification.service';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import Popover from '@mui/material/Popover';
 import BodyText from 'components/atoms/BodyText';
 import NotificationItem from 'components/atoms/NotificationItem';
 import { criteria, meta as defaultMeta } from 'config/search';
-import Button from '@mui/material/Button';
 
 const NotificationIcon = (props) => {
   const { user, darkMode = false } = props;
@@ -30,8 +30,6 @@ const NotificationIcon = (props) => {
   const [unread, setUnread] = useState(0);
   const [query, setQuery] = useState(criteria);
   const [meta, setMeta] = useState(defaultMeta);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
 
   const open = Boolean(anchorEl);
   const id = open ? 'simple-popover' : undefined;
@@ -84,7 +82,6 @@ const NotificationIcon = (props) => {
       const { data, meta, unread } = await searchNotifications({
         ...query,
         page: pageToFetch,
-        limit: 5,
       });
       if (pageToFetch === 1) {
         setNotifications(data);
@@ -93,7 +90,6 @@ const NotificationIcon = (props) => {
       }
       setUnread(unread);
       setMeta(meta);
-      setHasMore(meta.currentPage < meta.lastPage);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
@@ -124,18 +120,11 @@ const NotificationIcon = (props) => {
     });
   };
 
-  const handleLoadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    fetchNotifications(nextPage);
-  };
-
   const handleClearNotifications = async () => {
     try {
       await clearNotifications();
       setNotifications([]);
       setUnread(0);
-      setHasMore(false);
       toast.success('All notifications cleared!');
     } catch (error) {
       toast.error('Failed to clear notifications.');
@@ -143,10 +132,12 @@ const NotificationIcon = (props) => {
     }
   };
 
+  // Fetch notifications when popover is opened
   useEffect(() => {
-    fetchNotifications(page);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+    if (open) {
+      fetchNotifications();
+    }
+  }, [open]);
 
   useEffect(() => {
     // Fix the condition: use AND instead of OR
@@ -245,24 +236,6 @@ const NotificationIcon = (props) => {
               <BodyText disableGutter align="center" sx={{ p: 2 }}>
                 {t('labels.noNotifications')}
               </BodyText>
-            )}
-
-            {hasMore && !loading && (
-              <Box sx={{ p: 2, textAlign: 'center' }}>
-                <button
-                  onClick={handleLoadMore}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: 4,
-                    border: 'none',
-                    background: '#1976d2',
-                    color: '#fff',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {t('labels.loadMore') || 'Load More'}
-                </button>
-              </Box>
             )}
           </Box>
         </Box>

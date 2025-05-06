@@ -16,8 +16,6 @@ document
   .querySelector('meta[name=viewport]')
   .setAttribute('content', `width=device-width, initial-scale=${scale}`);
 
-const rootElement = document.getElementById('root');
-
 const token = localStorage.getItem('access_token');
 const { REACT_APP_WEBSOCKET_KEY, REACT_APP_WEBSOCKET_HOST, REACT_APP_WEBSOCKET_CLUSTER } =
   process.env;
