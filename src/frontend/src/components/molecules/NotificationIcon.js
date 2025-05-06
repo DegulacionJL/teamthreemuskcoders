@@ -1,15 +1,18 @@
-'use client';
-
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
 import { Fragment, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { markNotificationSeen, searchNotifications } from 'services/notification.service';
+import {
+  clearNotifications,
+  markNotificationSeen,
+  searchNotifications,
+} from 'services/notification.service';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import Popover from '@mui/material/Popover';
@@ -73,11 +76,18 @@ const NotificationIcon = (props) => {
     }
   };
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (pageToFetch = 1) => {
     try {
       setLoading(true);
-      const { data, meta, unread } = await searchNotifications(query);
-      setNotifications((prev) => [...prev, ...data]);
+      const { data, meta, unread } = await searchNotifications({
+        ...query,
+        page: pageToFetch,
+      });
+      if (pageToFetch === 1) {
+        setNotifications(data);
+      } else {
+        setNotifications((prev) => [...prev, ...data]);
+      }
       setUnread(unread);
       setMeta(meta);
     } catch (error) {
@@ -102,11 +112,32 @@ const NotificationIcon = (props) => {
     // Increment unread count
     setUnread((prev) => prev + 1);
     toast(t('labels.newNotification'), { type: 'info' });
+
+    // Play notification sound
+    const audio = new Audio('/sounds/notification-sound.mp3');
+    audio.play().catch((error) => {
+      console.error('Error playing notification sound:', error);
+    });
   };
 
+  const handleClearNotifications = async () => {
+    try {
+      await clearNotifications();
+      setNotifications([]);
+      setUnread(0);
+      toast.success('All notifications cleared!');
+    } catch (error) {
+      toast.error('Failed to clear notifications.');
+      console.error(error);
+    }
+  };
+
+  // Fetch notifications when popover is opened
   useEffect(() => {
-    fetchNotifications();
-  }, [query]);
+    if (open) {
+      fetchNotifications();
+    }
+  }, [open]);
 
   useEffect(() => {
     // Fix the condition: use AND instead of OR
@@ -156,10 +187,27 @@ const NotificationIcon = (props) => {
         }}
       >
         <Box sx={{ width: 300 }}>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', p: 2 }}>
+          <Box
+            sx={{
+              borderBottom: 1,
+              borderColor: 'divider',
+              p: 2,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
             <BodyText disableGutter sx={{ fontWeight: 700 }}>
               {t('labels.notifications')}
             </BodyText>
+            <Button
+              color="error"
+              size="small"
+              onClick={handleClearNotifications}
+              sx={{ minWidth: 0, fontWeight: 600 }}
+            >
+              Clear All
+            </Button>
           </Box>
 
           <Box sx={{ maxHeight: 400, overflowY: 'auto' }} onScroll={handleOnScroll}>

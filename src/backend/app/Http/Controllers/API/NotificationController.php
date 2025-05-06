@@ -126,4 +126,18 @@ class NotificationController extends Controller
 
         return response()->json($this->response, $this->response['code']);
     }
+
+    /**
+     * Delete all notifications for the authenticated user.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function clearAll(Request $request)
+    {
+        $user = $request->user();
+        \App\Models\Notification::where('recipient_id', $user->id)->delete();
+        return response()->json(['success' => true]);
+    }
+
 }
