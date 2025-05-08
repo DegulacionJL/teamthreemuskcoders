@@ -7,7 +7,7 @@ import {
   createMemePost,
   deletePost,
   getMemePosts,
-  getTopMemeAndLeaderboard, // Updated import
+  getAllTopMemesAndLeaderboards,
   reportPost,
   updateImage,
   updatePost,
@@ -35,13 +35,22 @@ function MemeFeed() {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [currentUser, setCurrentUser] = useState(null);
-  const [tabValue, setTabValue] = useState(0);
+  const [tabValue, setTabValue] = useState('daily');
   const [showMemeCreator, setShowMemeCreator] = useState(false);
   const [error, setError] = useState(null);
-  const [leaderboard, setLeaderboard] = useState([]);
+  const [leaderboards, setLeaderboards] = useState({
+    daily: [],
+    weekly: [],
+    monthly: [],
+  });
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState(null);
   const [commentCounts, setCommentCounts] = useState({});
+  const [topPosts, setTopPosts] = useState({
+    daily: null,
+    weekly: null,
+    monthly: null,
+  });
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedPostId, setSelectedPostId] = useState(null);
@@ -64,7 +73,6 @@ function MemeFeed() {
       await deletePost(postId);
       setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
       handleMenuClose();
-      fetchLeaderboard(getPeriodFromTab(tabValue));
     } catch (error) {
       console.error('Error deleting post:', error);
       setError('Failed to delete post. Please try again.');
@@ -76,7 +84,6 @@ function MemeFeed() {
       await reportPost(postId);
       setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
       handleMenuClose();
-      fetchLeaderboard(getPeriodFromTab(tabValue));
     } catch (error) {
       console.error('Failed to report Post: ', error);
       setError('Failed to report Post. Please try again.');
@@ -117,7 +124,6 @@ function MemeFeed() {
       setPage(1);
       setPosts([]);
       await fetchPosts(1);
-      fetchLeaderboard(getPeriodFromTab(tabValue));
 
       setCaption('');
       setImage(null);
@@ -155,7 +161,6 @@ function MemeFeed() {
       setPage(1);
       setPosts([]);
       await fetchPosts(1);
-      fetchLeaderboard(getPeriodFromTab(tabValue));
     } catch (error) {
       console.error('Error updating post:', error);
       setError('Failed to update post. Please try again.');
@@ -238,24 +243,34 @@ function MemeFeed() {
     }
   };
 
-  const fetchLeaderboard = async (period) => {
-    setLeaderboardLoading(true);
-    setLeaderboardError(null);
-    try {
-      const response = await getTopMemeAndLeaderboard(period); // Updated to use getTopMemeAndLeaderboard
-      setLeaderboard(response.leaderboard || []);
-    } catch (error) {
-      console.error('Error fetching leaderboard:', error);
-      setLeaderboardError('Failed to load leaderboard.');
-      setLeaderboard([]);
-    } finally {
-      setLeaderboardLoading(false);
-    }
-  };
-
   useEffect(() => {
     fetchPosts(1);
-    fetchLeaderboard('daily');
+    // Fetch all leaderboards at once
+    const fetchAllLeaderboards = async () => {
+      setLeaderboardLoading(true);
+      setLeaderboardError(null);
+      try {
+        const allData = await getAllTopMemesAndLeaderboards();
+        setLeaderboards({
+          daily: allData.daily?.leaderboard || [],
+          weekly: allData.weekly?.leaderboard || [],
+          monthly: allData.monthly?.leaderboard || [],
+        });
+        setTopPosts({
+          daily: allData.daily?.top_post || null,
+          weekly: allData.weekly?.top_post || null,
+          monthly: allData.monthly?.top_post || null,
+        });
+      } catch (error) {
+        console.error('Error fetching all leaderboards:', error);
+        setLeaderboardError('Failed to load leaderboard.');
+        setLeaderboards({ daily: [], weekly: [], monthly: [] });
+        setTopPosts({ daily: null, weekly: null, monthly: null });
+      } finally {
+        setLeaderboardLoading(false);
+      }
+    };
+    fetchAllLeaderboards();
   }, []);
 
   // Fetch batch comment counts whenever posts change
@@ -285,23 +300,8 @@ function MemeFeed() {
     }
   };
 
-  const getPeriodFromTab = (tabIndex) => {
-    switch (tabIndex) {
-      case 0:
-        return 'daily';
-      case 1:
-        return 'weekly';
-      case 2:
-        return 'monthly';
-      default:
-        return 'daily';
-    }
-  };
-
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
-    const period = getPeriodFromTab(newValue);
-    fetchLeaderboard(period);
   };
 
   const handleMemeCreatorSave = (editedImage, memeCaption) => {
@@ -326,6 +326,9 @@ function MemeFeed() {
     }));
   };
 
+  // Debug log
+  console.log('Current tabValue:', tabValue, 'Leaderboard:', leaderboards[tabValue]);
+
   return (
     <Box
       sx={{
@@ -346,7 +349,7 @@ function MemeFeed() {
       }}
     >
       {/* Left sidebar */}
-      <LeftSidebar />
+      <LeftSidebar topPosts={topPosts} />
 
       {/* Center Content (Create Post + Posts) */}
       <Box
@@ -438,7 +441,7 @@ function MemeFeed() {
 
       {/* Right sidebar */}
       <RightSidebar
-        leaderboard={leaderboard}
+        leaderboard={leaderboards[tabValue] || []}
         leaderboardLoading={leaderboardLoading}
         leaderboardError={leaderboardError}
         tabValue={tabValue}

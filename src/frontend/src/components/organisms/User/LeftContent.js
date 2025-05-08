@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getTopMemeAndLeaderboard, getAllTopMemesAndLeaderboards } from 'services/meme.service';
-// Updated import
 import { getTrendingMemes } from 'services/user.service';
 import { EmojiEvents, PhotoCamera } from '@mui/icons-material';
 import {
@@ -19,33 +17,12 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material';
 
-const LeftContent = () => {
+const LeftContent = ({ topPosts }) => {
   const theme = useTheme();
   const [activeTab, setActiveTab] = useState('daily');
-  const [topPosts, setTopPosts] = useState({
-    daily: null,
-    weekly: null,
-    monthly: null,
-  });
   const [trendingHashtags, setTrendingHashtags] = useState([]);
   const [loadingTrendingHashtags, setLoadingTrendingHashtags] = useState(true);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchTopPosts = async () => {
-      try {
-        const allData = await getAllTopMemesAndLeaderboards();
-        setTopPosts({
-          daily: allData.daily?.top_post || null,
-          weekly: allData.weekly?.top_post || null,
-          monthly: allData.monthly?.top_post || null,
-        });
-      } catch (error) {
-        console.error('Error fetching top posts:', error);
-      }
-    };
-    fetchTopPosts();
-  }, []);
 
   useEffect(() => {
     const fetchTrendingHashtags = async () => {
