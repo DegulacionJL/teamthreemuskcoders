@@ -2,6 +2,7 @@ import { useAuth } from 'hooks/useAuth';
 import { useEffect, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useNavigate } from 'react-router-dom';
+import { getBatchTotalCommentsCount } from 'services/comment.service';
 import {
   createMemePost,
   deletePost,
@@ -18,7 +19,6 @@ import CreatePostCard from './CreatePostCard';
 import LeftSidebar from './LeftContent';
 import MemePost from './MemePost';
 import RightSidebar from './RightContent';
-import { getBatchTotalCommentsCount } from 'services/comment.service';
 
 function MemeFeed() {
   const theme = useTheme();

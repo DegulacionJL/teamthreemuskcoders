@@ -26,7 +26,7 @@ import ReportPostConfirmationModal from 'components/organisms/ReportPostModal';
 import PostReaction from 'components/organisms/User/PostReaction';
 import { getRelativeTime } from 'utils/timeUtils';
 
-const PostCard = ({ post, loggedInUser }) => {
+const PostCard = ({ post, loggedInUser, totalCommentsCount, onCommentCountChange }) => {
   const [showComments, setShowComments] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -42,7 +42,6 @@ const PostCard = ({ post, loggedInUser }) => {
   const {
     comments,
     isLoading: commentsLoading,
-    totalCommentsCount,
     hasMore,
     editingCommentId,
     editingCommentText,
@@ -73,7 +72,7 @@ const PostCard = ({ post, loggedInUser }) => {
     handleLoadMore,
     handleLoadMoreReplies,
     handleCommentReactionChange,
-  } = useComments(post.id);
+  } = useComments(post.id, { fetchCountOnMount: false, onCommentCountChange });
 
   useEffect(() => {
     const savedReaction = localStorage.getItem(`post_reaction_${post.id}`);
@@ -254,6 +253,8 @@ const PostCard = ({ post, loggedInUser }) => {
         onReactionChange={handleReactionChange}
         initialReactionType={reactionType}
         initialReactionCount={likeCount}
+        totalCommentsCount={totalCommentsCount}
+        onCommentCountChange={onCommentCountChange}
       />
 
       <Box sx={{ px: 2, py: 1, display: 'flex', justifyContent: 'space-between' }}>
@@ -329,6 +330,7 @@ const PostCard = ({ post, loggedInUser }) => {
             handleLoadMore={handleLoadMore}
             handleLoadMoreReplies={handleLoadMoreReplies}
             handleCommentReactionChange={handleCommentReactionChange}
+            onCommentCountChange={onCommentCountChange}
           />
         </Box>
       )}
@@ -378,6 +380,8 @@ PostCard.propTypes = {
     caption: PropTypes.string,
   }).isRequired,
   loggedInUser: PropTypes.object.isRequired,
+  totalCommentsCount: PropTypes.number,
+  onCommentCountChange: PropTypes.func,
 };
 
 export default PostCard;

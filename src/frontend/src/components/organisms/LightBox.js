@@ -27,9 +27,6 @@ export default function LightBox({
   const [showComments, setShowComments] = useState(true);
   const hasFetchedComments = useRef(false);
 
-  // Add a no-op function to prevent total-count API call
-  const noopCommentCountChange = () => {};
-
   const {
     comments,
     isLoading: commentsLoading,
