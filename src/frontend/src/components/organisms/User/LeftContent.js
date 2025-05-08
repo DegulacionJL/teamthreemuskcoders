@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getTopMemeAndLeaderboard } from 'services/meme.service';
+import { getTopMemeAndLeaderboard, getAllTopMemesAndLeaderboards } from 'services/meme.service';
 // Updated import
 import { getTrendingMemes } from 'services/user.service';
 import { EmojiEvents, PhotoCamera } from '@mui/icons-material';
@@ -34,26 +34,16 @@ const LeftContent = () => {
   useEffect(() => {
     const fetchTopPosts = async () => {
       try {
-        const periods = ['daily', 'weekly', 'monthly'];
-        const results = await Promise.all(
-          periods.map(async (period) => {
-            const data = await getTopMemeAndLeaderboard(period);
-            console.log(`Top Meme and Leaderboard data for ${period}:`, data);
-            return { period, post: data.top_post };
-          })
-        );
-
-        const newTopPosts = results.reduce((acc, { period, post }) => {
-          acc[period] = post;
-          return acc;
-        }, {});
-
-        setTopPosts(newTopPosts);
+        const allData = await getAllTopMemesAndLeaderboards();
+        setTopPosts({
+          daily: allData.daily?.top_post || null,
+          weekly: allData.weekly?.top_post || null,
+          monthly: allData.monthly?.top_post || null,
+        });
       } catch (error) {
         console.error('Error fetching top posts:', error);
       }
     };
-
     fetchTopPosts();
   }, []);
 

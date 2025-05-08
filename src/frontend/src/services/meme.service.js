@@ -150,6 +150,20 @@ const getTopMemeAndLeaderboard = async (period = 'daily') => {
   }
 };
 
+/**
+ * Fetch all top meme posts and leaderboards for all periods
+ * @returns {Promise<Object>} - { daily: {...}, weekly: {...}, monthly: {...} }
+ */
+const getAllTopMemesAndLeaderboards = async () => {
+  try {
+    const response = await api.get('/posts/all-top-memes-leaderboards');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching all top memes and leaderboards:', error);
+    throw error;
+  }
+};
+
 export {
   createMemePost,
   getMemePosts,
@@ -163,4 +177,5 @@ export {
   getPostById,
   fetchPostsByHashtag,
   getTopMemeAndLeaderboard,
+  getAllTopMemesAndLeaderboards,
 };

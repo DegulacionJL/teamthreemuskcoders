@@ -97,6 +97,7 @@ Route::prefix('users')
             Route::get('/posts/trending-memes', [PostController::class, 'getTrendingMemes']);
             Route::get('/posts/hashtag/{hashtag}', [PostController::class, 'getPostsByHashtag']);
             Route::get('/posts/top-meme-and-leaderboard', [PostController::class, 'getTopMemeAndLeaderboard']);
+            Route::get('/posts/all-top-memes-leaderboards', [PostController::class, 'getAllTopMemesAndLeaderboards']);
         });
 
         Route::get('/search', [SearchController::class, 'search']);

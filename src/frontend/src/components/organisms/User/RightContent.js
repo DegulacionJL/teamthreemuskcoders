@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // Added useNavigate import
 import { followUser } from 'services/follow.service';
-import { getTopMemeAndLeaderboard } from 'services/meme.service';
+import { getTopMemeAndLeaderboard, getAllTopMemesAndLeaderboards } from 'services/meme.service';
 import { getSuggestedUsers } from 'services/user.service';
 import { Whatshot } from '@mui/icons-material';
 import {
@@ -48,20 +48,12 @@ const RightContent = () => {
     const fetchLeaderboard = async () => {
       try {
         setLeaderboardLoading(true);
-        const periods = ['daily', 'weekly', 'monthly'];
-        const results = await Promise.all(
-          periods.map(async (period) => {
-            const data = await getTopMemeAndLeaderboard(period);
-            return { period, leaderboard: data.leaderboard };
-          })
-        );
-
-        const newLeaderboard = results.reduce((acc, { period, leaderboard }) => {
-          acc[period] = leaderboard;
-          return acc;
-        }, {});
-
-        setLeaderboard(newLeaderboard);
+        const allData = await getAllTopMemesAndLeaderboards();
+        setLeaderboard({
+          daily: allData.daily?.leaderboard || [],
+          weekly: allData.weekly?.leaderboard || [],
+          monthly: allData.monthly?.leaderboard || [],
+        });
         setLeaderboardError(null);
       } catch (error) {
         console.error('Error fetching leaderboard:', error);
@@ -70,7 +62,6 @@ const RightContent = () => {
         setLeaderboardLoading(false);
       }
     };
-
     fetchLeaderboard();
   }, []);
 
