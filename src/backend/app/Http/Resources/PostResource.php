@@ -24,8 +24,8 @@ class PostResource extends JsonResource
                     'name' => trim($this->user->first_name. ''.$this->user->last_name), 
                     'avatar' => $this->user->avatar ?? null,
                      ]: null,
-            'created_at' => $this->created_at->format('y-m-d H:i:s'),
-            'updated_at' => $this->updated_at->format('y-m-d H:i:s'),
+            'created_at' => $this->created_at->toIso8601String(),
+            'updated_at' => $this->updated_at->toIso8601String(),
            
         ];
     }

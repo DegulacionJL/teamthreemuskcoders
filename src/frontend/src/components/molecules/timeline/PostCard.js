@@ -1,5 +1,7 @@
+import { useAuth } from 'hooks/useAuth';
+import { useComments } from 'hooks/useComments';
 import PropTypes from 'prop-types';
-import { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { ChatBubbleOutline as CommentIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import {
   Avatar,
@@ -16,14 +18,29 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material';
-import { getRelativeTime } from 'utils/timeUtils';
-import { useComments } from 'hooks/useComments';
-import PostReaction from 'components/organisms/User/PostReaction';
+import { useTheme } from '@mui/material';
 import CommentFeature from 'components/organisms/CommentFeature';
+import PostReaction from 'components/organisms/User/PostReaction';
+import { getRelativeTime } from 'utils/timeUtils';
+import DeleteConfirmationModal from 'components/organisms/DeleteConfirmationModal';
+import EditPostModal from 'components/organisms/EditPostModal';
+import ReportPostConfirmationModal from 'components/organisms/ReportPostModal';
+import LightBox from 'components/organisms/LightBox';
+import { deletePost, updatePost, reportPost } from 'services/meme.service';
 
 const PostCard = ({ post, loggedInUser }) => {
+  const theme = useTheme();
+  const { user } = useAuth({ middleware: 'auth' });
   const [showComments, setShowComments] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [currentCaption, setCurrentCaption] = useState(post.caption);
+  const [currentImage, setCurrentImage] = useState(post.image);
+  const [isPostDeleteModalOpen, setIsPostDeleteModalOpen] = useState(false);
+  const [isReportPostModalOpen, setIsReportPostModalOpen] = useState(false);
+  const [reactionType, setReactionType] = useState(null);
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   // Comments and reactions logic from useComments
   const {
@@ -41,12 +58,14 @@ const PostCard = ({ post, loggedInUser }) => {
     commentToDelete,
     isDeleteModalOpen,
     replyLoading,
+    hasFetchedComments,
     setReplyToComment,
     setTempEditingText,
     setCommentImage,
     setUpdateCommentImagePreview,
     setIsUpdateModalOpen,
     setIsDeleteModalOpen,
+    fetchComments,
     handleAddComment,
     handleAddReply,
     confirmDeleteComment,
@@ -58,8 +77,26 @@ const PostCard = ({ post, loggedInUser }) => {
     handleLoadMore,
     handleLoadMoreReplies,
     handleCommentReactionChange,
-    fetchComments,
   } = useComments(post.id);
+
+  useEffect(() => {
+    const savedReaction = localStorage.getItem(`post_reaction_${post.id}`);
+    const savedLikeCount = localStorage.getItem(`post_like_count_${post.id}`);
+
+    if (savedReaction) {
+      setReactionType(savedReaction);
+    }
+
+    if (savedLikeCount) {
+      setLikeCount(Number.parseInt(savedLikeCount, 10));
+    } else {
+      setLikeCount(5);
+    }
+  }, [post.id]);
+
+  useEffect(() => {
+    setCurrentImage(post.image);
+  }, [post.image]);
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -69,14 +106,90 @@ const PostCard = ({ post, loggedInUser }) => {
     setAnchorEl(null);
   };
 
-  const handleToggleComments = () => {
+  const handleToggleComments = useCallback(() => {
     setShowComments((prev) => {
-      const newShow = !prev;
-      if (newShow && comments.length === 0) {
+      const newShowComments = !prev;
+      if (newShowComments && !hasFetchedComments) {
         fetchComments(1);
       }
-      return newShow;
+      return newShowComments;
     });
+  }, [hasFetchedComments, fetchComments]);
+
+  const handleImageClick = () => {
+    if (currentImage) {
+      setIsLightboxOpen(true);
+    }
+  };
+
+  const handleReactionChange = useCallback((postId, hasReacted, newReactionType, count) => {
+    setLikeCount(count);
+    setReactionType(newReactionType);
+
+    if (hasReacted && newReactionType) {
+      localStorage.setItem(`post_reaction_${postId}`, newReactionType);
+    } else {
+      localStorage.removeItem(`post_reaction_${postId}`);
+    }
+    localStorage.setItem(`post_like_count_${postId}`, count.toString());
+  }, []);
+
+  const handleSave = async (newCaption, newImage, removeImage = false) => {
+    try {
+      await updatePost(post.id, { caption: newCaption });
+      setCurrentCaption(newCaption);
+      if (newImage) {
+        setCurrentImage(newImage);
+      } else if (removeImage) {
+        setCurrentImage(null);
+      }
+      setIsEditModalOpen(false);
+    } catch (error) {
+      console.error('Error updating post:', error);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await deletePost(post.id);
+      setIsPostDeleteModalOpen(false);
+      // You might want to add a callback to refresh the posts list
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    }
+  };
+
+  const handleConfirmReportPost = async () => {
+    try {
+      await reportPost(post.id);
+      setIsReportPostModalOpen(false);
+    } catch (error) {
+      console.error('Error reporting post:', error);
+    }
+  };
+
+  const formatCaption = (text) => {
+    if (!text) return '';
+
+    const formattedText = text.split('\n').map((line, i, arr) => (
+      <React.Fragment key={i}>
+        {line}
+        {i < arr.length - 1 && <br />}
+      </React.Fragment>
+    ));
+
+    return (
+      <Typography
+        variant="body1"
+        component="div"
+        sx={{
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
+        }}
+      >
+        {formattedText}
+      </Typography>
+    );
   };
 
   return (
@@ -106,30 +219,55 @@ const PostCard = ({ post, loggedInUser }) => {
       />
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuItem onClick={handleMenuClose}>Save Post</MenuItem>
-        <MenuItem onClick={handleMenuClose}>Report Post</MenuItem>
-        {post.is_own_post && <MenuItem onClick={handleMenuClose}>Delete Post</MenuItem>}
+        {post.is_own_post ? (
+          <>
+            <MenuItem onClick={() => setIsEditModalOpen(true)}>Edit</MenuItem>
+            <MenuItem onClick={() => setIsPostDeleteModalOpen(true)} sx={{ color: 'red' }}>
+              Delete
+            </MenuItem>
+          </>
+        ) : (
+          <MenuItem onClick={() => setIsReportPostModalOpen(true)}>Report</MenuItem>
+        )}
       </Menu>
 
       <CardContent sx={{ pt: 0 }}>
-        <Typography variant="body1" sx={{ mb: post.image ? 2 : 0 }}>
-          {post.caption}
-        </Typography>
+        <Box sx={{ mb: 2, mt: 2 }}>{formatCaption(currentCaption)}</Box>
       </CardContent>
 
-      {post.image && (
+      {currentImage && (
         <CardMedia
           component="img"
-          image={post.image}
+          image={currentImage}
           alt="Post image"
-          sx={{ maxHeight: 500, objectFit: 'contain' }}
+          onClick={handleImageClick}
+          sx={{ maxHeight: 500, objectFit: 'contain', cursor: 'pointer' }}
         />
       )}
 
-      {/* Engagement Stats */}
+      <LightBox
+        isOpen={isLightboxOpen}
+        onClose={() => setIsLightboxOpen(false)}
+        image={currentImage}
+        caption={currentCaption}
+        user={post.user}
+        timestamp={post.created_at}
+        postId={post.id}
+        onReactionChange={handleReactionChange}
+        initialReactionType={reactionType}
+        initialReactionCount={likeCount}
+      />
+
       <Box sx={{ px: 2, py: 1, display: 'flex', justifyContent: 'space-between' }}>
         <Typography variant="body2" color="text.secondary">
-          {/* Like count will be handled by PostReaction */}
+          {likeCount > 0 && (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <span role="img" aria-label="laughing emoji" style={{ marginRight: '4px' }}>
+                😂
+              </span>
+              {likeCount}
+            </Box>
+          )}
         </Typography>
         <Typography variant="body2" color="text.secondary">
           {totalCommentsCount > 0 && (
@@ -143,7 +281,11 @@ const PostCard = ({ post, loggedInUser }) => {
       <Divider />
 
       <CardActions sx={{ justifyContent: 'space-around', px: 2 }}>
-        <PostReaction postId={post.id} />
+        <PostReaction
+          postId={post.id}
+          onReactionChange={handleReactionChange}
+          initialReactionType={reactionType}
+        />
         <Button
           startIcon={<CommentIcon />}
           onClick={handleToggleComments}
@@ -153,7 +295,6 @@ const PostCard = ({ post, loggedInUser }) => {
         </Button>
       </CardActions>
 
-      {/* Comments Section */}
       {showComments && (
         <Box sx={{ p: 2, pt: 0 }}>
           <Divider sx={{ my: 1 }} />
@@ -193,6 +334,30 @@ const PostCard = ({ post, loggedInUser }) => {
           />
         </Box>
       )}
+
+      <EditPostModal
+        open={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        caption={currentCaption}
+        image={currentImage}
+        onSave={handleSave}
+      />
+
+      <ReportPostConfirmationModal
+        open={isReportPostModalOpen}
+        onClose={() => setIsReportPostModalOpen(false)}
+        onConfirm={handleConfirmReportPost}
+        title="Report Post"
+        content="Are you sure you want to report this Post? This action cannot be undone."
+      />
+
+      <DeleteConfirmationModal
+        open={isPostDeleteModalOpen}
+        onClose={() => setIsPostDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Post"
+        content="Are you sure you want to delete this post? This action cannot be undone."
+      />
     </Card>
   );
 };
@@ -202,19 +367,8 @@ PostCard.propTypes = {
     id: PropTypes.number.isRequired,
     liked: PropTypes.bool,
     likes_count: PropTypes.number,
-    comments: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number,
-        user: PropTypes.shape({
-          id: PropTypes.number,
-          name: PropTypes.string,
-          avatar: PropTypes.string,
-        }),
-        text: PropTypes.string,
-        created_at: PropTypes.string,
-      })
-    ),
     user: PropTypes.shape({
+      id: PropTypes.number,
       avatar: PropTypes.string,
       name: PropTypes.string,
     }),
