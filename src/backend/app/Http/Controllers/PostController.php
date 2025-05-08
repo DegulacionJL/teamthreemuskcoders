@@ -320,4 +320,25 @@ class PostController extends Controller
         }
     }
 
+    /**
+     * Batch endpoint: Get top meme and leaderboard for all periods
+     */
+    public function getAllTopMemesAndLeaderboards(Request $request)
+    {
+        try {
+            $periods = ['daily', 'weekly', 'monthly'];
+            $result = [];
+            foreach ($periods as $period) {
+                // Use the service directly to avoid double response wrapping
+                $result[$period] = $this->postService->getTopMemeAndLeaderboard($period);
+            }
+            return response()->json($result);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch all top memes and leaderboards',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 }

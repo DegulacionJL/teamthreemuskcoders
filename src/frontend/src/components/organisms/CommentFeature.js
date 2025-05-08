@@ -52,6 +52,7 @@ const CommentFeature = ({
   handleLoadMore,
   handleLoadMoreReplies,
   handleCommentReactionChange,
+  onCommentCountChange,
 }) => {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportCommentId, setReportCommentId] = useState(null);
@@ -119,13 +120,13 @@ const CommentFeature = ({
 
       <CommentSection
         comments={comments}
-        onAddComment={handleAddComment}
+        onAddComment={(...args) => handleAddComment(...args, onCommentCountChange)}
         replyToComment={replyToComment}
         onReplyClick={setReplyToComment}
         onCancelReply={() => setReplyToComment(null)}
         onAddReply={handleAddReply}
         onEditClick={handleEditCommentClick}
-        onDeleteClick={confirmDeleteComment}
+        onDeleteClick={(commentId) => confirmDeleteComment(commentId, onCommentCountChange)}
         editingCommentId={editingCommentId}
         editingCommentText={editingCommentText}
         onReactionChange={handleCommentReactionChange}
@@ -297,6 +298,7 @@ CommentFeature.propTypes = {
   handleLoadMore: PropTypes.func.isRequired,
   handleLoadMoreReplies: PropTypes.func.isRequired,
   handleCommentReactionChange: PropTypes.func.isRequired,
+  onCommentCountChange: PropTypes.func,
 };
 
 export default CommentFeature;

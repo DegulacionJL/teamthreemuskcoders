@@ -9,6 +9,7 @@ use App\Http\Resources\CommentResource;
 use App\Services\API\CommentService;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\ReportRequest;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @group Comment Management
@@ -320,29 +321,57 @@ class CommentController extends Controller
     }
     
     /**
- * Get Total Comment Count
- *
- * Retrieves the total number of comments (including replies) for a specific post.
- *
- * @param int $postId
- * @return JsonResponse
- */
-public function getTotalCount($postId)
-{
-    try {
-        $totalWithReplies = $this->commentService->getTotalCommentsCount($postId);
+     * Get Total Comment Count
+     *
+     * Retrieves the total number of comments (including replies) for a specific post.
+     *
+     * @param int $postId
+     * @return JsonResponse
+     */
+    public function getTotalCount($postId)
+    {
+        try {
+            $totalWithReplies = $this->commentService->getTotalCommentsCount($postId);
 
-        $this->response['data'] = [
-            'total_with_replies' => $totalWithReplies,
-        ];
-    } catch (Exception $e) {
-        $this->response = [
-            'error' => $e->getMessage(),
-            'code' => 500,
-        ];
+            $this->response['data'] = [
+                'total_with_replies' => $totalWithReplies,
+            ];
+        } catch (Exception $e) {
+            $this->response = [
+                'error' => $e->getMessage(),
+                'code' => 500,
+            ];
+        }
+
+        return response()->json($this->response, $this->response['code']);
     }
 
-    return response()->json($this->response, $this->response['code']);
-}
+    /**
+     * Batch Total Comment Counts
+     *
+     * Returns total comment counts for multiple post IDs.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function batchTotalCounts(\Illuminate\Http\Request $request)
+    {
+        $postIds = $request->input('post_ids', []);
+        if (!is_array($postIds)) {
+            return response()->json(['error' => 'post_ids must be an array'], 400);
+        }
 
+        $counts = DB::table('comments')
+            ->select('post_id', DB::raw('COUNT(*) as total_with_replies'))
+            ->whereIn('post_id', $postIds)
+            ->groupBy('post_id')
+            ->pluck('total_with_replies', 'post_id');
+
+        $result = [];
+        foreach ($postIds as $id) {
+            $result[$id] = isset($counts[$id]) ? $counts[$id] : 0;
+        }
+
+        return response()->json(['counts' => $result]);
+    }
 }

@@ -19,6 +19,8 @@ export default function LightBox({
   onReactionChange,
   initialReactionType,
   initialReactionCount,
+  totalCommentsCount,
+  onCommentCountChange,
 }) {
   const theme = useTheme();
   const isDarkMode = darkMode !== undefined ? darkMode : theme.palette.mode === 'dark';
@@ -28,7 +30,6 @@ export default function LightBox({
   const {
     comments,
     isLoading: commentsLoading,
-    totalCommentsCount,
     hasMore,
     editingCommentId,
     editingCommentText,
@@ -58,7 +59,10 @@ export default function LightBox({
     handleLoadMoreReplies,
     handleCommentReactionChange,
     fetchComments,
-  } = useComments(postId);
+  } = useComments(postId, {
+    fetchCountOnMount: false,
+    onCommentCountChange,
+  });
 
   // Fetch comments when LightBox opens
   React.useEffect(() => {
@@ -254,6 +258,7 @@ export default function LightBox({
                 handleLoadMore={handleLoadMore}
                 handleLoadMoreReplies={handleLoadMoreReplies}
                 handleCommentReactionChange={handleCommentReactionChange}
+                onCommentCountChange={onCommentCountChange}
               />
             </Box>
           )}
@@ -279,4 +284,6 @@ LightBox.propTypes = {
   onReactionChange: PropTypes.func,
   initialReactionType: PropTypes.string,
   initialReactionCount: PropTypes.number,
+  totalCommentsCount: PropTypes.number,
+  onCommentCountChange: PropTypes.func,
 };

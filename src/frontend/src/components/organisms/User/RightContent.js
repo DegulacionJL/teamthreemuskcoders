@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // Added useNavigate import
 import { followUser } from 'services/follow.service';
-import { getTopMemeAndLeaderboard } from 'services/meme.service';
 import { getSuggestedUsers } from 'services/user.service';
 import { Whatshot } from '@mui/icons-material';
 import {
@@ -23,56 +22,22 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material';
+import PropTypes from 'prop-types';
 
-const RightContent = () => {
+const RightContent = ({
+  leaderboard,
+  leaderboardLoading,
+  leaderboardError,
+  tabValue,
+  handleTabChange,
+  handleUserNameClick,
+}) => {
   const { user } = useAuth({ middleware: 'auth' });
   const theme = useTheme();
-  const navigate = useNavigate(); // Define navigate using useNavigate
-
-  // State for Leaderboard
-  const [leaderboard, setLeaderboard] = useState({
-    daily: [],
-    weekly: [],
-    monthly: [],
-  });
-  const [leaderboardLoading, setLeaderboardLoading] = useState(true);
-  const [leaderboardError, setLeaderboardError] = useState(null);
-  const [tabValue, setTabValue] = useState('daily');
 
   // State for Suggested Users
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [loadingSuggestedUsers, setLoadingSuggestedUsers] = useState(true);
-
-  // Fetch Leaderboard
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
-      try {
-        setLeaderboardLoading(true);
-        const periods = ['daily', 'weekly', 'monthly'];
-        const results = await Promise.all(
-          periods.map(async (period) => {
-            const data = await getTopMemeAndLeaderboard(period);
-            return { period, leaderboard: data.leaderboard };
-          })
-        );
-
-        const newLeaderboard = results.reduce((acc, { period, leaderboard }) => {
-          acc[period] = leaderboard;
-          return acc;
-        }, {});
-
-        setLeaderboard(newLeaderboard);
-        setLeaderboardError(null);
-      } catch (error) {
-        console.error('Error fetching leaderboard:', error);
-        setLeaderboardError('Failed to load leaderboard');
-      } finally {
-        setLeaderboardLoading(false);
-      }
-    };
-
-    fetchLeaderboard();
-  }, []);
 
   // Fetch Suggested Users
   const fetchSuggestedUsers = async () => {
@@ -127,14 +92,6 @@ const RightContent = () => {
     } catch (error) {
       console.error('Follow error: ', error);
     }
-  };
-
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
-  };
-
-  const handleUserNameClick = (event, userId) => {
-    navigate(`/profile/${userId}`);
   };
 
   return (
@@ -289,7 +246,7 @@ const RightContent = () => {
           <Box sx={{ p: 2, textAlign: 'center' }}>
             <Typography color="error">{leaderboardError}</Typography>
           </Box>
-        ) : leaderboard[tabValue].length === 0 ? (
+        ) : leaderboard.length === 0 ? (
           <Box sx={{ p: 2, textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary">
               No data available for this period.
@@ -297,7 +254,7 @@ const RightContent = () => {
           </Box>
         ) : (
           <List disablePadding>
-            {leaderboard[tabValue].map((user) => (
+            {leaderboard.map((user) => (
               <ListItem key={user.id} divider>
                 <ListItemAvatar>
                   <Avatar
@@ -347,6 +304,15 @@ const RightContent = () => {
       </Card>
     </Box>
   );
+};
+
+RightContent.propTypes = {
+  leaderboard: PropTypes.array.isRequired,
+  leaderboardLoading: PropTypes.bool.isRequired,
+  leaderboardError: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
+  tabValue: PropTypes.string.isRequired,
+  handleTabChange: PropTypes.func.isRequired,
+  handleUserNameClick: PropTypes.func.isRequired,
 };
 
 export default RightContent;

@@ -45,6 +45,8 @@ const MemePost = ({
   darkMode,
   onUserNameClick,
   postUserId,
+  totalCommentsCount,
+  onCommentCountChange,
 }) => {
   const theme = useTheme();
   const { darkMode: contextDarkMode } = useCustomTheme();
@@ -63,7 +65,6 @@ const MemePost = ({
   const {
     comments,
     isLoading: commentsLoading,
-    totalCommentsCount,
     hasMore,
     editingCommentId,
     editingCommentText,
@@ -94,7 +95,7 @@ const MemePost = ({
     handleLoadMore,
     handleLoadMoreReplies,
     handleCommentReactionChange,
-  } = useComments(id);
+  } = useComments(id, { fetchCountOnMount: false, onCommentCountChange });
 
   const isDarkMode = darkMode !== undefined ? darkMode : contextDarkMode;
 
@@ -323,6 +324,8 @@ const MemePost = ({
         onReactionChange={handleReactionChange}
         initialReactionType={reactionType}
         initialReactionCount={likeCount}
+        totalCommentsCount={totalCommentsCount}
+        onCommentCountChange={onCommentCountChange}
       />
 
       <CardActions disableSpacing sx={{ p: 0 }}>
@@ -403,6 +406,7 @@ const MemePost = ({
           handleLoadMore={handleLoadMore}
           handleLoadMoreReplies={handleLoadMoreReplies}
           handleCommentReactionChange={handleCommentReactionChange}
+          onCommentCountChange={onCommentCountChange}
         />
       )}
 
@@ -456,6 +460,8 @@ MemePost.propTypes = {
   darkMode: PropTypes.bool,
   onUserNameClick: PropTypes.func,
   postUserId: PropTypes.number,
+  totalCommentsCount: PropTypes.number,
+  onCommentCountChange: PropTypes.func,
 };
 
 export default MemePost;

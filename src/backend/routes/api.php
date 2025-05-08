@@ -96,7 +96,7 @@ Route::prefix('users')
             Route::get('/users/suggested/{id}', [UserController::class, 'getSuggestedUsers']);
             Route::get('/posts/trending-memes', [PostController::class, 'getTrendingMemes']);
             Route::get('/posts/hashtag/{hashtag}', [PostController::class, 'getPostsByHashtag']);
-            Route::get('/posts/top-meme-and-leaderboard', [PostController::class, 'getTopMemeAndLeaderboard']);
+            Route::get('/posts/all-top-memes-leaderboards', [PostController::class, 'getAllTopMemesAndLeaderboards']);
         });
 
         Route::get('/search', [SearchController::class, 'search']);
@@ -179,3 +179,6 @@ Route::prefix('timeline')->group(function () {
     Route::get('/users/{id}/friends', [UserTimelineController::class, 'getFriends']);
     Route::get('/users/{id}/photos', [UserTimelineController::class, 'getPhotos']);
 });
+
+// Add after the existing comments routes
+Route::post('/posts/comments/total-counts', [CommentController::class, 'batchTotalCounts']);

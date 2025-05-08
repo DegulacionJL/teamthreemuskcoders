@@ -36,6 +36,7 @@ import FriendsList from '../components/molecules/timeline/FriendsList';
 import PhotosGrid from '../components/molecules/timeline/PhotosGrid';
 import PostCard from '../components/molecules/timeline/PostCard';
 import { useAuth } from '../contexts/AuthContext';
+import { getBatchTotalCommentsCount } from '../services/comment.service';
 import { followUser, isFollowing, unfollowUser } from '../services/follow.service';
 import {
   getUserPosts,
@@ -68,10 +69,12 @@ const UserTimeline = () => {
     firstName: '',
     lastName: '',
   });
+  const [commentCounts, setCommentCounts] = useState({});
 
   const { user: currentUser, isAuthenticated } = useAuth();
   const reduxUser = useSelector((state) => state.profile.user);
   const fileRef = useRef(null);
+  const lastFetchedIdsRef = useRef([]);
 
   const handleFileSelect = () => {
     fileRef.current.click();
@@ -132,6 +135,21 @@ const UserTimeline = () => {
     fetchUserData();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [userId, currentUser, isAuthenticated, reduxUser]);
+
+  useEffect(() => {
+    if (posts.length > 0) {
+      const postIds = posts.map((post) => post.id);
+      if (
+        postIds.length !== lastFetchedIdsRef.current.length ||
+        !postIds.every((id, i) => id === lastFetchedIdsRef.current[i])
+      ) {
+        lastFetchedIdsRef.current = postIds;
+        getBatchTotalCommentsCount(postIds).then((counts) => {
+          setCommentCounts(counts);
+        });
+      }
+    }
+  }, [posts]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -219,6 +237,13 @@ const UserTimeline = () => {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
     }
+  };
+
+  const handleCommentCountChange = (postId, delta) => {
+    setCommentCounts((prev) => ({
+      ...prev,
+      [postId]: (prev[postId] || 0) + delta,
+    }));
   };
 
   if (loading) {
@@ -557,7 +582,15 @@ const UserTimeline = () => {
               )}
 
               {posts.length > 0 ? (
-                posts.map((post) => <PostCard key={post.id} post={post} />)
+                posts.map((post) => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    loggedInUser={currentUser}
+                    totalCommentsCount={commentCounts[post.id] || 0}
+                    onCommentCountChange={handleCommentCountChange}
+                  />
+                ))
               ) : (
                 <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 2 }}>
                   <Typography variant="h6" color="text.secondary">
