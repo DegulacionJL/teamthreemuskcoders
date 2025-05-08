@@ -324,6 +324,8 @@ const MemePost = ({
         onReactionChange={handleReactionChange}
         initialReactionType={reactionType}
         initialReactionCount={likeCount}
+        totalCommentsCount={totalCommentsCount}
+        onCommentCountChange={onCommentCountChange}
       />
 
       <CardActions disableSpacing sx={{ p: 0 }}>
