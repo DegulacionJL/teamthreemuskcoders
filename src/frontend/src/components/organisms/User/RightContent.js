@@ -22,6 +22,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material';
+import PropTypes from 'prop-types';
 
 const RightContent = ({
   leaderboard,
@@ -33,7 +34,6 @@ const RightContent = ({
 }) => {
   const { user } = useAuth({ middleware: 'auth' });
   const theme = useTheme();
-  const navigate = useNavigate(); // Define navigate using useNavigate
 
   // State for Suggested Users
   const [suggestedUsers, setSuggestedUsers] = useState([]);
@@ -304,6 +304,15 @@ const RightContent = ({
       </Card>
     </Box>
   );
+};
+
+RightContent.propTypes = {
+  leaderboard: PropTypes.array.isRequired,
+  leaderboardLoading: PropTypes.bool.isRequired,
+  leaderboardError: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
+  tabValue: PropTypes.string.isRequired,
+  handleTabChange: PropTypes.func.isRequired,
+  handleUserNameClick: PropTypes.func.isRequired,
 };
 
 export default RightContent;

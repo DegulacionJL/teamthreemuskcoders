@@ -16,6 +16,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material';
+import PropTypes from 'prop-types';
 
 const LeftContent = ({ topPosts }) => {
   const theme = useTheme();
@@ -297,6 +298,14 @@ const LeftContent = ({ topPosts }) => {
       </Card>
     </Box>
   );
+};
+
+LeftContent.propTypes = {
+  topPosts: PropTypes.shape({
+    daily: PropTypes.object,
+    weekly: PropTypes.object,
+    monthly: PropTypes.object,
+  }).isRequired,
 };
 
 export default LeftContent;
