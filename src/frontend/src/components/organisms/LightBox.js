@@ -25,6 +25,9 @@ export default function LightBox({
   const [showComments, setShowComments] = useState(true);
   const hasFetchedComments = useRef(false);
 
+  // Add a no-op function to prevent total-count API call
+  const noopCommentCountChange = () => {};
+
   const {
     comments,
     isLoading: commentsLoading,
@@ -58,7 +61,10 @@ export default function LightBox({
     handleLoadMoreReplies,
     handleCommentReactionChange,
     fetchComments,
-  } = useComments(postId, { fetchCountOnMount: false });
+  } = useComments(postId, {
+    fetchCountOnMount: false,
+    onCommentCountChange: noopCommentCountChange,
+  });
 
   // Fetch comments when LightBox opens
   React.useEffect(() => {
@@ -254,6 +260,7 @@ export default function LightBox({
                 handleLoadMore={handleLoadMore}
                 handleLoadMoreReplies={handleLoadMoreReplies}
                 handleCommentReactionChange={handleCommentReactionChange}
+                onCommentCountChange={noopCommentCountChange}
               />
             </Box>
           )}
