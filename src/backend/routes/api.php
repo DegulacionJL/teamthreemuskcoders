@@ -179,3 +179,6 @@ Route::prefix('timeline')->group(function () {
     Route::get('/users/{id}/friends', [UserTimelineController::class, 'getFriends']);
     Route::get('/users/{id}/photos', [UserTimelineController::class, 'getPhotos']);
 });
+
+// Add after the existing comments routes
+Route::post('/posts/comments/total-counts', [CommentController::class, 'batchTotalCounts']);

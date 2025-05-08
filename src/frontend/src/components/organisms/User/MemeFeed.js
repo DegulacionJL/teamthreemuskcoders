@@ -18,6 +18,7 @@ import CreatePostCard from './CreatePostCard';
 import LeftSidebar from './LeftContent';
 import MemePost from './MemePost';
 import RightSidebar from './RightContent';
+import { getBatchTotalCommentsCount } from 'services/comment.service';
 
 function MemeFeed() {
   const theme = useTheme();
@@ -40,6 +41,7 @@ function MemeFeed() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState(null);
+  const [commentCounts, setCommentCounts] = useState({});
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedPostId, setSelectedPostId] = useState(null);
@@ -256,6 +258,16 @@ function MemeFeed() {
     fetchLeaderboard('daily');
   }, []);
 
+  // Fetch batch comment counts whenever posts change
+  useEffect(() => {
+    if (posts.length > 0) {
+      const postIds = posts.map((post) => post.id);
+      getBatchTotalCommentsCount(postIds).then((counts) => {
+        setCommentCounts(counts);
+      });
+    }
+  }, [posts]);
+
   const loadMorePosts = () => {
     if (!loading && hasMore) {
       const nextPage = page + 1;
@@ -304,6 +316,14 @@ function MemeFeed() {
     event.preventDefault();
     event.stopPropagation();
     navigate(`/users/${userId}`);
+  };
+
+  // Add this function to update commentCounts for a post
+  const handleCommentCountChange = (postId, delta) => {
+    setCommentCounts((prev) => ({
+      ...prev,
+      [postId]: (prev[postId] || 0) + delta,
+    }));
   };
 
   return (
@@ -408,6 +428,8 @@ function MemeFeed() {
                 darkMode={darkMode}
                 onUserNameClick={handleUserNameClick}
                 postUserId={post.user_id}
+                totalCommentsCount={commentCounts[post.id] || 0}
+                onCommentCountChange={handleCommentCountChange}
               />
             ))}
           </InfiniteScroll>

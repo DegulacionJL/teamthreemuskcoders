@@ -58,7 +58,7 @@ export default function LightBox({
     handleLoadMoreReplies,
     handleCommentReactionChange,
     fetchComments,
-  } = useComments(postId);
+  } = useComments(postId, { fetchCountOnMount: false });
 
   // Fetch comments when LightBox opens
   React.useEffect(() => {
