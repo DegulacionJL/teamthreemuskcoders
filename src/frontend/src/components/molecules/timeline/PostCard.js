@@ -1,12 +1,6 @@
 import PropTypes from 'prop-types';
 import { useState } from 'react';
-import {
-  ChatBubbleOutline as CommentIcon,
-  FavoriteBorder as FavoriteBorderIcon,
-  Favorite as FavoriteIcon,
-  MoreVert as MoreVertIcon,
-  Send as SendIcon,
-} from '@mui/icons-material';
+import { ChatBubbleOutline as CommentIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import {
   Avatar,
   Box,
@@ -20,51 +14,52 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  TextField,
   Typography,
 } from '@mui/material';
 import { getRelativeTime } from 'utils/timeUtils';
+import { useComments } from 'hooks/useComments';
+import PostReaction from 'components/organisms/User/PostReaction';
+import CommentFeature from 'components/organisms/CommentFeature';
 
-const PostCard = ({ post }) => {
-  const [liked, setLiked] = useState(post.liked || false);
-  const [likesCount, setLikesCount] = useState(post.likesCount || 0);
+const PostCard = ({ post, loggedInUser }) => {
   const [showComments, setShowComments] = useState(false);
-  const [commentText, setCommentText] = useState('');
-  const [comments, setComments] = useState(post.comments || []);
   const [anchorEl, setAnchorEl] = useState(null);
 
-  const handleLike = () => {
-    if (liked) {
-      setLikesCount(likesCount - 1);
-    } else {
-      setLikesCount(likesCount + 1);
-    }
-    setLiked(!liked);
-    // Call API to update like status
-  };
-
-  const handleComment = () => {
-    setShowComments(!showComments);
-  };
-
-  const handleSubmitComment = () => {
-    if (commentText.trim()) {
-      const newComment = {
-        id: Date.now(),
-        user: {
-          id: 1, // Current user ID
-          name: 'Current User', // Current user name
-          avatar: '/placeholder.svg?height=40&width=40&text=Me', // Current user avatar
-        },
-        text: commentText,
-        createdAt: new Date().toISOString(),
-      };
-
-      setComments([...comments, newComment]);
-      setCommentText('');
-      // Call API to save comment
-    }
-  };
+  // Comments and reactions logic from useComments
+  const {
+    comments,
+    isLoading: commentsLoading,
+    totalCommentsCount,
+    hasMore,
+    editingCommentId,
+    editingCommentText,
+    tempEditingText,
+    commentImage,
+    updateCommentImagePreview,
+    isUpdateModalOpen,
+    replyToComment,
+    commentToDelete,
+    isDeleteModalOpen,
+    replyLoading,
+    setReplyToComment,
+    setTempEditingText,
+    setCommentImage,
+    setUpdateCommentImagePreview,
+    setIsUpdateModalOpen,
+    setIsDeleteModalOpen,
+    handleAddComment,
+    handleAddReply,
+    confirmDeleteComment,
+    handleDeleteComment,
+    handleEditCommentClick,
+    handleUpdateCommentImage,
+    handleUpdateComment,
+    handleCancelUpdateComment,
+    handleLoadMore,
+    handleLoadMoreReplies,
+    handleCommentReactionChange,
+    fetchComments,
+  } = useComments(post.id);
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -72,6 +67,16 @@ const PostCard = ({ post }) => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleToggleComments = () => {
+    setShowComments((prev) => {
+      const newShow = !prev;
+      if (newShow && comments.length === 0) {
+        fetchComments(1);
+      }
+      return newShow;
+    });
   };
 
   return (
@@ -95,7 +100,7 @@ const PostCard = ({ post }) => {
         }
         subheader={
           <Typography variant="caption" color="text.secondary">
-            {post.timestamp ? getRelativeTime(post.timestamp) : 'Unknown time'}
+            {post.created_at ? getRelativeTime(post.created_at) : 'Unknown time'}
           </Typography>
         }
       />
@@ -103,12 +108,12 @@ const PostCard = ({ post }) => {
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuItem onClick={handleMenuClose}>Save Post</MenuItem>
         <MenuItem onClick={handleMenuClose}>Report Post</MenuItem>
-        {post.isOwnPost && <MenuItem onClick={handleMenuClose}>Delete Post</MenuItem>}
+        {post.is_own_post && <MenuItem onClick={handleMenuClose}>Delete Post</MenuItem>}
       </Menu>
 
       <CardContent sx={{ pt: 0 }}>
         <Typography variant="body1" sx={{ mb: post.image ? 2 : 0 }}>
-          {post.content}
+          {post.caption}
         </Typography>
       </CardContent>
 
@@ -124,21 +129,12 @@ const PostCard = ({ post }) => {
       {/* Engagement Stats */}
       <Box sx={{ px: 2, py: 1, display: 'flex', justifyContent: 'space-between' }}>
         <Typography variant="body2" color="text.secondary">
-          {likesCount > 0 && (
-            <>
-              <FavoriteIcon
-                fontSize="small"
-                color="error"
-                sx={{ fontSize: 16, verticalAlign: 'text-bottom', mr: 0.5 }}
-              />
-              {likesCount} {likesCount === 1 ? 'like' : 'likes'}
-            </>
-          )}
+          {/* Like count will be handled by PostReaction */}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {comments.length > 0 && (
+          {totalCommentsCount > 0 && (
             <>
-              {comments.length} {comments.length === 1 ? 'comment' : 'comments'}
+              {totalCommentsCount} {totalCommentsCount === 1 ? 'comment' : 'comments'}
             </>
           )}
         </Typography>
@@ -147,98 +143,54 @@ const PostCard = ({ post }) => {
       <Divider />
 
       <CardActions sx={{ justifyContent: 'space-around', px: 2 }}>
-        <Button
-          startIcon={liked ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
-          onClick={handleLike}
-          sx={{
-            color: liked ? 'error.main' : 'text.secondary',
-            textTransform: 'none',
-          }}
-        >
-          Like
-        </Button>
+        <PostReaction postId={post.id} />
         <Button
           startIcon={<CommentIcon />}
-          onClick={handleComment}
+          onClick={handleToggleComments}
           sx={{ color: 'text.secondary', textTransform: 'none' }}
         >
-          Comment
+          Comment{totalCommentsCount > 0 ? ` (${totalCommentsCount})` : ''}
         </Button>
       </CardActions>
 
       {/* Comments Section */}
-      {(showComments || comments.length > 0) && (
+      {showComments && (
         <Box sx={{ p: 2, pt: 0 }}>
           <Divider sx={{ my: 1 }} />
-
-          {/* Comment Input */}
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-            <Avatar
-              src="/placeholder.svg?height=32&width=32&text=Me"
-              sx={{ width: 32, height: 32, mr: 1.5 }}
-            />
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Write a comment..."
-              variant="outlined"
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              InputProps={{
-                endAdornment: (
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={handleSubmitComment}
-                    disabled={!commentText.trim()}
-                  >
-                    <SendIcon fontSize="small" />
-                  </IconButton>
-                ),
-                sx: { borderRadius: 10 },
-              }}
-            />
-          </Box>
-
-          {/* Comments List */}
-          {comments.map((comment) => (
-            <Box key={comment.id} sx={{ display: 'flex', mb: 2 }}>
-              <Avatar src={comment.user.avatar} sx={{ width: 32, height: 32, mr: 1.5 }} />
-              <Box sx={{ flex: 1 }}>
-                <Box
-                  sx={{
-                    backgroundColor: 'grey.100',
-                    p: 1.5,
-                    borderRadius: 2,
-                  }}
-                >
-                  <Typography variant="subtitle2" sx={{ fontWeight: 'medium' }}>
-                    {comment.user.name}
-                  </Typography>
-                  <Typography variant="body2">{comment.text}</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', mt: 0.5, ml: 1 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ mr: 1.5 }}>
-                    {post.timestamp ? getRelativeTime(post.timestamp) : 'Unknown time'}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ fontWeight: 'medium', cursor: 'pointer', mr: 1.5 }}
-                  >
-                    Like
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ fontWeight: 'medium', cursor: 'pointer' }}
-                  >
-                    Reply
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-          ))}
+          <CommentFeature
+            postId={post.id}
+            user={loggedInUser}
+            comments={comments}
+            isLoading={commentsLoading}
+            hasMore={hasMore}
+            editingCommentId={editingCommentId}
+            editingCommentText={editingCommentText}
+            tempEditingText={tempEditingText}
+            commentImage={commentImage}
+            updateCommentImagePreview={updateCommentImagePreview}
+            isUpdateModalOpen={isUpdateModalOpen}
+            replyToComment={replyToComment}
+            commentToDelete={commentToDelete}
+            isDeleteModalOpen={isDeleteModalOpen}
+            replyLoading={replyLoading}
+            setReplyToComment={setReplyToComment}
+            setTempEditingText={setTempEditingText}
+            setCommentImage={setCommentImage}
+            setUpdateCommentImagePreview={setUpdateCommentImagePreview}
+            setIsUpdateModalOpen={setIsUpdateModalOpen}
+            setIsDeleteModalOpen={setIsDeleteModalOpen}
+            handleAddComment={handleAddComment}
+            handleAddReply={handleAddReply}
+            confirmDeleteComment={confirmDeleteComment}
+            handleDeleteComment={handleDeleteComment}
+            handleEditCommentClick={handleEditCommentClick}
+            handleUpdateCommentImage={handleUpdateCommentImage}
+            handleUpdateComment={handleUpdateComment}
+            handleCancelUpdateComment={handleCancelUpdateComment}
+            handleLoadMore={handleLoadMore}
+            handleLoadMoreReplies={handleLoadMoreReplies}
+            handleCommentReactionChange={handleCommentReactionChange}
+          />
         </Box>
       )}
     </Card>
@@ -247,8 +199,9 @@ const PostCard = ({ post }) => {
 
 PostCard.propTypes = {
   post: PropTypes.shape({
+    id: PropTypes.number.isRequired,
     liked: PropTypes.bool,
-    likesCount: PropTypes.number,
+    likes_count: PropTypes.number,
     comments: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.number,
@@ -258,18 +211,19 @@ PostCard.propTypes = {
           avatar: PropTypes.string,
         }),
         text: PropTypes.string,
-        createdAt: PropTypes.string,
+        created_at: PropTypes.string,
       })
     ),
     user: PropTypes.shape({
       avatar: PropTypes.string,
       name: PropTypes.string,
     }),
-    timestamp: PropTypes.string,
-    isOwnPost: PropTypes.bool,
+    created_at: PropTypes.string,
+    is_own_post: PropTypes.bool,
     image: PropTypes.string,
-    content: PropTypes.string,
+    caption: PropTypes.string,
   }).isRequired,
+  loggedInUser: PropTypes.object.isRequired,
 };
 
 export default PostCard;
