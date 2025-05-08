@@ -1,7 +1,7 @@
-import { useAuth } from 'hooks/useAuth';
 import { useComments } from 'hooks/useComments';
 import PropTypes from 'prop-types';
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { deletePost, reportPost, updatePost } from 'services/meme.service';
 import { ChatBubbleOutline as CommentIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import {
   Avatar,
@@ -18,19 +18,15 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material';
-import { useTheme } from '@mui/material';
 import CommentFeature from 'components/organisms/CommentFeature';
-import PostReaction from 'components/organisms/User/PostReaction';
-import { getRelativeTime } from 'utils/timeUtils';
 import DeleteConfirmationModal from 'components/organisms/DeleteConfirmationModal';
 import EditPostModal from 'components/organisms/EditPostModal';
-import ReportPostConfirmationModal from 'components/organisms/ReportPostModal';
 import LightBox from 'components/organisms/LightBox';
-import { deletePost, updatePost, reportPost } from 'services/meme.service';
+import ReportPostConfirmationModal from 'components/organisms/ReportPostModal';
+import PostReaction from 'components/organisms/User/PostReaction';
+import { getRelativeTime } from 'utils/timeUtils';
 
 const PostCard = ({ post, loggedInUser }) => {
-  const theme = useTheme();
-  const { user } = useAuth({ middleware: 'auth' });
   const [showComments, setShowComments] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
