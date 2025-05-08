@@ -21,7 +21,9 @@ class PostResource extends JsonResource
             'likes_count' => $this->likes->count(),
             'user' => $this->user? [
                     'id' => $this->user->id,
-                    'name' => trim($this->user->first_name. ''.$this->user->last_name), 
+                    'name' => trim($this->user->first_name. ' '.$this->user->last_name),
+                    'first_name' => $this->user->first_name,
+                    'last_name' => $this->user->last_name,
                     'avatar' => $this->user->avatar ?? null,
                      ]: null,
             'created_at' => $this->created_at->toIso8601String(),

@@ -204,7 +204,9 @@ const PostCard = ({ post, loggedInUser }) => {
         }
         title={
           <Typography variant="subtitle1" fontWeight="medium">
-            {post.user?.name || 'Unknown User'}
+            {post.user?.first_name || post.user?.last_name
+              ? `${post.user?.first_name || ''} ${post.user?.last_name || ''}`.trim()
+              : post.user?.name || 'Unknown User'}
           </Typography>
         }
         subheader={
@@ -367,6 +369,8 @@ PostCard.propTypes = {
       id: PropTypes.number,
       avatar: PropTypes.string,
       name: PropTypes.string,
+      first_name: PropTypes.string,
+      last_name: PropTypes.string,
     }),
     created_at: PropTypes.string,
     is_own_post: PropTypes.bool,
