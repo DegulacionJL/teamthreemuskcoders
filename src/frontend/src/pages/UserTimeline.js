@@ -74,6 +74,7 @@ const UserTimeline = () => {
   const { user: currentUser, isAuthenticated } = useAuth();
   const reduxUser = useSelector((state) => state.profile.user);
   const fileRef = useRef(null);
+  const lastFetchedIdsRef = useRef([]);
 
   const handleFileSelect = () => {
     fileRef.current.click();
@@ -138,9 +139,15 @@ const UserTimeline = () => {
   useEffect(() => {
     if (posts.length > 0) {
       const postIds = posts.map((post) => post.id);
-      getBatchTotalCommentsCount(postIds).then((counts) => {
-        setCommentCounts(counts);
-      });
+      if (
+        postIds.length !== lastFetchedIdsRef.current.length ||
+        !postIds.every((id, i) => id === lastFetchedIdsRef.current[i])
+      ) {
+        lastFetchedIdsRef.current = postIds;
+        getBatchTotalCommentsCount(postIds).then((counts) => {
+          setCommentCounts(counts);
+        });
+      }
     }
   }, [posts]);
 
