@@ -1,12 +1,8 @@
+import { useComments } from 'hooks/useComments';
 import PropTypes from 'prop-types';
-import { useState } from 'react';
-import {
-  ChatBubbleOutline as CommentIcon,
-  FavoriteBorder as FavoriteBorderIcon,
-  Favorite as FavoriteIcon,
-  MoreVert as MoreVertIcon,
-  Send as SendIcon,
-} from '@mui/icons-material';
+import React, { useCallback, useEffect, useState } from 'react';
+import { deletePost, reportPost, updatePost } from 'services/meme.service';
+import { ChatBubbleOutline as CommentIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import {
   Avatar,
   Box,
@@ -20,51 +16,83 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  TextField,
   Typography,
 } from '@mui/material';
+import CommentFeature from 'components/organisms/CommentFeature';
+import DeleteConfirmationModal from 'components/organisms/DeleteConfirmationModal';
+import EditPostModal from 'components/organisms/EditPostModal';
+import LightBox from 'components/organisms/LightBox';
+import ReportPostConfirmationModal from 'components/organisms/ReportPostModal';
+import PostReaction from 'components/organisms/User/PostReaction';
 import { getRelativeTime } from 'utils/timeUtils';
 
-const PostCard = ({ post }) => {
-  const [liked, setLiked] = useState(post.liked || false);
-  const [likesCount, setLikesCount] = useState(post.likesCount || 0);
+const PostCard = ({ post, loggedInUser }) => {
   const [showComments, setShowComments] = useState(false);
-  const [commentText, setCommentText] = useState('');
-  const [comments, setComments] = useState(post.comments || []);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [currentCaption, setCurrentCaption] = useState(post.caption);
+  const [currentImage, setCurrentImage] = useState(post.image);
+  const [isPostDeleteModalOpen, setIsPostDeleteModalOpen] = useState(false);
+  const [isReportPostModalOpen, setIsReportPostModalOpen] = useState(false);
+  const [reactionType, setReactionType] = useState(null);
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
-  const handleLike = () => {
-    if (liked) {
-      setLikesCount(likesCount - 1);
+  // Comments and reactions logic from useComments
+  const {
+    comments,
+    isLoading: commentsLoading,
+    totalCommentsCount,
+    hasMore,
+    editingCommentId,
+    editingCommentText,
+    tempEditingText,
+    commentImage,
+    updateCommentImagePreview,
+    isUpdateModalOpen,
+    replyToComment,
+    commentToDelete,
+    isDeleteModalOpen,
+    replyLoading,
+    hasFetchedComments,
+    setReplyToComment,
+    setTempEditingText,
+    setCommentImage,
+    setUpdateCommentImagePreview,
+    setIsUpdateModalOpen,
+    setIsDeleteModalOpen,
+    fetchComments,
+    handleAddComment,
+    handleAddReply,
+    confirmDeleteComment,
+    handleDeleteComment,
+    handleEditCommentClick,
+    handleUpdateCommentImage,
+    handleUpdateComment,
+    handleCancelUpdateComment,
+    handleLoadMore,
+    handleLoadMoreReplies,
+    handleCommentReactionChange,
+  } = useComments(post.id);
+
+  useEffect(() => {
+    const savedReaction = localStorage.getItem(`post_reaction_${post.id}`);
+    const savedLikeCount = localStorage.getItem(`post_like_count_${post.id}`);
+
+    if (savedReaction) {
+      setReactionType(savedReaction);
+    }
+
+    if (savedLikeCount) {
+      setLikeCount(Number.parseInt(savedLikeCount, 10));
     } else {
-      setLikesCount(likesCount + 1);
+      setLikeCount(5);
     }
-    setLiked(!liked);
-    // Call API to update like status
-  };
+  }, [post.id]);
 
-  const handleComment = () => {
-    setShowComments(!showComments);
-  };
-
-  const handleSubmitComment = () => {
-    if (commentText.trim()) {
-      const newComment = {
-        id: Date.now(),
-        user: {
-          id: 1, // Current user ID
-          name: 'Current User', // Current user name
-          avatar: '/placeholder.svg?height=40&width=40&text=Me', // Current user avatar
-        },
-        text: commentText,
-        createdAt: new Date().toISOString(),
-      };
-
-      setComments([...comments, newComment]);
-      setCommentText('');
-      // Call API to save comment
-    }
-  };
+  useEffect(() => {
+    setCurrentImage(post.image);
+  }, [post.image]);
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -72,6 +100,92 @@ const PostCard = ({ post }) => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleToggleComments = useCallback(() => {
+    setShowComments((prev) => {
+      const newShowComments = !prev;
+      if (newShowComments && !hasFetchedComments) {
+        fetchComments(1);
+      }
+      return newShowComments;
+    });
+  }, [hasFetchedComments, fetchComments]);
+
+  const handleImageClick = () => {
+    if (currentImage) {
+      setIsLightboxOpen(true);
+    }
+  };
+
+  const handleReactionChange = useCallback((postId, hasReacted, newReactionType, count) => {
+    setLikeCount(count);
+    setReactionType(newReactionType);
+
+    if (hasReacted && newReactionType) {
+      localStorage.setItem(`post_reaction_${postId}`, newReactionType);
+    } else {
+      localStorage.removeItem(`post_reaction_${postId}`);
+    }
+    localStorage.setItem(`post_like_count_${postId}`, count.toString());
+  }, []);
+
+  const handleSave = async (newCaption, newImage, removeImage = false) => {
+    try {
+      await updatePost(post.id, { caption: newCaption });
+      setCurrentCaption(newCaption);
+      if (newImage) {
+        setCurrentImage(newImage);
+      } else if (removeImage) {
+        setCurrentImage(null);
+      }
+      setIsEditModalOpen(false);
+    } catch (error) {
+      console.error('Error updating post:', error);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await deletePost(post.id);
+      setIsPostDeleteModalOpen(false);
+      // You might want to add a callback to refresh the posts list
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    }
+  };
+
+  const handleConfirmReportPost = async () => {
+    try {
+      await reportPost(post.id);
+      setIsReportPostModalOpen(false);
+    } catch (error) {
+      console.error('Error reporting post:', error);
+    }
+  };
+
+  const formatCaption = (text) => {
+    if (!text) return '';
+
+    const formattedText = text.split('\n').map((line, i, arr) => (
+      <React.Fragment key={i}>
+        {line}
+        {i < arr.length - 1 && <br />}
+      </React.Fragment>
+    ));
+
+    return (
+      <Typography
+        variant="body1"
+        component="div"
+        sx={{
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
+        }}
+      >
+        {formattedText}
+      </Typography>
+    );
   };
 
   return (
@@ -90,55 +204,73 @@ const PostCard = ({ post }) => {
         }
         title={
           <Typography variant="subtitle1" fontWeight="medium">
-            {post.user?.name || 'Unknown User'}
+            {post.user?.first_name || post.user?.last_name
+              ? `${post.user?.first_name || ''} ${post.user?.last_name || ''}`.trim()
+              : post.user?.name || 'Unknown User'}
           </Typography>
         }
         subheader={
           <Typography variant="caption" color="text.secondary">
-            {post.timestamp ? getRelativeTime(post.timestamp) : 'Unknown time'}
+            {post.created_at ? getRelativeTime(post.created_at) : 'Unknown time'}
           </Typography>
         }
       />
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuItem onClick={handleMenuClose}>Save Post</MenuItem>
-        <MenuItem onClick={handleMenuClose}>Report Post</MenuItem>
-        {post.isOwnPost && <MenuItem onClick={handleMenuClose}>Delete Post</MenuItem>}
+        {post.is_own_post ? (
+          <>
+            <MenuItem onClick={() => setIsEditModalOpen(true)}>Edit</MenuItem>
+            <MenuItem onClick={() => setIsPostDeleteModalOpen(true)} sx={{ color: 'red' }}>
+              Delete
+            </MenuItem>
+          </>
+        ) : (
+          <MenuItem onClick={() => setIsReportPostModalOpen(true)}>Report</MenuItem>
+        )}
       </Menu>
 
       <CardContent sx={{ pt: 0 }}>
-        <Typography variant="body1" sx={{ mb: post.image ? 2 : 0 }}>
-          {post.content}
-        </Typography>
+        <Box sx={{ mb: 2, mt: 2 }}>{formatCaption(currentCaption)}</Box>
       </CardContent>
 
-      {post.image && (
+      {currentImage && (
         <CardMedia
           component="img"
-          image={post.image}
+          image={currentImage}
           alt="Post image"
-          sx={{ maxHeight: 500, objectFit: 'contain' }}
+          onClick={handleImageClick}
+          sx={{ maxHeight: 500, objectFit: 'contain', cursor: 'pointer' }}
         />
       )}
 
-      {/* Engagement Stats */}
+      <LightBox
+        isOpen={isLightboxOpen}
+        onClose={() => setIsLightboxOpen(false)}
+        image={currentImage}
+        caption={currentCaption}
+        user={post.user}
+        timestamp={post.created_at}
+        postId={post.id}
+        onReactionChange={handleReactionChange}
+        initialReactionType={reactionType}
+        initialReactionCount={likeCount}
+      />
+
       <Box sx={{ px: 2, py: 1, display: 'flex', justifyContent: 'space-between' }}>
         <Typography variant="body2" color="text.secondary">
-          {likesCount > 0 && (
-            <>
-              <FavoriteIcon
-                fontSize="small"
-                color="error"
-                sx={{ fontSize: 16, verticalAlign: 'text-bottom', mr: 0.5 }}
-              />
-              {likesCount} {likesCount === 1 ? 'like' : 'likes'}
-            </>
+          {likeCount > 0 && (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <span role="img" aria-label="laughing emoji" style={{ marginRight: '4px' }}>
+                😂
+              </span>
+              {likeCount}
+            </Box>
           )}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {comments.length > 0 && (
+          {totalCommentsCount > 0 && (
             <>
-              {comments.length} {comments.length === 1 ? 'comment' : 'comments'}
+              {totalCommentsCount} {totalCommentsCount === 1 ? 'comment' : 'comments'}
             </>
           )}
         </Typography>
@@ -147,129 +279,105 @@ const PostCard = ({ post }) => {
       <Divider />
 
       <CardActions sx={{ justifyContent: 'space-around', px: 2 }}>
-        <Button
-          startIcon={liked ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
-          onClick={handleLike}
-          sx={{
-            color: liked ? 'error.main' : 'text.secondary',
-            textTransform: 'none',
-          }}
-        >
-          Like
-        </Button>
+        <PostReaction
+          postId={post.id}
+          onReactionChange={handleReactionChange}
+          initialReactionType={reactionType}
+        />
         <Button
           startIcon={<CommentIcon />}
-          onClick={handleComment}
+          onClick={handleToggleComments}
           sx={{ color: 'text.secondary', textTransform: 'none' }}
         >
-          Comment
+          Comment{totalCommentsCount > 0 ? ` (${totalCommentsCount})` : ''}
         </Button>
       </CardActions>
 
-      {/* Comments Section */}
-      {(showComments || comments.length > 0) && (
+      {showComments && (
         <Box sx={{ p: 2, pt: 0 }}>
           <Divider sx={{ my: 1 }} />
-
-          {/* Comment Input */}
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-            <Avatar
-              src="/placeholder.svg?height=32&width=32&text=Me"
-              sx={{ width: 32, height: 32, mr: 1.5 }}
-            />
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Write a comment..."
-              variant="outlined"
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              InputProps={{
-                endAdornment: (
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={handleSubmitComment}
-                    disabled={!commentText.trim()}
-                  >
-                    <SendIcon fontSize="small" />
-                  </IconButton>
-                ),
-                sx: { borderRadius: 10 },
-              }}
-            />
-          </Box>
-
-          {/* Comments List */}
-          {comments.map((comment) => (
-            <Box key={comment.id} sx={{ display: 'flex', mb: 2 }}>
-              <Avatar src={comment.user.avatar} sx={{ width: 32, height: 32, mr: 1.5 }} />
-              <Box sx={{ flex: 1 }}>
-                <Box
-                  sx={{
-                    backgroundColor: 'grey.100',
-                    p: 1.5,
-                    borderRadius: 2,
-                  }}
-                >
-                  <Typography variant="subtitle2" sx={{ fontWeight: 'medium' }}>
-                    {comment.user.name}
-                  </Typography>
-                  <Typography variant="body2">{comment.text}</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', mt: 0.5, ml: 1 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ mr: 1.5 }}>
-                    {post.timestamp ? getRelativeTime(post.timestamp) : 'Unknown time'}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ fontWeight: 'medium', cursor: 'pointer', mr: 1.5 }}
-                  >
-                    Like
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ fontWeight: 'medium', cursor: 'pointer' }}
-                  >
-                    Reply
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-          ))}
+          <CommentFeature
+            postId={post.id}
+            user={loggedInUser}
+            comments={comments}
+            isLoading={commentsLoading}
+            hasMore={hasMore}
+            editingCommentId={editingCommentId}
+            editingCommentText={editingCommentText}
+            tempEditingText={tempEditingText}
+            commentImage={commentImage}
+            updateCommentImagePreview={updateCommentImagePreview}
+            isUpdateModalOpen={isUpdateModalOpen}
+            replyToComment={replyToComment}
+            commentToDelete={commentToDelete}
+            isDeleteModalOpen={isDeleteModalOpen}
+            replyLoading={replyLoading}
+            setReplyToComment={setReplyToComment}
+            setTempEditingText={setTempEditingText}
+            setCommentImage={setCommentImage}
+            setUpdateCommentImagePreview={setUpdateCommentImagePreview}
+            setIsUpdateModalOpen={setIsUpdateModalOpen}
+            setIsDeleteModalOpen={setIsDeleteModalOpen}
+            handleAddComment={handleAddComment}
+            handleAddReply={handleAddReply}
+            confirmDeleteComment={confirmDeleteComment}
+            handleDeleteComment={handleDeleteComment}
+            handleEditCommentClick={handleEditCommentClick}
+            handleUpdateCommentImage={handleUpdateCommentImage}
+            handleUpdateComment={handleUpdateComment}
+            handleCancelUpdateComment={handleCancelUpdateComment}
+            handleLoadMore={handleLoadMore}
+            handleLoadMoreReplies={handleLoadMoreReplies}
+            handleCommentReactionChange={handleCommentReactionChange}
+          />
         </Box>
       )}
+
+      <EditPostModal
+        open={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        caption={currentCaption}
+        image={currentImage}
+        onSave={handleSave}
+      />
+
+      <ReportPostConfirmationModal
+        open={isReportPostModalOpen}
+        onClose={() => setIsReportPostModalOpen(false)}
+        onConfirm={handleConfirmReportPost}
+        title="Report Post"
+        content="Are you sure you want to report this Post? This action cannot be undone."
+      />
+
+      <DeleteConfirmationModal
+        open={isPostDeleteModalOpen}
+        onClose={() => setIsPostDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Post"
+        content="Are you sure you want to delete this post? This action cannot be undone."
+      />
     </Card>
   );
 };
 
 PostCard.propTypes = {
   post: PropTypes.shape({
+    id: PropTypes.number.isRequired,
     liked: PropTypes.bool,
-    likesCount: PropTypes.number,
-    comments: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number,
-        user: PropTypes.shape({
-          id: PropTypes.number,
-          name: PropTypes.string,
-          avatar: PropTypes.string,
-        }),
-        text: PropTypes.string,
-        createdAt: PropTypes.string,
-      })
-    ),
+    likes_count: PropTypes.number,
     user: PropTypes.shape({
+      id: PropTypes.number,
       avatar: PropTypes.string,
       name: PropTypes.string,
+      first_name: PropTypes.string,
+      last_name: PropTypes.string,
     }),
-    timestamp: PropTypes.string,
-    isOwnPost: PropTypes.bool,
+    created_at: PropTypes.string,
+    is_own_post: PropTypes.bool,
     image: PropTypes.string,
-    content: PropTypes.string,
+    caption: PropTypes.string,
   }).isRequired,
+  loggedInUser: PropTypes.object.isRequired,
 };
 
 export default PostCard;
