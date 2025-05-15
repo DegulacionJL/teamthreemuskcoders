@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { likePost, unlikePost } from 'services/meme.service';
+import { likePost, unlikePost, getLikes } from 'services/meme.service';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import { Box, Button, CircularProgress, Fade, Popper, Typography } from '@mui/material';
 
@@ -45,24 +45,31 @@ const PostReaction = ({
   // Initialize state from props and localStorage
   useEffect(() => {
     setIsInitializing(true);
-    // Load from localStorage if available, otherwise use props
-    const storedReaction = localStorage.getItem(`post_reaction_${postId}`);
-    const storedLikeCount = localStorage.getItem(`post_like_count_${postId}`);
+    // Fetch actual like count and user reaction from backend
+    const fetchLikes = async () => {
+      try {
+        const response = await getLikes(postId);
+        setLikeCount(response.like_count || 0);
+        // Use backend info for logged-in users
+        if (typeof response.user_has_liked !== 'undefined') {
+          setHasReacted(response.user_has_liked);
+        } else {
+          // Fallback to localStorage for guests
+          const storedReaction = localStorage.getItem(`post_reaction_${postId}`);
+          setHasReacted(storedReaction === (initialReactionType || '😂'));
+        }
+      } catch (error) {
+        console.error('Error fetching likes:', error);
+        setLikeCount(initialLikeCount || 0);
+        // Fallback to localStorage for guests
+        const storedReaction = localStorage.getItem(`post_reaction_${postId}`);
+        setHasReacted(storedReaction === (initialReactionType || '😂'));
+      }
+    };
 
-    const hasReactedFromStorage = storedReaction === (initialReactionType || '😂');
-    setHasReacted(hasReactedFromStorage || initialHasReacted);
-    setLikeCount(storedLikeCount ? Number.parseInt(storedLikeCount, 10) : initialLikeCount);
-
-    // Update localStorage with initial values if not present
-    if (!storedReaction && initialHasReacted) {
-      localStorage.setItem(`post_reaction_${postId}`, initialReactionType || '😂');
-    }
-    if (!storedLikeCount) {
-      localStorage.setItem(`post_like_count_${postId}`, initialLikeCount.toString());
-    }
-
+    fetchLikes();
     setIsInitializing(false);
-  }, [postId, initialReactionType, initialLikeCount, initialHasReacted]);
+  }, [postId, initialReactionType, initialLikeCount]);
 
   // Notify parent component when like count changes
   useEffect(() => {
@@ -135,6 +142,18 @@ const PostReaction = ({
       setIsLoading(false);
     }
   }, [hasReacted, postId, isLoading, likeCount]);
+
+  const handleReactionChange = useCallback((postId, hasReacted, newReactionType, count) => {
+    setLikeCount(count);
+    setHasReacted(hasReacted);
+
+    // Only store the user's reaction state in localStorage
+    if (hasReacted && newReactionType) {
+      localStorage.setItem(`post_reaction_${postId}`, newReactionType);
+    } else {
+      localStorage.removeItem(`post_reaction_${postId}`);
+    }
+  }, []);
 
   return (
     <Box sx={{ position: 'relative' }}>
