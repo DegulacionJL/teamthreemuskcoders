@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { likePost, unlikePost, getLikes } from 'services/meme.service';
+import { likePost, unlikePost } from 'services/meme.service';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import { Box, Button, CircularProgress, Fade, Popper, Typography } from '@mui/material';
 
@@ -31,7 +31,6 @@ const PostReaction = ({
   postId,
   isDarkMode,
   onReactionChange,
-  initialReactionType,
   initialLikeCount = 0,
   initialHasReacted = false,
 }) => {
@@ -39,44 +38,14 @@ const PostReaction = ({
   const [hasReacted, setHasReacted] = useState(initialHasReacted);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
   const likeButtonRef = useRef(null);
-
-  // Initialize state from props and localStorage
-  useEffect(() => {
-    setIsInitializing(true);
-    // Fetch actual like count and user reaction from backend
-    const fetchLikes = async () => {
-      try {
-        const response = await getLikes(postId);
-        setLikeCount(response.like_count || 0);
-        // Use backend info for logged-in users
-        if (typeof response.user_has_liked !== 'undefined') {
-          setHasReacted(response.user_has_liked);
-        } else {
-          // Fallback to localStorage for guests
-          const storedReaction = localStorage.getItem(`post_reaction_${postId}`);
-          setHasReacted(storedReaction === (initialReactionType || '😂'));
-        }
-      } catch (error) {
-        console.error('Error fetching likes:', error);
-        setLikeCount(initialLikeCount || 0);
-        // Fallback to localStorage for guests
-        const storedReaction = localStorage.getItem(`post_reaction_${postId}`);
-        setHasReacted(storedReaction === (initialReactionType || '😂'));
-      }
-    };
-
-    fetchLikes();
-    setIsInitializing(false);
-  }, [postId, initialReactionType, initialLikeCount]);
 
   // Notify parent component when like count changes
   useEffect(() => {
-    if (onReactionChange && !isInitializing) {
+    if (onReactionChange) {
       onReactionChange(postId, hasReacted, hasReacted ? '😂' : null, likeCount);
     }
-  }, [postId, hasReacted, likeCount, onReactionChange, isInitializing]);
+  }, [postId, hasReacted, likeCount, onReactionChange]);
 
   const handleReaction = useCallback(async () => {
     if (isLoading || hasReacted) return;
@@ -173,11 +142,18 @@ const PostReaction = ({
         sx={{
           color: hasReacted ? 'primary.main' : 'text.secondary',
           fontWeight: hasReacted ? 'bold' : 'normal',
+          backgroundColor: hasReacted
+            ? isDarkMode
+              ? 'rgba(40, 40, 40, 0.15)'
+              : 'rgba(25, 118, 210, 0.08)'
+            : 'inherit',
+          borderRadius: 2,
+          transition: 'background-color 0.2s, color 0.2s',
         }}
         onMouseEnter={() => !hasReacted && !isLoading && setShowReactions(true)}
         onMouseLeave={() => setTimeout(() => setShowReactions(false), 300)}
         onClick={handleToggleReaction}
-        disabled={isLoading || isInitializing}
+        disabled={isLoading}
       >
         {hasReacted ? 'Laugh' : 'Laugh'} {likeCount > 0 && `(${likeCount})`}
       </Button>
@@ -238,7 +214,6 @@ PostReaction.propTypes = {
   postId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   isDarkMode: PropTypes.bool.isRequired,
   onReactionChange: PropTypes.func,
-  initialReactionType: PropTypes.string,
   initialLikeCount: PropTypes.number,
   initialHasReacted: PropTypes.bool,
 };

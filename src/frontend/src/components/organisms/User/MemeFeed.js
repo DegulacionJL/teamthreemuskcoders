@@ -433,6 +433,8 @@ function MemeFeed() {
                 postUserId={post.user_id}
                 totalCommentsCount={commentCounts[post.id] || 0}
                 onCommentCountChange={handleCommentCountChange}
+                initialLikeCount={post.like_count ?? post.reaction_data?.like_count ?? 0}
+                initialHasReacted={post.user_has_liked ?? post.reaction_data?.has_liked ?? false}
               />
             ))}
           </InfiniteScroll>

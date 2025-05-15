@@ -104,7 +104,7 @@ class PostService
 
     public function getPosts($page = 1)
     {
-        $currentUser = Auth::user();
+        $currentUser = Auth::guard('api')->user();
         
         // Fetch posts with pagination, including related user and image data
         $posts = Post::with('user', 'image')

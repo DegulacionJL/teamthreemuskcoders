@@ -47,6 +47,8 @@ const MemePost = ({
   postUserId,
   totalCommentsCount,
   onCommentCountChange,
+  initialLikeCount = 0,
+  initialHasReacted = false,
 }) => {
   const theme = useTheme();
   const { darkMode: contextDarkMode } = useCustomTheme();
@@ -57,8 +59,8 @@ const MemePost = ({
   const [currentImage, setCurrentImage] = useState(image);
   const [isPostDeleteModalOpen, setIsPostDeleteModalOpen] = useState(false);
   const [isReportPostModalOpen, setIsReportPostModalOpen] = useState(false);
-  const [reactionType, setReactionType] = useState(null);
-  const [likeCount, setLikeCount] = useState(0);
+  const [reactionType, setReactionType] = useState(initialHasReacted ? '😂' : null);
+  const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [showComments, setShowComments] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
@@ -334,6 +336,8 @@ const MemePost = ({
           isDarkMode={isDarkMode}
           onReactionChange={handleReactionChange}
           initialReactionType={reactionType}
+          initialLikeCount={likeCount}
+          initialHasReacted={initialHasReacted}
         />
         <Button
           startIcon={<ChatBubbleOutline />}
@@ -462,6 +466,8 @@ MemePost.propTypes = {
   postUserId: PropTypes.number,
   totalCommentsCount: PropTypes.number,
   onCommentCountChange: PropTypes.func,
+  initialLikeCount: PropTypes.number,
+  initialHasReacted: PropTypes.bool,
 };
 
 export default MemePost;
