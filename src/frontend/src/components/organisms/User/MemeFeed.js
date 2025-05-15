@@ -362,18 +362,20 @@ function MemeFeed() {
           mt: 2,
         }}
       >
-        <CreatePostCard
-          currentUser={user}
-          caption={caption}
-          setCaption={setCaption}
-          imagePreview={imagePreview}
-          setImagePreview={setImagePreview}
-          setImage={setImage}
-          showMemeCreator={showMemeCreator}
-          setShowMemeCreator={setShowMemeCreator}
-          handlePost={handlePost}
-          handleMemeCreatorSave={handleMemeCreatorSave}
-        />
+        <Box width="80%">
+          <CreatePostCard
+            currentUser={user}
+            caption={caption}
+            setCaption={setCaption}
+            imagePreview={imagePreview}
+            setImagePreview={setImagePreview}
+            setImage={setImage}
+            showMemeCreator={showMemeCreator}
+            setShowMemeCreator={setShowMemeCreator}
+            handlePost={handlePost}
+            handleMemeCreatorSave={handleMemeCreatorSave}
+          />
+        </Box>
 
         {error && (
           <Box

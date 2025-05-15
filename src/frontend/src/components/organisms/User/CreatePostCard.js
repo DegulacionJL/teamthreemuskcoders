@@ -21,7 +21,7 @@ const CreatePostCard = ({
   const navigate = useNavigate();
 
   return (
-    <Card sx={{ width: '100%', mb: 3, maxWidth: '80%' }}>
+    <Card sx={{ width: '100%', mb: 3, maxWidth: '100%' }}>
       <CardContent>
         {showMemeCreator ? (
           <Box>

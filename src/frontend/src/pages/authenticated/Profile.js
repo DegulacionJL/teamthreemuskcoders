@@ -1,8 +1,9 @@
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useAuth } from 'hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
 import { updateProfile } from 'services/profile.service';
 import { setProfile } from 'store/slices/profileSlice';
@@ -15,7 +16,8 @@ import errorHandler from 'utils/errorHandler';
 
 function Profile() {
   const { t } = useTranslation();
-  const user = useSelector((state) => state.profile.user);
+  // const user = useSelector((state) => state.profile.user);
+  const { user } = useAuth({ middleware: 'auth' });
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
 
@@ -56,7 +58,7 @@ function Profile() {
       setValue('last_name', user.last_name);
       setValue('email', user.email);
     }
-  }, []);
+  }, [user]);
 
   return (
     <Container maxWidth="xs" sx={{ pt: 6 }}>
@@ -79,6 +81,7 @@ function Profile() {
                   url={user.avatar}
                   onFileSelect={(url) => setValue('avatar', url)}
                   editable={true}
+                  name="avatar"
                 />
               </Grid>
 
