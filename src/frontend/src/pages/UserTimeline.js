@@ -45,6 +45,8 @@ import {
   uploadCoverPhoto,
   uploadUserAvatar,
 } from '../services/user.service';
+import { createMemePost } from '../services/meme.service';
+import CreatePostCard from '../components/organisms/User/CreatePostCard';
 
 const UserTimeline = () => {
   const { userId } = useParams();
@@ -70,6 +72,11 @@ const UserTimeline = () => {
     lastName: '',
   });
   const [commentCounts, setCommentCounts] = useState({});
+  const [caption, setCaption] = useState('');
+  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [showMemeCreator, setShowMemeCreator] = useState(false);
+  const [posting, setPosting] = useState(false);
 
   const { user: currentUser, isAuthenticated } = useAuth();
   const reduxUser = useSelector((state) => state.profile.user);
@@ -244,6 +251,55 @@ const UserTimeline = () => {
       ...prev,
       [postId]: (prev[postId] || 0) + delta,
     }));
+  };
+
+  const handleMemeCreatorSave = (editedImage, memeCaption) => {
+    const dataURLtoFile = (dataurl, filename) => {
+      const arr = dataurl.split(',');
+      const mime = arr[0].match(/:(.*?);/)?.[1];
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new File([u8arr], filename, { type: mime });
+    };
+    const file = dataURLtoFile(editedImage, 'meme.png');
+    setImage(file);
+    setCaption(memeCaption);
+    setImagePreview(editedImage);
+    setShowMemeCreator(false);
+  };
+
+  const handlePost = async () => {
+    setPosting(true);
+    try {
+      const formData = new FormData();
+      formData.append('caption', caption);
+      if (caption) {
+        const hashtags = caption.match(/#\w+/g) || [];
+        formData.append('hashtag', JSON.stringify(hashtags));
+      }
+      if (image) {
+        formData.append('image', image);
+      }
+      // Optionally add user_id if needed by your backend
+      // formData.append('user_id', currentUser.id);
+      await createMemePost(formData);
+      setCaption('');
+      setImage(null);
+      setImagePreview(null);
+      setShowMemeCreator(false);
+      // Refresh posts
+      const postsData = await getUserPosts(userId);
+      setPosts(postsData.posts || []);
+      toast.success('Post created!');
+    } catch (error) {
+      toast.error('Failed to create post');
+    } finally {
+      setPosting(false);
+    }
   };
 
   if (loading) {
@@ -560,25 +616,18 @@ const UserTimeline = () => {
           {activeTab === 0 && (
             <Box>
               {isCurrentUser && (
-                <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Avatar src={profile?.avatar} sx={{ mr: 2 }} />
-                    <Button
-                      variant="outlined"
-                      fullWidth
-                      sx={{
-                        justifyContent: 'flex-start',
-                        textTransform: 'none',
-                        py: 1.5,
-                        borderRadius: 10,
-                        color: 'text.secondary',
-                      }}
-                      onClick={() => navigate('/create-post')}
-                    >
-                      What&apos;s on your mind?
-                    </Button>
-                  </Box>
-                </Paper>
+                <CreatePostCard
+                  currentUser={currentUser}
+                  caption={caption}
+                  setCaption={setCaption}
+                  imagePreview={imagePreview}
+                  setImagePreview={setImagePreview}
+                  setImage={setImage}
+                  showMemeCreator={showMemeCreator}
+                  setShowMemeCreator={setShowMemeCreator}
+                  handlePost={handlePost}
+                  handleMemeCreatorSave={handleMemeCreatorSave}
+                />
               )}
 
               {posts.length > 0 ? (
