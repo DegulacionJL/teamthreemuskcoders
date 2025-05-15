@@ -1,13 +1,11 @@
-import { faker } from '@faker-js/faker';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Box, Container, Grid, Button as MuiButton, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import ButtonRound from 'components/atoms/ButtonRound';
 import Feature from 'components/atoms/Feature';
 import HeroImage from 'components/atoms/HeroImage';
 import Section from 'components/atoms/Section';
 import CallToAction from 'components/molecules/CallToAction';
-import ReviewSlider from 'components/molecules/ReviewSlider';
 import Seo from 'components/organisms/Seo';
 
 function Landing() {

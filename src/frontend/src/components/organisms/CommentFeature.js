@@ -124,7 +124,7 @@ const CommentFeature = ({
         replyToComment={replyToComment}
         onReplyClick={setReplyToComment}
         onCancelReply={() => setReplyToComment(null)}
-        onAddReply={handleAddReply}
+        onAddReply={(...args) => handleAddReply(...args, onCommentCountChange)}
         onEditClick={handleEditCommentClick}
         onDeleteClick={(commentId) => confirmDeleteComment(commentId, onCommentCountChange)}
         editingCommentId={editingCommentId}

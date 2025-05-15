@@ -6,8 +6,8 @@ import { getBatchTotalCommentsCount } from 'services/comment.service';
 import {
   createMemePost,
   deletePost,
-  getMemePosts,
   getAllTopMemesAndLeaderboards,
+  getMemePosts,
   reportPost,
   updateImage,
   updatePost,

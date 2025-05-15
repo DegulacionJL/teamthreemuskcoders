@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import MenuIcon from '@mui/icons-material/Menu';
-import { TextField } from '@mui/material';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
@@ -49,8 +48,6 @@ function Navbar(props) {
     { label: t('menu.profile'), url: '/profile' },
     { label: t('menu.logout'), url: '/logout' },
   ];
-
-  const [searchQuery, setSearchQuery] = useState('');
 
   return (
     <AppBar

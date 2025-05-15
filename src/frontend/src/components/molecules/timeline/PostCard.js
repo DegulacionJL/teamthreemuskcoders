@@ -284,6 +284,8 @@ const PostCard = ({ post, loggedInUser, totalCommentsCount, onCommentCountChange
           postId={post.id}
           onReactionChange={handleReactionChange}
           initialReactionType={reactionType}
+          initialLikeCount={post.like_count ?? post.reaction_data?.like_count ?? 0}
+          initialHasReacted={post.user_has_liked ?? post.reaction_data?.has_liked ?? false}
         />
         <Button
           startIcon={<CommentIcon />}
@@ -367,6 +369,12 @@ PostCard.propTypes = {
     id: PropTypes.number.isRequired,
     liked: PropTypes.bool,
     likes_count: PropTypes.number,
+    like_count: PropTypes.number,
+    user_has_liked: PropTypes.bool,
+    reaction_data: PropTypes.shape({
+      like_count: PropTypes.number,
+      has_liked: PropTypes.bool,
+    }),
     user: PropTypes.shape({
       id: PropTypes.number,
       avatar: PropTypes.string,

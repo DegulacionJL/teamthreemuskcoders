@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTrendingMemes } from 'services/user.service';
@@ -16,7 +17,6 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material';
-import PropTypes from 'prop-types';
 
 const LeftContent = ({ topPosts }) => {
   const theme = useTheme();

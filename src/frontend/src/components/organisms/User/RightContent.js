@@ -1,7 +1,6 @@
 import { useAuth } from 'hooks/useAuth';
+import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-// Added useNavigate import
 import { followUser } from 'services/follow.service';
 import { getSuggestedUsers } from 'services/user.service';
 import { Whatshot } from '@mui/icons-material';
@@ -22,7 +21,6 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material';
-import PropTypes from 'prop-types';
 
 const RightContent = ({
   leaderboard,

@@ -112,18 +112,6 @@ const PostReaction = ({
     }
   }, [hasReacted, postId, isLoading, likeCount]);
 
-  const handleReactionChange = useCallback((postId, hasReacted, newReactionType, count) => {
-    setLikeCount(count);
-    setHasReacted(hasReacted);
-
-    // Only store the user's reaction state in localStorage
-    if (hasReacted && newReactionType) {
-      localStorage.setItem(`post_reaction_${postId}`, newReactionType);
-    } else {
-      localStorage.removeItem(`post_reaction_${postId}`);
-    }
-  }, []);
-
   return (
     <Box sx={{ position: 'relative' }}>
       {/* Like Button Only - Since Comment & Share Are Already in memePost.js */}

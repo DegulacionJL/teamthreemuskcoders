@@ -160,7 +160,7 @@ export const useComments = (postId, { fetchCountOnMount = true, onCommentCountCh
   );
 
   const handleAddReply = useCallback(
-    async (parentId, text, image) => {
+    async (parentId, text, image, onCountChange) => {
       if (!text.trim() && !image) return;
       setIsLoading(true);
       try {
@@ -172,7 +172,9 @@ export const useComments = (postId, { fetchCountOnMount = true, onCommentCountCh
         await addComment(postId, text, image, finalParentId);
         setReplyToComment(null);
         await fetchComments(1);
-        await fetchTotalCommentsCount(); // Update total count after adding a reply
+        if (onCountChange) onCountChange(postId, 1);
+        else if (onCommentCountChange) onCommentCountChange(postId, 1);
+        else await fetchTotalCommentsCount();
         setReplyPages((prev) => ({ ...prev, [finalParentId]: 1 }));
       } catch (error) {
         console.error('Error adding reply:', error);
@@ -182,7 +184,7 @@ export const useComments = (postId, { fetchCountOnMount = true, onCommentCountCh
         setIsLoading(false);
       }
     },
-    [postId, comments, fetchComments, fetchTotalCommentsCount]
+    [postId, comments, fetchComments, fetchTotalCommentsCount, onCommentCountChange]
   );
 
   const confirmDeleteComment = useCallback((commentId) => {

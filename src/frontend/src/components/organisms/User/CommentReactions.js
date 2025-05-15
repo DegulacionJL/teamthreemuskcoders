@@ -16,7 +16,7 @@ const CommentReactions = ({
   const [hasReacted, setHasReacted] = useState(initialHasReacted);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(false);
+  const [isInitializing] = useState(false);
   const likeButtonRef = useRef(null);
 
   useEffect(() => {
