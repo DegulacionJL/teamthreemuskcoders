@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Events\NotificationCreated;
 use App\Models\Notification;
+use Illuminate\Support\Facades\DB;
 
 class CommentService
 {
@@ -64,14 +65,15 @@ class CommentService
 
         // Fetch like counts
         $likesData = CommentLike::whereIn('comment_id', $allCommentIds)
-            ->select('comment_id', \DB::raw('count(*) as like_count'))
+            ->select('comment_id', DB::raw('count(*) as like_count'))
             ->groupBy('comment_id')
             ->get()
             ->pluck('like_count', 'comment_id')
             ->toArray();
 
         // Fetch user likes if logged in
-        $userId = Auth::check() ? Auth::id() : null;
+        $user = Auth::guard('api')->user();
+        $userId = $user ? $user->id : null;
         $userLikes = $userId
             ? CommentLike::whereIn('comment_id', $allCommentIds)
                 ->where('user_id', $userId)
@@ -122,13 +124,14 @@ class CommentService
         // Fetch likes for replies
         $replyIds = $replies->pluck('id')->toArray();
         $likesData = CommentLike::whereIn('comment_id', $replyIds)
-            ->select('comment_id', \DB::raw('count(*) as like_count'))
+            ->select('comment_id', DB::raw('count(*) as like_count'))
             ->groupBy('comment_id')
             ->get()
             ->pluck('like_count', 'comment_id')
             ->toArray();
 
-        $userId = Auth::check() ? Auth::id() : null;
+        $user = Auth::guard('api')->user();
+        $userId = $user ? $user->id : null;
         $userLikes = $userId ? CommentLike::whereIn('comment_id', $replyIds)
             ->where('user_id', $userId)
             ->pluck('comment_id')
@@ -427,13 +430,13 @@ class CommentService
     }
 
     /**
- * Get total comments count (including replies) for a post.
- *
- * @param int $postId
- * @return int
- */
-public function getTotalCommentsCount($postId)
-{
-    return Comment::where('post_id', $postId)->count();
-}
+     * Get total comments count (including replies) for a post.
+     *
+     * @param int $postId
+     * @return int
+     */
+    public function getTotalCommentsCount($postId)
+    {
+        return Comment::where('post_id', $postId)->count();
+    }
 }
