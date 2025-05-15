@@ -20,7 +20,6 @@ import NotificationIcon from 'components/molecules/NotificationIcon';
 
 function Navbar(props) {
   const { user = null } = props;
-
   const { t } = useTranslation();
 
   const navigate = useNavigate();

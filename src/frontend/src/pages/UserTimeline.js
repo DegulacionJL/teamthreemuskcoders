@@ -35,9 +35,11 @@ import AboutSection from '../components/molecules/timeline/AboutSection';
 import FriendsList from '../components/molecules/timeline/FriendsList';
 import PhotosGrid from '../components/molecules/timeline/PhotosGrid';
 import PostCard from '../components/molecules/timeline/PostCard';
+import CreatePostCard from '../components/organisms/User/CreatePostCard';
 import { useAuth } from '../contexts/AuthContext';
 import { getBatchTotalCommentsCount } from '../services/comment.service';
 import { followUser, isFollowing, unfollowUser } from '../services/follow.service';
+import { createMemePost } from '../services/meme.service';
 import {
   getUserPosts,
   getUserProfile,
@@ -45,10 +47,9 @@ import {
   uploadCoverPhoto,
   uploadUserAvatar,
 } from '../services/user.service';
-import { createMemePost } from '../services/meme.service';
-import CreatePostCard from '../components/organisms/User/CreatePostCard';
 
 const UserTimeline = () => {
+  const { user } = useAuth({ middleware: 'auth' });
   const { userId } = useParams();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -76,7 +77,6 @@ const UserTimeline = () => {
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [showMemeCreator, setShowMemeCreator] = useState(false);
-  const [posting, setPosting] = useState(false);
 
   const { user: currentUser, isAuthenticated } = useAuth();
   const reduxUser = useSelector((state) => state.profile.user);
@@ -273,7 +273,6 @@ const UserTimeline = () => {
   };
 
   const handlePost = async () => {
-    setPosting(true);
     try {
       const formData = new FormData();
       formData.append('caption', caption);
@@ -297,8 +296,6 @@ const UserTimeline = () => {
       toast.success('Post created!');
     } catch (error) {
       toast.error('Failed to create post');
-    } finally {
-      setPosting(false);
     }
   };
 
@@ -396,7 +393,7 @@ const UserTimeline = () => {
         {/* Profile Avatar */}
         <Box sx={{ position: 'relative' }}>
           <Avatar
-            src={profile?.avatar}
+            src={user.avatar}
             sx={{
               width: isMobile ? 120 : 180,
               height: isMobile ? 120 : 180,
@@ -404,6 +401,7 @@ const UserTimeline = () => {
               boxShadow: theme.shadows[3],
             }}
           />
+
           {isCurrentUser && (
             <>
               <input
@@ -627,6 +625,7 @@ const UserTimeline = () => {
                   setShowMemeCreator={setShowMemeCreator}
                   handlePost={handlePost}
                   handleMemeCreatorSave={handleMemeCreatorSave}
+                  sx={{ mb: 3 }}
                 />
               )}
 
