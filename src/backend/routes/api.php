@@ -47,8 +47,9 @@ Route::prefix('posts')
         Route::put('/{post}', [PostController::class, 'updatePost'])->middleware('auth:api');
         Route::delete('/{post}', [PostController::class, 'deletePost']);
         Route::post('/{post}/image', [PostController::class, 'updatePostImage'])->middleware('auth:api');
-        Route::get('/leaderboard', [PostController::class, 'getUserLeaderboard'])->middleware('auth:api'); // Updated for Leaderboard
-        Route::get('/top-post', [PostController::class, 'getTopPost'])->middleware('auth:api'); // New endpoint for Top Meme
+        Route::get('/leaderboard', [PostController::class, 'getUserLeaderboard'])->middleware('auth:api');
+        Route::get('/top-post', [PostController::class, 'getTopPost'])->middleware('auth:api');
+        Route::post('/{post}/report', [ReportController::class, 'create'])->middleware('auth:api');
     });
 
     Route::prefix('likes')->group(function() {
@@ -147,8 +148,12 @@ Route::prefix('admin')->middleware(['auth:api'])->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'getStats']);
 });
 
-// DEMO PURPOSES ONLY. REMOVE ON ACTUAL PROJECT
-Route::post('notifications/test', [NotificationController::class, 'create']);
+// for report management if sakto ba
+Route::prefix('admin')->middleware(['auth:sanctum', 'admin'])->group(function () {
+    Route::get('/reports', [ReportController::class, 'index']);
+    Route::patch('/reports/{id}/resolve', [ReportController::class, 'resolve']);
+    Route::delete('/reports/{id}', [ReportController::class, 'destroy']);
+});
 
 
 Route::prefix('timeline')->group(function () {
@@ -159,5 +164,4 @@ Route::prefix('timeline')->group(function () {
     Route::post('/users/{id}/cover-photo', [UserTimelineController::class, 'uploadCoverPhoto'])->middleware('auth:api');
     Route::get('/users/{id}/friends', [UserTimelineController::class, 'getFriends']);
     Route::get('/users/{id}/photos', [UserTimelineController::class, 'getPhotos']);
-    Route::post('/reports', [ReportController::class, 'create']);
 });

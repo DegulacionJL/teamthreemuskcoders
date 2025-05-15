@@ -2,45 +2,65 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\CreateReportRequest;
-use App\Http\Resources\ReportResource;
 use App\Models\Report;
-use Illuminate\Support\Facades\Log;
+use App\Models\Post;
+use Illuminate\Http\Request;
+use App\Http\Resources\ReportResource;
 
 class ReportController extends Controller
 {
     /**
-     * Display a listing of the reports.
+     * Handle a POST request to report a post.
      *
-     * @return \Illuminate\Http\Response
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Post  $post
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function index()
+    public function create(Request $request, Post $post)
     {
-        try {
-            $reports = Report::with('user')->get();
-            return ReportResource::collection($reports);
-        } catch (\Exception $e) {
-            Log::error('Error fetching reports: ' . $e->getMessage());
-            return response()->json(['error' => 'Unable to fetch reports'], 500);
-        }
+        $validated = $request->validate([
+            'reason' => 'required|string|max:255',
+        ]);
+
+        $report = Report::create([
+            'reportable_id' => $post->id,
+            'reportable_type' => Post::class,
+            'user_id' => auth()->id(),
+            'reason' => $validated['reason'],
+            'status' => 'Pending',
+        ]);
+
+        Report::logReportCreation($report); // Optional debug log
+
+        return response()->json(['message' => 'Report submitted successfully.'], 201);
     }
 
     /**
-     * Store a newly created report in storage.
+     * Display a listing of the reports.
      *
-     * @param  \App\Http\Requests\CreateReportRequest  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function create(CreateReportRequest $request)
+    public function index()
     {
-        try {
-            $data = $request->validated();
-            $report = Report::create($data); // Directly create report
-            Report::logReportCreation($report); // Optional logging
-            return new ReportResource($report);
-        } catch (\Exception $e) {
-            Log::error('Error creating report: ' . $e->getMessage());
-            return response()->json(['error' => 'Something went wrong'], 500);
-        }
+        return ReportResource::collection(
+            Report::with('user') // Updated to match model's `user()` method
+                ->orderBy('created_at', 'desc')
+                ->get()
+        );
+    }
+
+    /**
+     * Mark a report as resolved.
+     *
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function resolve($id)
+    {
+        $report = Report::findOrFail($id);
+        $report->status = 'Resolved';
+        $report->save();
+
+        return response()->json(['message' => 'Report marked as resolved.'], 200);
     }
 }

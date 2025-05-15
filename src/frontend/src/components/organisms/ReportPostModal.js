@@ -9,6 +9,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  TextField,
   Typography,
 } from '@mui/material';
 
@@ -39,6 +40,7 @@ const ReportPostConfirmationModal = ({ open, onClose, onConfirm, title, content 
       <DialogContent>
         <Typography variant="body1">{content}</Typography>
       </DialogContent>
+      <TextField />
       <DialogActions>
         <Button onClick={onClose} disabled={isReportPost}>
           Cancel
