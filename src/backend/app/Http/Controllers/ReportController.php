@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Report;
 use App\Models\Post;
 use Illuminate\Http\Request;
-use App\Http\Resources\ReportResource;
 
 class ReportController extends Controller
 {
@@ -19,34 +18,49 @@ class ReportController extends Controller
     public function create(Request $request, Post $post)
     {
         $validated = $request->validate([
-            'reason' => 'required|string|max:255',
+            'reason' => 'nullable|string|max:255',
         ]);
 
-        $report = Report::create([
+        Report::create([
             'reportable_id' => $post->id,
             'reportable_type' => Post::class,
             'user_id' => auth()->id(),
-            'reason' => $validated['reason'],
+            'reason' => $validated['reason'] ?? 'No reason provided',
             'status' => 'Pending',
         ]);
 
-        Report::logReportCreation($report); // Optional debug log
-
-        return response()->json(['message' => 'Report submitted successfully.'], 201);
+        return response()->json([
+            'message' => 'Report submitted successfully.'
+        ], 201);
     }
 
     /**
      * Display a listing of the reports.
      *
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index()
     {
-        return ReportResource::collection(
-            Report::with('user') // Updated to match model's `user()` method
-                ->orderBy('created_at', 'desc')
-                ->get()
-        );
+        $reports = Report::with('user', 'reportable')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($report) {
+                $type = class_basename($report->reportable_type);
+                if ($type === 'Post') {
+                    $type = 'Meme'; // Map Post model to Meme for frontend
+                }
+
+                return [
+                    'id' => $report->id,
+                    'reported_by' => $report->user->name ?? 'Unknown',
+                    'reason' => $report->reason,
+                    'date' => $report->created_at->format('Y-m-d'),
+                    'status' => $report->status,
+                    'type' => $type,
+                ];
+            });
+
+        return response()->json($reports);
     }
 
     /**

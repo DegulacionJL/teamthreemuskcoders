@@ -73,9 +73,9 @@ function MemeFeed() {
   const handleReportPost = async (postId) => {
     try {
       await reportPost(postId);
-      setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
       handleMenuClose();
       fetchLeaderboard(getPeriodFromTab(tabValue));
+      alert('Report submitted successfully.');
     } catch (error) {
       console.error('Failed to report Post: ', error);
       setError('Failed to report Post. Please try again.');

@@ -30,6 +30,7 @@ const ReportManagement = () => {
     axios
       .get('http://localhost:8000/api/reports') // Update if your backend URL/port is different
       .then((response) => {
+        console.log('Reports from API:', response.data);
         setReports(response.data);
       })
       .catch((error) => {
