@@ -1,4 +1,3 @@
-import { useAuth } from 'hooks/useAuth';
 import { Suspense, lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Loader from 'components/atoms/Loader';
@@ -10,10 +9,6 @@ const GuestLayout = lazy(() => import('templates/Guest'));
 const Logout = lazy(() => import('pages/guest/Logout'));
 
 function Router() {
-  const { user } = useAuth({ middleware: 'auth ' });
-
-  if (!user) console.log();
-
   return (
     <Suspense fallback={<Loader />}>
       <Routes>
