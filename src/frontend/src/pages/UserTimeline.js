@@ -35,8 +35,11 @@ import AboutSection from '../components/molecules/timeline/AboutSection';
 import FriendsList from '../components/molecules/timeline/FriendsList';
 import PhotosGrid from '../components/molecules/timeline/PhotosGrid';
 import PostCard from '../components/molecules/timeline/PostCard';
+import CreatePostCard from '../components/organisms/User/CreatePostCard';
 import { useAuth } from '../contexts/AuthContext';
+import { getBatchTotalCommentsCount } from '../services/comment.service';
 import { followUser, isFollowing, unfollowUser } from '../services/follow.service';
+import { createMemePost } from '../services/meme.service';
 import {
   getUserPosts,
   getUserProfile,
@@ -46,6 +49,7 @@ import {
 } from '../services/user.service';
 
 const UserTimeline = () => {
+  const { user } = useAuth({ middleware: 'auth' });
   const { userId } = useParams();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -68,10 +72,16 @@ const UserTimeline = () => {
     firstName: '',
     lastName: '',
   });
+  const [commentCounts, setCommentCounts] = useState({});
+  const [caption, setCaption] = useState('');
+  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [showMemeCreator, setShowMemeCreator] = useState(false);
 
   const { user: currentUser, isAuthenticated } = useAuth();
   const reduxUser = useSelector((state) => state.profile.user);
   const fileRef = useRef(null);
+  const lastFetchedIdsRef = useRef([]);
 
   const handleFileSelect = () => {
     fileRef.current.click();
@@ -132,6 +142,21 @@ const UserTimeline = () => {
     fetchUserData();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [userId, currentUser, isAuthenticated, reduxUser]);
+
+  useEffect(() => {
+    if (posts.length > 0) {
+      const postIds = posts.map((post) => post.id);
+      if (
+        postIds.length !== lastFetchedIdsRef.current.length ||
+        !postIds.every((id, i) => id === lastFetchedIdsRef.current[i])
+      ) {
+        lastFetchedIdsRef.current = postIds;
+        getBatchTotalCommentsCount(postIds).then((counts) => {
+          setCommentCounts(counts);
+        });
+      }
+    }
+  }, [posts]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -218,6 +243,59 @@ const UserTimeline = () => {
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
+    }
+  };
+
+  const handleCommentCountChange = (postId, delta) => {
+    setCommentCounts((prev) => ({
+      ...prev,
+      [postId]: (prev[postId] || 0) + delta,
+    }));
+  };
+
+  const handleMemeCreatorSave = (editedImage, memeCaption) => {
+    const dataURLtoFile = (dataurl, filename) => {
+      const arr = dataurl.split(',');
+      const mime = arr[0].match(/:(.*?);/)?.[1];
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new File([u8arr], filename, { type: mime });
+    };
+    const file = dataURLtoFile(editedImage, 'meme.png');
+    setImage(file);
+    setCaption(memeCaption);
+    setImagePreview(editedImage);
+    setShowMemeCreator(false);
+  };
+
+  const handlePost = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('caption', caption);
+      if (caption) {
+        const hashtags = caption.match(/#\w+/g) || [];
+        formData.append('hashtag', JSON.stringify(hashtags));
+      }
+      if (image) {
+        formData.append('image', image);
+      }
+      // Optionally add user_id if needed by your backend
+      // formData.append('user_id', currentUser.id);
+      await createMemePost(formData);
+      setCaption('');
+      setImage(null);
+      setImagePreview(null);
+      setShowMemeCreator(false);
+      // Refresh posts
+      const postsData = await getUserPosts(userId);
+      setPosts(postsData.posts || []);
+      toast.success('Post created!');
+    } catch (error) {
+      toast.error('Failed to create post');
     }
   };
 
@@ -315,7 +393,7 @@ const UserTimeline = () => {
         {/* Profile Avatar */}
         <Box sx={{ position: 'relative' }}>
           <Avatar
-            src={profile?.avatar}
+            src={user.avatar}
             sx={{
               width: isMobile ? 120 : 180,
               height: isMobile ? 120 : 180,
@@ -323,6 +401,7 @@ const UserTimeline = () => {
               boxShadow: theme.shadows[3],
             }}
           />
+
           {isCurrentUser && (
             <>
               <input
@@ -535,29 +614,31 @@ const UserTimeline = () => {
           {activeTab === 0 && (
             <Box>
               {isCurrentUser && (
-                <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Avatar src={profile?.avatar} sx={{ mr: 2 }} />
-                    <Button
-                      variant="outlined"
-                      fullWidth
-                      sx={{
-                        justifyContent: 'flex-start',
-                        textTransform: 'none',
-                        py: 1.5,
-                        borderRadius: 10,
-                        color: 'text.secondary',
-                      }}
-                      onClick={() => navigate('/create-post')}
-                    >
-                      What&apos;s on your mind?
-                    </Button>
-                  </Box>
-                </Paper>
+                <CreatePostCard
+                  currentUser={currentUser}
+                  caption={caption}
+                  setCaption={setCaption}
+                  imagePreview={imagePreview}
+                  setImagePreview={setImagePreview}
+                  setImage={setImage}
+                  showMemeCreator={showMemeCreator}
+                  setShowMemeCreator={setShowMemeCreator}
+                  handlePost={handlePost}
+                  handleMemeCreatorSave={handleMemeCreatorSave}
+                  sx={{ mb: 3 }}
+                />
               )}
 
               {posts.length > 0 ? (
-                posts.map((post) => <PostCard key={post.id} post={post} />)
+                posts.map((post) => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    loggedInUser={currentUser}
+                    totalCommentsCount={commentCounts[post.id] || 0}
+                    onCommentCountChange={handleCommentCountChange}
+                  />
+                ))
               ) : (
                 <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 2 }}>
                   <Typography variant="h6" color="text.secondary">

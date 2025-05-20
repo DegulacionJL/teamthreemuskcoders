@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Events\NotificationCreated;
 use App\Models\Notification;
+use Illuminate\Support\Facades\DB;
 
 class CommentService
 {
@@ -25,61 +26,65 @@ class CommentService
      */
     public function getComments($postId, $perPage = 5, $page = 1)
     {
-        $repliesPerPage = 3; // Define the number of replies per page
+        $repliesPerPage = 3;
 
+        // Fetch paginated top-level comments with user only
         $commentsQuery = Comment::where('post_id', $postId)
             ->whereNull('parent_id')
-            ->with([
-                'user',
-                'replies' => function ($query) use ($repliesPerPage) {
-                    $query->with('user')
-                        ->orderBy('created_at', 'asc')
-                        ->take($repliesPerPage); // Strictly limit to 3 replies
-                },
-            ])
+            ->with('user')
             ->orderBy('created_at', 'asc');
 
         $comments = $commentsQuery->paginate($perPage, ['*'], 'page', $page);
 
-        // Fetch likes for all comments and replies in one go
+        // Collect comment IDs and prepare replyId container
         $commentIds = $comments->pluck('id')->toArray();
         $replyIds = [];
+
+        // Manually fetch and attach replies per comment
         foreach ($comments as $comment) {
-            $replyIds = array_merge($replyIds, $comment->replies->pluck('id')->toArray());
-        }
-        $allCommentIds = array_merge($commentIds, $replyIds);
+            $replies = Comment::where('parent_id', $comment->id)
+                ->with('user')
+                ->orderBy('created_at', 'asc')
+                ->take($repliesPerPage)
+                ->get();
 
-        $likesData = CommentLike::whereIn('comment_id', $allCommentIds)
-            ->select('comment_id', \DB::raw('count(*) as like_count'))
-            ->groupBy('comment_id')
-            ->get()
-            ->pluck('like_count', 'comment_id')
-            ->toArray();
+            $replyIds = array_merge($replyIds, $replies->pluck('id')->toArray());
+            $comment->setRelation('replies', $replies);
 
-        $userId = Auth::check() ? Auth::id() : null;
-        $userLikes = $userId ? CommentLike::whereIn('comment_id', $allCommentIds)
-            ->where('user_id', $userId)
-            ->pluck('comment_id')
-            ->toArray() : [];
-
-        // Attach likes and reply pagination metadata to comments
-        foreach ($comments as $comment) {
-            $comment->like_count = $likesData[$comment->id] ?? 0;
-            $comment->user_has_liked = in_array($comment->id, $userLikes);
-
-            // Calculate total replies for this comment
             $totalReplies = Comment::where('parent_id', $comment->id)->count();
-
-            // Ensure only 3 replies are attached
-            $comment->setRelation('replies', $comment->replies->take($repliesPerPage));
-
-            // Set pagination metadata for replies
             $comment->replies_pagination = [
                 'total' => $totalReplies,
                 'per_page' => min($repliesPerPage, $totalReplies),
                 'current_page' => 1,
                 'has_more' => $totalReplies > $repliesPerPage,
             ];
+        }
+
+        // Combine comment and reply IDs for like aggregation
+        $allCommentIds = array_merge($commentIds, $replyIds);
+
+        // Fetch like counts
+        $likesData = CommentLike::whereIn('comment_id', $allCommentIds)
+            ->select('comment_id', DB::raw('count(*) as like_count'))
+            ->groupBy('comment_id')
+            ->get()
+            ->pluck('like_count', 'comment_id')
+            ->toArray();
+
+        // Fetch user likes if logged in
+        $user = Auth::guard('api')->user();
+        $userId = $user ? $user->id : null;
+        $userLikes = $userId
+            ? CommentLike::whereIn('comment_id', $allCommentIds)
+                ->where('user_id', $userId)
+                ->pluck('comment_id')
+                ->toArray()
+            : [];
+
+        // Attach like data
+        foreach ($comments as $comment) {
+            $comment->like_count = $likesData[$comment->id] ?? 0;
+            $comment->user_has_liked = in_array($comment->id, $userLikes);
 
             foreach ($comment->replies as $reply) {
                 $reply->like_count = $likesData[$reply->id] ?? 0;
@@ -94,6 +99,7 @@ class CommentService
             'total_with_replies' => $totalWithReplies,
         ];
     }
+
 
     /**
      * Get paginated replies for a comment.
@@ -118,13 +124,14 @@ class CommentService
         // Fetch likes for replies
         $replyIds = $replies->pluck('id')->toArray();
         $likesData = CommentLike::whereIn('comment_id', $replyIds)
-            ->select('comment_id', \DB::raw('count(*) as like_count'))
+            ->select('comment_id', DB::raw('count(*) as like_count'))
             ->groupBy('comment_id')
             ->get()
             ->pluck('like_count', 'comment_id')
             ->toArray();
 
-        $userId = Auth::check() ? Auth::id() : null;
+        $user = Auth::guard('api')->user();
+        $userId = $user ? $user->id : null;
         $userLikes = $userId ? CommentLike::whereIn('comment_id', $replyIds)
             ->where('user_id', $userId)
             ->pluck('comment_id')
@@ -423,13 +430,13 @@ class CommentService
     }
 
     /**
- * Get total comments count (including replies) for a post.
- *
- * @param int $postId
- * @return int
- */
-public function getTotalCommentsCount($postId)
-{
-    return Comment::where('post_id', $postId)->count();
-}
+     * Get total comments count (including replies) for a post.
+     *
+     * @param int $postId
+     * @return int
+     */
+    public function getTotalCommentsCount($postId)
+    {
+        return Comment::where('post_id', $postId)->count();
+    }
 }

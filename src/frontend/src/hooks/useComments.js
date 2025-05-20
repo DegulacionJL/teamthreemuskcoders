@@ -10,7 +10,7 @@ import {
   updateComment, // Add the missing import
 } from 'services/comment.service';
 
-export const useComments = (postId) => {
+export const useComments = (postId, { fetchCountOnMount = true, onCommentCountChange } = {}) => {
   const [comments, setComments] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [totalCommentsCount, setTotalCommentsCount] = useState(0);
@@ -137,28 +137,30 @@ export const useComments = (postId) => {
 
   // Fetch total comment count on mount
   useEffect(() => {
-    fetchTotalCommentsCount();
-  }, [fetchTotalCommentsCount]);
+    if (fetchCountOnMount) fetchTotalCommentsCount();
+  }, [fetchTotalCommentsCount, fetchCountOnMount]);
 
   const handleAddComment = useCallback(
-    async (text, image) => {
+    async (text, image, onCountChange) => {
       if (!text.trim() && !image) return;
       setIsLoading(true);
       try {
         await addComment(postId, text, image);
         await fetchComments(1);
-        await fetchTotalCommentsCount(); // Update total count after adding a comment
+        if (onCountChange) onCountChange(postId, 1);
+        else if (onCommentCountChange) onCommentCountChange(postId, 1);
+        else await fetchTotalCommentsCount();
       } catch (error) {
         console.error('Error adding comment:', error);
       } finally {
         setIsLoading(false);
       }
     },
-    [postId, fetchComments, fetchTotalCommentsCount]
+    [postId, fetchComments, fetchTotalCommentsCount, onCommentCountChange]
   );
 
   const handleAddReply = useCallback(
-    async (parentId, text, image) => {
+    async (parentId, text, image, onCountChange) => {
       if (!text.trim() && !image) return;
       setIsLoading(true);
       try {
@@ -170,7 +172,9 @@ export const useComments = (postId) => {
         await addComment(postId, text, image, finalParentId);
         setReplyToComment(null);
         await fetchComments(1);
-        await fetchTotalCommentsCount(); // Update total count after adding a reply
+        if (onCountChange) onCountChange(postId, 1);
+        else if (onCommentCountChange) onCommentCountChange(postId, 1);
+        else await fetchTotalCommentsCount();
         setReplyPages((prev) => ({ ...prev, [finalParentId]: 1 }));
       } catch (error) {
         console.error('Error adding reply:', error);
@@ -180,7 +184,7 @@ export const useComments = (postId) => {
         setIsLoading(false);
       }
     },
-    [postId, comments, fetchComments, fetchTotalCommentsCount]
+    [postId, comments, fetchComments, fetchTotalCommentsCount, onCommentCountChange]
   );
 
   const confirmDeleteComment = useCallback((commentId) => {
@@ -188,22 +192,27 @@ export const useComments = (postId) => {
     setIsDeleteModalOpen(true);
   }, []);
 
-  const handleDeleteComment = useCallback(async () => {
-    if (!commentToDelete) return;
-    setIsLoading(true);
-    try {
-      await deleteComment(postId, commentToDelete);
-      await fetchComments(1);
-      await fetchTotalCommentsCount(); // Update total count after deleting a comment
-      setReplyPages({});
-    } catch (error) {
-      console.error('Error deleting comment:', error);
-    } finally {
-      setCommentToDelete(null);
-      setIsDeleteModalOpen(false);
-      setIsLoading(false);
-    }
-  }, [postId, commentToDelete, fetchComments, fetchTotalCommentsCount]);
+  const handleDeleteComment = useCallback(
+    async (onCountChange) => {
+      if (!commentToDelete) return;
+      setIsLoading(true);
+      try {
+        await deleteComment(postId, commentToDelete);
+        await fetchComments(1);
+        if (onCountChange) onCountChange(postId, -1);
+        else if (onCommentCountChange) onCommentCountChange(postId, -1);
+        else await fetchTotalCommentsCount();
+        setReplyPages({});
+      } catch (error) {
+        console.error('Error deleting comment:', error);
+      } finally {
+        setCommentToDelete(null);
+        setIsDeleteModalOpen(false);
+        setIsLoading(false);
+      }
+    },
+    [postId, commentToDelete, fetchComments, fetchTotalCommentsCount, onCommentCountChange]
+  );
 
   const handleEditCommentClick = useCallback((comment) => {
     setEditingCommentId(comment.id);

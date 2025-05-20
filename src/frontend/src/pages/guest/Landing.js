@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Box, Button as Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import ButtonRound from 'components/atoms/ButtonRound';
 import Feature from 'components/atoms/Feature';
 import HeroImage from 'components/atoms/HeroImage';
@@ -32,26 +32,6 @@ function Landing() {
     },
   ];
 
-  // {
-  //   /** dummy client data */
-  // }
-  // const clients = [...Array(6)].map((item, index) => {
-  //   index++;
-  //   return {
-  //     name: `Client ${index}`,
-  //     logo: `/static/images/client-logo-${index}.png`,
-  //   };
-  // });
-
-  // {
-  //   /** dummy reviews data */
-  // }
-  // const reviews = [...Array(9)].map(() => ({
-  //   avatar: faker.image.people(120, 120, true),
-  //   name: `${faker.name.firstName()} ${faker.name.lastName()}`,
-  //   comment: faker.lorem.words(15),
-  //   rating: Math.random() * (5 - 1) + 1,
-  // }));
   return (
     <>
       <Seo

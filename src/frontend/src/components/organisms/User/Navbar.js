@@ -1,5 +1,6 @@
+import { useAuth } from 'hooks/useAuth';
 import PropTypes from 'prop-types';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
@@ -24,8 +25,9 @@ import NotificationIcon from 'components/molecules/NotificationIcon';
 import SearchComponent from 'components/molecules/SearchBox';
 import { useTheme } from '../../../theme/ThemeContext';
 
-function Navbar(props) {
-  const { user = null } = props;
+function Navbar() {
+  const { user } = useAuth({ middleware: 'auth' });
+  // const user = useSelector((state) => state.profile.user);
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -53,6 +55,15 @@ function Navbar(props) {
     { label: t('menu.profile'), url: '/profile' },
     { label: t('menu.logout'), url: '/logout' },
   ];
+
+  const [avatarKey, setAvatarKey] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      console.log('user.avatar changed:', user?.avatar);
+      setAvatarKey((prev) => prev + 1);
+    }
+  }, [user]);
 
   return (
     <AppBar
@@ -210,7 +221,7 @@ function Navbar(props) {
           {user ? (
             <Fragment>
               <NotificationIcon user={user} />
-              <AvatarNavDropdown user={user} links={links} />
+              <AvatarNavDropdown key={avatarKey} user={user} links={links} />
             </Fragment>
           ) : (
             <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>

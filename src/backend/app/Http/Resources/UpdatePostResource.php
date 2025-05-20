@@ -23,8 +23,8 @@ class UpdatePostResource extends JsonResource
                     'id' => $this->user->id,
                     'name' => $this->user->name ?? 'Unknown User', 
                      ],
-            'created_at' => $this->created_at->format('y-m-d H:i:s'),
-            'updated_at' => $this->updated_at->format('y-m-d H:i:s'),
+            'created_at' => $this->created_at->toIso8601String(),
+            'updated_at' => $this->updated_at->toIso8601String(),
            
         ];
     }

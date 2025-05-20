@@ -5,29 +5,24 @@ import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import { Box, Button, CircularProgress, Fade, Popper, Typography } from '@mui/material';
 import AnimatedEmoji from '../../atoms/animation/AnimatedEmoji';
 
-const CommentReactions = ({ commentId, isDarkMode, onReactionChange }) => {
+const CommentReactions = ({
+  commentId,
+  isDarkMode,
+  onReactionChange,
+  initialLikeCount = 0,
+  initialHasReacted = false,
+}) => {
   const [showReactions, setShowReactions] = useState(false);
-  const [hasReacted, setHasReacted] = useState(() => {
-    const storedReaction = localStorage.getItem(`comment_reaction_${commentId}`);
-    return storedReaction === '😂';
-  });
-  const [likeCount, setLikeCount] = useState(() => {
-    const storedCount = localStorage.getItem(`comment_like_count_${commentId}`);
-    return storedCount ? parseInt(storedCount, 10) : 0;
-  });
+  const [hasReacted, setHasReacted] = useState(initialHasReacted);
+  const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [isInitializing] = useState(false);
   const likeButtonRef = useRef(null);
 
   useEffect(() => {
-    // Initialize from localStorage only, no initial fetch to reduce requests
-    setIsInitializing(true);
-    const storedReaction = localStorage.getItem(`comment_reaction_${commentId}`);
-    const storedCount = localStorage.getItem(`comment_like_count_${commentId}`);
-    setHasReacted(storedReaction === '😂');
-    setLikeCount(storedCount ? parseInt(storedCount, 10) : 0);
-    setIsInitializing(false);
-  }, [commentId]);
+    setHasReacted(initialHasReacted);
+    setLikeCount(initialLikeCount);
+  }, [initialHasReacted, initialLikeCount, commentId]);
 
   useEffect(() => {
     if (onReactionChange && !isInitializing) {
@@ -170,6 +165,8 @@ CommentReactions.propTypes = {
   commentId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   isDarkMode: PropTypes.bool.isRequired,
   onReactionChange: PropTypes.func,
+  initialLikeCount: PropTypes.number,
+  initialHasReacted: PropTypes.bool,
 };
 
 export default CommentReactions;

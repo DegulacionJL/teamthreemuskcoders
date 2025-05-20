@@ -13,6 +13,7 @@ import {
   CardContent,
   CardHeader,
   CardMedia,
+  Divider,
   IconButton,
   Menu,
   MenuItem,
@@ -45,6 +46,10 @@ const MemePost = ({
   darkMode,
   onUserNameClick,
   postUserId,
+  totalCommentsCount,
+  onCommentCountChange,
+  initialLikeCount = 0,
+  initialHasReacted = false,
 }) => {
   const theme = useTheme();
   const { darkMode: contextDarkMode } = useCustomTheme();
@@ -55,15 +60,14 @@ const MemePost = ({
   const [currentImage, setCurrentImage] = useState(image);
   const [isPostDeleteModalOpen, setIsPostDeleteModalOpen] = useState(false);
   const [isReportPostModalOpen, setIsReportPostModalOpen] = useState(false);
-  const [reactionType, setReactionType] = useState(null);
-  const [likeCount, setLikeCount] = useState(0);
+  const [reactionType, setReactionType] = useState(initialHasReacted ? '😂' : null);
+  const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [showComments, setShowComments] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   const {
     comments,
     isLoading: commentsLoading,
-    totalCommentsCount,
     hasMore,
     editingCommentId,
     editingCommentText,
@@ -94,7 +98,7 @@ const MemePost = ({
     handleLoadMore,
     handleLoadMoreReplies,
     handleCommentReactionChange,
-  } = useComments(id);
+  } = useComments(id, { fetchCountOnMount: false, onCommentCountChange });
 
   const isDarkMode = darkMode !== undefined ? darkMode : contextDarkMode;
 
@@ -323,51 +327,51 @@ const MemePost = ({
         onReactionChange={handleReactionChange}
         initialReactionType={reactionType}
         initialReactionCount={likeCount}
+        totalCommentsCount={totalCommentsCount}
+        onCommentCountChange={onCommentCountChange}
       />
 
-      <CardActions disableSpacing sx={{ p: 0 }}>
+      {/* Counts bar (Laugh and Comments) */}
+      <Box sx={{ px: 2, py: 1, display: 'flex', justifyContent: 'space-between' }}>
+        <Typography variant="body2" color="text.secondary">
+          {likeCount > 0 && (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <span role="img" aria-label="laughing emoji" style={{ marginRight: '4px' }}>
+                😂
+              </span>
+              {likeCount}
+            </Box>
+          )}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {totalCommentsCount > 0 && (
+            <>
+              {totalCommentsCount} {totalCommentsCount === 1 ? 'comment' : 'comments'}
+            </>
+          )}
+        </Typography>
+      </Box>
+
+      <Divider />
+
+      <CardActions sx={{ justifyContent: 'space-around', px: 2 }}>
         <PostReaction
           postId={id}
           isDarkMode={isDarkMode}
           onReactionChange={handleReactionChange}
           initialReactionType={reactionType}
+          initialLikeCount={likeCount}
+          initialHasReacted={initialHasReacted}
         />
         <Button
           startIcon={<ChatBubbleOutline />}
           size="small"
           onClick={handleToggleComments}
-          sx={{ color: theme.palette.text.secondary }}
+          sx={{ color: theme.palette.text.secondary, textTransform: 'none' }}
         >
-          Comments {totalCommentsCount > 0 && `(${totalCommentsCount})`}
+          Comment{totalCommentsCount > 0 ? ` (${totalCommentsCount})` : ''}
         </Button>
       </CardActions>
-
-      <Box
-        sx={{
-          px: 0,
-          pb: 0,
-          mt: 0,
-          display: 'flex',
-          alignItems: 'center',
-          mx: 1,
-        }}
-      >
-        {likeCount > 0 && (
-          <Typography
-            variant="caption"
-            sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', py: 0 }}
-          >
-            <span
-              role="img"
-              aria-label="laughing emoji"
-              style={{ marginRight: '4px', fontSize: '16px' }}
-            >
-              😂
-            </span>
-            {likeCount}
-          </Typography>
-        )}
-      </Box>
 
       {showComments && (
         <CommentFeature
@@ -403,6 +407,7 @@ const MemePost = ({
           handleLoadMore={handleLoadMore}
           handleLoadMoreReplies={handleLoadMoreReplies}
           handleCommentReactionChange={handleCommentReactionChange}
+          onCommentCountChange={onCommentCountChange}
         />
       )}
 
@@ -456,6 +461,10 @@ MemePost.propTypes = {
   darkMode: PropTypes.bool,
   onUserNameClick: PropTypes.func,
   postUserId: PropTypes.number,
+  totalCommentsCount: PropTypes.number,
+  onCommentCountChange: PropTypes.func,
+  initialLikeCount: PropTypes.number,
+  initialHasReacted: PropTypes.bool,
 };
 
 export default MemePost;

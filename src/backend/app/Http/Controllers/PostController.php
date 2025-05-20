@@ -320,29 +320,25 @@ class PostController extends Controller
         }
     }
 
-    public function searchPosts(Request $request): JsonResponse
+    /**
+     * Batch endpoint: Get top meme and leaderboard for all periods
+     */
+    public function getAllTopMemesAndLeaderboards(Request $request)
     {
         try {
-            $keyword = $request->get('keyword', '');
-            $queryParams = $request->all(); // Get additional query parameters like pagination
-
-            $posts = $this->postService->searchPostsByKeyword($keyword, $queryParams);
-
-            return response()->json([
-                'meta' => $posts['meta'],
-                'data' => $posts['data'],
-            ]);
+            $periods = ['daily', 'weekly', 'monthly'];
+            $result = [];
+            foreach ($periods as $period) {
+                // Use the service directly to avoid double response wrapping
+                $result[$period] = $this->postService->getTopMemeAndLeaderboard($period);
+            }
+            return response()->json($result);
         } catch (Exception $e) {
-            Log::error('Error fetching posts by keyword: ' . $e->getMessage());
-
             return response()->json([
-                'error' => 'Failed to fetch posts by keyword',
+                'error' => 'Failed to fetch all top memes and leaderboards',
                 'message' => $e->getMessage(),
             ], 500);
         }
     }
-
-   
-    
 
 }

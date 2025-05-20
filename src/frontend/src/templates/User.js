@@ -1,6 +1,7 @@
+// import { useAuth } from 'hooks/useAuth';
 import { useCallback, useEffect } from 'react';
 import { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { logout } from 'services/auth';
 import { setProfile } from 'store/slices/profileSlice';
@@ -58,7 +59,8 @@ export default function User() {
   const [open, setOpen] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user = useSelector((state) => state.profile.user);
+  // const user = useSelector((state) => state.profile.user);
+  // const { user } = useAuth({ middleware: 'auth' });
   const toggleDrawer = () => setOpen(!open);
 
   const handleLogout = async () => {
@@ -98,11 +100,10 @@ export default function User() {
 
     debouncedFetchProfile(); // Fetch if no valid cache
   }, [debouncedFetchProfile, dispatch]);
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
       <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100vh' }}>
-        <Navbar open={open} onToggle={toggleDrawer} onLogout={handleLogout} user={user} />
+        <Navbar open={open} onToggle={toggleDrawer} onLogout={handleLogout} />
 
         <Box sx={{ display: 'flex', flexGrow: 1 }}>
           {/* Main content (Outlet will load here) */}

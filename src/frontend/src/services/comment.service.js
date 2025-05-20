@@ -107,6 +107,13 @@ const getTotalCommentsCount = async (postId) => {
   return await req;
 };
 
+const getBatchTotalCommentsCount = async (postIds) => {
+  const req = api
+    .post('/posts/comments/total-counts', { post_ids: postIds })
+    .then(({ data }) => data.counts);
+  return await req;
+};
+
 export {
   getComments,
   getReplies,
@@ -118,4 +125,5 @@ export {
   getCommentLikes,
   reportComment,
   getTotalCommentsCount,
+  getBatchTotalCommentsCount,
 };

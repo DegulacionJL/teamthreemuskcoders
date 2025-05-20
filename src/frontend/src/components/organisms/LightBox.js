@@ -1,7 +1,6 @@
-// LightBox.js
 import { useComments } from 'hooks/useComments';
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { ChatBubbleOutline, Close as CloseIcon } from '@mui/icons-material';
 import { Avatar, Box, Button, IconButton, Typography, useTheme } from '@mui/material';
 import CommentFeature from 'components/organisms/CommentFeature';
@@ -20,15 +19,17 @@ export default function LightBox({
   onReactionChange,
   initialReactionType,
   initialReactionCount,
+  totalCommentsCount,
+  onCommentCountChange,
 }) {
   const theme = useTheme();
   const isDarkMode = darkMode !== undefined ? darkMode : theme.palette.mode === 'dark';
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(true);
+  const hasFetchedComments = useRef(false);
 
   const {
     comments,
     isLoading: commentsLoading,
-    totalCommentsCount,
     hasMore,
     editingCommentId,
     editingCommentText,
@@ -57,7 +58,18 @@ export default function LightBox({
     handleLoadMore,
     handleLoadMoreReplies,
     handleCommentReactionChange,
-  } = useComments(postId);
+    fetchComments,
+  } = useComments(postId, {
+    fetchCountOnMount: false,
+    onCommentCountChange,
+  });
+
+  // Fetch comments when LightBox opens
+  React.useEffect(() => {
+    if (isOpen && !hasFetchedComments.current) {
+      fetchComments(1);
+    }
+  }, [isOpen, fetchComments]);
 
   if (!isOpen) {
     return null;
@@ -75,7 +87,13 @@ export default function LightBox({
   };
 
   const handleToggleComments = () => {
-    setShowComments((prev) => !prev);
+    setShowComments((prev) => {
+      const newValue = !prev;
+      if (newValue && !hasFetchedComments.current) {
+        fetchComments(1);
+      }
+      return newValue;
+    });
   };
 
   return (
@@ -240,6 +258,7 @@ export default function LightBox({
                 handleLoadMore={handleLoadMore}
                 handleLoadMoreReplies={handleLoadMoreReplies}
                 handleCommentReactionChange={handleCommentReactionChange}
+                onCommentCountChange={onCommentCountChange}
               />
             </Box>
           )}
@@ -265,4 +284,6 @@ LightBox.propTypes = {
   onReactionChange: PropTypes.func,
   initialReactionType: PropTypes.string,
   initialReactionCount: PropTypes.number,
+  totalCommentsCount: PropTypes.number,
+  onCommentCountChange: PropTypes.func,
 };

@@ -150,7 +150,8 @@ const CommentItem = ({
             commentId={comment.id}
             isDarkMode={false}
             onReactionChange={onReactionChange}
-            initialReactionType={comment.reactionType}
+            initialLikeCount={comment.like_count}
+            initialHasReacted={comment.user_has_liked}
           />
           {replyToComment !== comment.id && !isMaxDepthReached && (
             <Button

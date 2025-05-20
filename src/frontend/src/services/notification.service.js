@@ -13,4 +13,9 @@ const markNotificationSeen = async (id) => {
   return await req;
 };
 
-export { searchNotifications, markNotificationSeen };
+const clearNotifications = async () => {
+  // Use your api instance for consistency and auth
+  return api.delete('/notifications/clear-all');
+};
+
+export { searchNotifications, markNotificationSeen, clearNotifications };

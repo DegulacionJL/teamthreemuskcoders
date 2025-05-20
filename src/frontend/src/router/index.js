@@ -1,25 +1,36 @@
-import { useAuth } from 'hooks/useAuth';
 import { Suspense, lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Loader from 'components/atoms/Loader';
 import routes from './routes';
 
-function Router() {
-  const { user } = useAuth({ middleware: 'auth' });
-  const AdminLayout = lazy(() => import('templates/Authenticated'));
-  const UserLayout = lazy(() => import('templates/User'));
-  const Logout = lazy(() => import('pages/guest/Logout'));
+const AdminLayout = lazy(() => import('templates/Authenticated'));
+const UserLayout = lazy(() => import('templates/User'));
+const GuestLayout = lazy(() => import('templates/Guest'));
+const Logout = lazy(() => import('pages/guest/Logout'));
 
+function Router() {
   return (
     <Suspense fallback={<Loader />}>
       <Routes>
         {routes.map((route, i) => {
           const Page = lazy(() => import(`../${route.component}`));
-          const layout = route.auth ? <AdminLayout /> : <UserLayout navbar={route.navbar} />;
+
+          let Layout;
+          if (route.auth) {
+            if (route.layout === 'Admin') {
+              Layout = AdminLayout;
+            } else if (route.layout === 'User') {
+              Layout = UserLayout;
+            } else {
+              Layout = AdminLayout; // default to admin if not specified
+            }
+          } else {
+            Layout = GuestLayout;
+          }
 
           return (
-            <Route key={i} element={layout}>
-              <Route exact path={route.path} element={<Page />} />
+            <Route key={i} element={<Layout />}>
+              <Route path={route.path} element={<Page />} />
             </Route>
           );
         })}

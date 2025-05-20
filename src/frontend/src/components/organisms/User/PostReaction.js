@@ -31,7 +31,6 @@ const PostReaction = ({
   postId,
   isDarkMode,
   onReactionChange,
-  initialReactionType,
   initialLikeCount = 0,
   initialHasReacted = false,
 }) => {
@@ -39,37 +38,14 @@ const PostReaction = ({
   const [hasReacted, setHasReacted] = useState(initialHasReacted);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
   const likeButtonRef = useRef(null);
-
-  // Initialize state from props and localStorage
-  useEffect(() => {
-    setIsInitializing(true);
-    // Load from localStorage if available, otherwise use props
-    const storedReaction = localStorage.getItem(`post_reaction_${postId}`);
-    const storedLikeCount = localStorage.getItem(`post_like_count_${postId}`);
-
-    const hasReactedFromStorage = storedReaction === (initialReactionType || '😂');
-    setHasReacted(hasReactedFromStorage || initialHasReacted);
-    setLikeCount(storedLikeCount ? Number.parseInt(storedLikeCount, 10) : initialLikeCount);
-
-    // Update localStorage with initial values if not present
-    if (!storedReaction && initialHasReacted) {
-      localStorage.setItem(`post_reaction_${postId}`, initialReactionType || '😂');
-    }
-    if (!storedLikeCount) {
-      localStorage.setItem(`post_like_count_${postId}`, initialLikeCount.toString());
-    }
-
-    setIsInitializing(false);
-  }, [postId, initialReactionType, initialLikeCount, initialHasReacted]);
 
   // Notify parent component when like count changes
   useEffect(() => {
-    if (onReactionChange && !isInitializing) {
+    if (onReactionChange) {
       onReactionChange(postId, hasReacted, hasReacted ? '😂' : null, likeCount);
     }
-  }, [postId, hasReacted, likeCount, onReactionChange, isInitializing]);
+  }, [postId, hasReacted, likeCount, onReactionChange]);
 
   const handleReaction = useCallback(async () => {
     if (isLoading || hasReacted) return;
@@ -154,11 +130,18 @@ const PostReaction = ({
         sx={{
           color: hasReacted ? 'primary.main' : 'text.secondary',
           fontWeight: hasReacted ? 'bold' : 'normal',
+          backgroundColor: hasReacted
+            ? isDarkMode
+              ? 'rgba(40, 40, 40, 0.15)'
+              : 'rgba(25, 118, 210, 0.08)'
+            : 'inherit',
+          borderRadius: 2,
+          transition: 'background-color 0.2s, color 0.2s',
         }}
         onMouseEnter={() => !hasReacted && !isLoading && setShowReactions(true)}
         onMouseLeave={() => setTimeout(() => setShowReactions(false), 300)}
         onClick={handleToggleReaction}
-        disabled={isLoading || isInitializing}
+        disabled={isLoading}
       >
         {hasReacted ? 'Laugh' : 'Laugh'} {likeCount > 0 && `(${likeCount})`}
       </Button>
@@ -219,7 +202,6 @@ PostReaction.propTypes = {
   postId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   isDarkMode: PropTypes.bool.isRequired,
   onReactionChange: PropTypes.func,
-  initialReactionType: PropTypes.string,
   initialLikeCount: PropTypes.number,
   initialHasReacted: PropTypes.bool,
 };

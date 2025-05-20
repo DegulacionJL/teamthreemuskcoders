@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class PostService
 {
@@ -103,7 +104,7 @@ class PostService
 
     public function getPosts($page = 1)
     {
-        $currentUser = Auth::user();
+        $currentUser = Auth::guard('api')->user();
         
         // Fetch posts with pagination, including related user and image data
         $posts = Post::with('user', 'image')
@@ -334,20 +335,20 @@ class PostService
                 throw new Exception('Invalid period specified. Use "daily", "weekly", or "monthly".');
             }
 
-            // Fetch the top post with the most likes within the time range
+            // Fetch the top post with the most likes for posts created in the period
             $topPost = Post::select('posts.id', 'posts.caption', 'posts.user_id')
                 ->with(['user' => function ($query) {
                     $query->select('id', 'first_name', 'last_name', 'avatar');
                 }, 'image'])
                 ->leftJoin('likes', 'posts.id', '=', 'likes.post_id')
-                ->whereBetween('likes.created_at', [$startDate, $endDate])
+                ->whereBetween('posts.created_at', [$startDate, $endDate])
                 ->groupBy('posts.id', 'posts.caption', 'posts.user_id')
                 ->selectRaw('COUNT(likes.id) as laugh_votes')
                 ->orderByDesc('laugh_votes')
                 ->first();
 
             // Format the top post response
-            $topPostResult = $topPost ? [
+            $topPostResult = ($topPost && (int) $topPost->laugh_votes > 0) ? [
                 'id' => $topPost->id,
                 'caption' => $topPost->caption,
                 'image' => $topPost->image ? asset('storage/images/' . basename($topPost->image->image_path)) : null,
@@ -357,38 +358,42 @@ class PostService
                 'is_king' => true
             ] : null;
 
-            // Fetch leaderboard (top 3 users by total likes)
-            $leaderboard = Like::select('posts.user_id')
-                ->selectRaw('users.first_name, users.last_name, COUNT(*) as total_likes')
-                ->join('posts', 'likes.post_id', '=', 'posts.id')
+            // Fetch leaderboard (top 3 users by total likes on posts created in the period) - robust SQL version
+            $leaderboard = DB::table('posts')
                 ->join('users', 'posts.user_id', '=', 'users.id')
-                ->whereBetween('likes.created_at', [$startDate, $endDate])
+                ->leftJoin('likes', 'posts.id', '=', 'likes.post_id')
+                ->whereBetween('posts.created_at', [$startDate, $endDate])
                 ->groupBy('posts.user_id', 'users.first_name', 'users.last_name')
-                ->orderByDesc('total_likes')
-                ->take(3)
-                ->get();
-
-            // Format the leaderboard response
-            $leaderboardResult = $leaderboard->map(function ($item, $index) {
-                return [
-                    'id' => $item->user_id,
-                    'name' => trim("{$item->first_name} {$item->last_name}"),
-                    'points' => (int) $item->total_likes,
-                    'rank' => $index + 1,
-                ];
-            })->toArray();
+                ->select(
+                    'posts.user_id as id',
+                    DB::raw("CONCAT(users.first_name, ' ', users.last_name) as name"),
+                    DB::raw('COUNT(likes.id) as points')
+                )
+                ->having('points', '>', 0)
+                ->orderByDesc('points')
+                ->limit(3)
+                ->get()
+                ->map(function ($item, $index) {
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->name,
+                        'points' => (int) $item->points,
+                        'rank' => $index + 1,
+                    ];
+                })
+                ->toArray();
 
             // Log the query result for debugging
             Log::info("Top Meme and Leaderboard query for period {$period}: ", [
                 'startDate' => $startDate,
                 'endDate' => $endDate,
                 'topPost' => $topPostResult,
-                'leaderboard' => $leaderboardResult,
+                'leaderboard' => $leaderboard,
             ]);
 
             return [
                 'top_post' => $topPostResult,
-                'leaderboard' => $leaderboardResult,
+                'leaderboard' => $leaderboard,
                 'period' => $period,
             ];
         } catch (\Exception $e) {
