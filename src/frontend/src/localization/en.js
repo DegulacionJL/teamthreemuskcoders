@@ -45,7 +45,22 @@ const en = {
       notifications: 'Notifications',
       noNotifications: 'No new notifications.',
       newNotification: 'You have a new notification.',
+      search: 'Search...',
     },
+
+    search: {
+      all: 'All',
+      users: 'Users',
+      posts: 'Posts',
+      hashtags: 'Hashtags',
+      noResults: 'No results found.',
+      recent: 'Recent Searches',
+      noRecent: 'No recent searches.',
+      resultsFor: 'Results for',
+      filters: 'Filters',
+      viewProfile: 'View Profile',
+    },
+
     pages: {
       signup: {
         agree_to_terms: 'By clicking Register, you agree that you have read and agree to the',

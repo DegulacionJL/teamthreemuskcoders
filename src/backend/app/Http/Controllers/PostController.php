@@ -255,12 +255,11 @@ class PostController extends Controller
         $cleanHashtag = ltrim($hashtag, '#');
 
         // Query posts that contain the hashtag using a REGEXP match and eager-load the image relationship
-        $posts = Post::with('image') // Eager-load the image relationship
+        $posts = Post::with('image') 
             ->where('caption', 'REGEXP', '(^|[^a-zA-Z0-9_])#' . preg_quote($cleanHashtag) . '($|[^a-zA-Z0-9_])')
             ->orderBy('created_at', 'desc')
             ->paginate(10, ['*'], 'page', $request->page ?? 1);
 
-        // Return the formatted response
         return response()->json([
             'posts' => HashtagResource::collection($posts),
             'meta' => [
@@ -302,6 +301,7 @@ class PostController extends Controller
             ]
         ]);
     }
+    
 
     /**
      * Get top meme post and user leaderboard

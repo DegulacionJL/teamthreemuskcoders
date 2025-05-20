@@ -2,35 +2,38 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\User;
-use App\Models\Post;
-use App\Models\Hashtag;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\API\SearchRequestUsers;
+use App\Http\Resources\SearchResultResource;
+use App\Services\API\SearchService;
+use Illuminate\Http\JsonResponse;
 
 class SearchController extends Controller
 {
-    public function search(Request $request)
-{
-    $query = $request->input('q');
+    protected $searchService;
 
-    // Search Users (e.g., name or username)
-    $users = User::where('name', 'LIKE', "%{$query}%")
-        ->orWhere('username', 'LIKE', "%{$query}%")
-        ->select('id', 'name', 'username', 'avatar') // restrict fields
-        ->get();
+    public function __construct(SearchService $searchService)
+    {
+        $this->searchService = $searchService;
+    }
 
-    // Search Posts (captions)
-    $posts = Post::where('caption', 'LIKE', "%{$query}%")
-        ->with(['user:id,name,avatar']) // include user info
-        ->get();
+    /**
+     * Unified Search
+     *
+     * @param SearchRequest $request
+     * @return JsonResponse
+     */
+    public function search(SearchRequestUsers $request): JsonResponse
+    {
+        $validated = $request->validated();
 
-    // Search Hashtags (if you have a hashtags table)
-    $hashtags = Hashtag::where('name', 'LIKE', "%{$query}%")->get();
+        $results = $this->searchService->unifiedSearch(
+            $validated['keyword'],
+            $validated['types'],
+            $validated['limit'],
+            $validated['page']
+        );
 
-    return response()->json([
-        'users' => $users,
-        'posts' => $posts,
-        'hashtags' => $hashtags,
-    ]);
-}
+        return response()->json(SearchResultResource::collection($results));
+    }
 }
