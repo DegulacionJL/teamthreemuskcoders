@@ -30,6 +30,10 @@ const ReportPostConfirmationModal = ({ open, onClose, onConfirm, title, content 
   const [reportSuccess, setReportSuccess] = useState(false);
   const [selectedReason, setSelectedReason] = useState('');
 
+  const handleReportPost = async (event) => {
+    console.error('Reporting post:', event);
+  };
+
   const handleConfirm = async () => {
     try {
       setIsReporting(true);
@@ -38,12 +42,12 @@ const ReportPostConfirmationModal = ({ open, onClose, onConfirm, title, content 
       setTimeout(() => {
         onClose();
         setReportSuccess(false);
-        setSelectedReason('');
       }, 1500);
     } catch (error) {
       console.error('Error during reporting post: ', error);
     } finally {
       setIsReporting(false);
+      setSelectedReason('');
     }
   };
 

@@ -1,5 +1,6 @@
-import axios from 'axios';
+// import axios from 'axios';
 import React, { useEffect, useState } from 'react';
+import { getReportedMemes } from 'services/admin.service';
 import { CheckCircle, Delete, Visibility } from '@mui/icons-material';
 import {
   Box,
@@ -21,21 +22,27 @@ import {
 const ReportManagement = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [reports, setReports] = useState([]);
+  const [data, setData] = useState(null);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
+  const fetchReportedMemes = async () => {
+    const response = await getReportedMemes();
+    setData(response);
+  };
   useEffect(() => {
-    axios
-      .get('http://localhost:8000/api/reports') // Update if your backend URL/port is different
-      .then((response) => {
-        console.log('Reports from API:', response.data);
-        setReports(response.data);
-      })
-      .catch((error) => {
-        console.error('Error fetching reports:', error);
-      });
+    // axios
+    //   .get('http://localhost:8000/api/admin/reports')
+    //   .then((response) => {
+    //     console.log('Reports from API:', response.data);
+    //     setReports(response.data);
+    //   })
+    //   .catch((error) => {
+    //     console.error('Error fetching reports:', error);
+    //   });
+    fetchReportedMemes();
   }, []);
 
   const filteredReports = reports.filter((report) => {
@@ -78,8 +85,8 @@ const ReportManagement = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredReports.length > 0 ? (
-              filteredReports.map((report) => (
+            {filteredReports?.length || data?.length > 0 ? (
+              data.map((report) => (
                 <TableRow key={report.id} hover>
                   <TableCell align="center">{report.id}</TableCell>
                   <TableCell align="center">{report.reported_by}</TableCell>

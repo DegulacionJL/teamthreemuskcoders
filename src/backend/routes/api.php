@@ -145,12 +145,13 @@ Route::put('notifications/{id}/seen', [NotificationController::class, 'seen']);
 
 // Admin Dashboard Route
 Route::prefix('admin')->middleware(['auth:api'])->group(function () {
+    Route::get('/memes/reported', [ReportController::class, 'index']);
     Route::get('/dashboard', [AdminDashboardController::class, 'getStats']);
 });
 
 // for report management if sakto ba
-Route::prefix('admin')->middleware(['auth:sanctum', 'admin'])->group(function () {
-    Route::get('/reports', [ReportController::class, 'index']);
+Route::prefix('admin')->middleware(['auth:api', 'admin'])->group(function () {
+    // Route::get('/memes/reported', [ReportController::class, 'index']);
     Route::patch('/reports/{id}/resolve', [ReportController::class, 'resolve']);
     Route::delete('/reports/{id}', [ReportController::class, 'destroy']);
 });

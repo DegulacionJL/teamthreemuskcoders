@@ -21,8 +21,10 @@ const deleteMeme = async (id) => {
 };
 
 const getReportedMemes = async () => {
-  const req = api.get('/admin/memes/reported').then(({ data }) => data);
-  return await req;
+  const req = await api.get('/admin/memes/reported').then(({ data }) => data);
+  // const req = await api.get('/admin/memes/reported');
+  console.log('admin service: ', req);
+  return req;
 };
 
 const getDashboardStats = async () => {

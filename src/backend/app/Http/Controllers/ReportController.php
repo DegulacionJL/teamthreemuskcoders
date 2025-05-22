@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Report;
 use App\Models\Post;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ReportController extends Controller
 {
@@ -52,7 +53,7 @@ class ReportController extends Controller
 
                 return [
                     'id' => $report->id,
-                    'reported_by' => $report->user->name ?? 'Unknown',
+                    'reported_by' => $report->user->first_name ?? 'Unknown',
                     'reason' => $report->reason,
                     'date' => $report->created_at->format('Y-m-d'),
                     'status' => $report->status,
@@ -60,6 +61,7 @@ class ReportController extends Controller
                 ];
             });
 
+        Log::info($reports);
         return response()->json($reports);
     }
 
