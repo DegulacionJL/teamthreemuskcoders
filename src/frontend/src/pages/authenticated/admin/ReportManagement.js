@@ -1,4 +1,3 @@
-// import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { getReportedMemes } from 'services/admin.service';
 import { CheckCircle, Delete, Visibility } from '@mui/icons-material';
@@ -33,15 +32,6 @@ const ReportManagement = () => {
     setData(response);
   };
   useEffect(() => {
-    // axios
-    //   .get('http://localhost:8000/api/admin/reports')
-    //   .then((response) => {
-    //     console.log('Reports from API:', response.data);
-    //     setReports(response.data);
-    //   })
-    //   .catch((error) => {
-    //     console.error('Error fetching reports:', error);
-    //   });
     fetchReportedMemes();
   }, []);
 

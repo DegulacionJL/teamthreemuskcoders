@@ -24,7 +24,6 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material';
 import CommentFeature from 'components/organisms/CommentFeature';
-// Import the useComments hook
 import { useTheme as useCustomTheme } from 'theme/ThemeContext';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import EditPostModal from '../EditPostModal';

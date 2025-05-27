@@ -92,7 +92,7 @@ const ReportPostConfirmationModal = ({ open, onClose, onConfirm, title, content 
 
         {reportSuccess && (
           <Typography color="success.main" mt={2}>
-            ✅ Report submitted successfully!
+            Report submitted successfully!
           </Typography>
         )}
       </DialogContent>

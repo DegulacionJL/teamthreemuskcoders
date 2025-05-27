@@ -22,7 +22,6 @@ const deleteMeme = async (id) => {
 
 const getReportedMemes = async () => {
   const req = await api.get('/admin/memes/reported').then(({ data }) => data);
-  // const req = await api.get('/admin/memes/reported');
   console.log('admin service: ', req);
   return req;
 };
@@ -30,12 +29,12 @@ const getReportedMemes = async () => {
 const getDashboardStats = async () => {
   try {
     console.log('📡 Fetching dashboard stats...');
-    const { data } = await api.get('/admin/dashboard'); // Await the API request directly
-    console.log('✅ Dashboard stats received:', data); // Log the received data
-    return data; // Return the data directly from the response
+    const { data } = await api.get('/admin/dashboard');
+    console.log('✅ Dashboard stats received:', data);
+    return data;
   } catch (error) {
     console.error('❌ Error fetching dashboard stats:', error);
-    throw error; // Re-throw the error after logging
+    throw error;
   }
 };
 

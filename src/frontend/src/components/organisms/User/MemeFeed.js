@@ -16,7 +16,6 @@ import { Box, CircularProgress, Typography } from '@mui/material';
 import { useTheme } from '@mui/material';
 import { useTheme as useCustomTheme } from '../../../theme/ThemeContext';
 import CreatePostCard from './CreatePostCard';
-// Import components
 import LeftSidebar from './LeftContent';
 import MemePost from './MemePost';
 import RightSidebar from './RightContent';

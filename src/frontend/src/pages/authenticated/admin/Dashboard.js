@@ -112,19 +112,13 @@ function Dashboard() {
   ];
 
   const averageMemesPerUser =
-    stats.active_users_today > 0
-      ? (stats.new_memes_today / stats.active_users_today).toFixed(2)
-      : '0.00';
+    stats.active_users_today > 0 ? stats.new_memes_today / stats.active_users_today : 0;
 
   const averageReportsPerUser =
-    stats.active_users_today > 0
-      ? (stats.reported_content_today / stats.active_users_today).toFixed(2)
-      : '0.00';
+    stats.active_users_today > 0 ? stats.reported_content_today / stats.active_users_today : 0;
 
   const engagementRate =
-    stats.total_users > 0
-      ? ((stats.active_users_today / stats.total_users) * 100).toFixed(2)
-      : '0.00';
+    stats.total_users > 0 ? (stats.active_users_today / stats.total_users) * 100 : 0;
 
   const backgroundColor = '#121212';
   const cardColor = '#1E1E1E';
