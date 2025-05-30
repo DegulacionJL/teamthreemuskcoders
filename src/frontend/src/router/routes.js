@@ -96,6 +96,11 @@ const routes = [
     component: 'pages/HashtagPage',
     auth: true,
   },
+  {
+    path: '/search-results',
+    component: 'pages/SearchResultPage',
+    auth: true,
+  },
 
   ...admin,
   ...user,

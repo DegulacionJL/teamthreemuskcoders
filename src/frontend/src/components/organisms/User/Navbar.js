@@ -4,6 +4,7 @@ import { Fragment, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -21,6 +22,7 @@ import LanguageSelect from 'components/atoms/LanguageSelect';
 import MenuLinks from 'components/atoms/MenuLinks';
 import AvatarNavDropdown from 'components/molecules/AvatarNavDropdown';
 import NotificationIcon from 'components/molecules/NotificationIcon';
+import SearchComponent from 'components/molecules/SearchBox';
 import { useTheme } from '../../../theme/ThemeContext';
 
 function Navbar() {
@@ -28,17 +30,20 @@ function Navbar() {
   // const user = useSelector((state) => state.profile.user);
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [anchorMobileNav, setAnchorMobileNav] = useState(null);
   const { darkMode, toggleDarkMode } = useTheme();
 
   const menus = [];
 
   if (user) {
-    menus.push({ label: t('menu.memefeed'), url: '/memefeed' });
+    if (location.pathname !== '/memefeed') {
+      menus.push({ label: t('menu.memefeed'), url: '/memefeed' });
+    }
     menus.push({ label: t('menu.userlist'), url: '/userList' });
   }
 
-  const appName = process.env.REACT_APP_SITE_TITLE || '😂';
+  const appName = 'MemeMa 😂';
 
   const handleOpenNavMenu = (event) => setAnchorMobileNav(event.currentTarget);
   const handleCloseNavMenu = (url) => {
@@ -71,10 +76,19 @@ function Navbar() {
         transition: 'background-color 0.3s ease',
       }}
     >
-      <Container maxWidth="lg">
-        <Toolbar sx={{ flexWrap: 'wrap' }} disableGutters>
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            <Link to="/" style={{ marginRight: 8 }}>
+      {/** Desktop View */}
+      <Container maxWidth="100%" disableGutters>
+        <Toolbar sx={{ flexWrap: 'wrap', padding: 0 }} disableGutters>
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: { xs: 'none', md: 'flex' },
+              justifyContent: 'start',
+              alignItems: 'center',
+              padding: 0,
+            }}
+          >
+            <Link to="/" style={{ textDecoration: 'none', padding: 0, margin: 0 }}>
               <Typography
                 variant="h5"
                 noWrap
@@ -85,13 +99,30 @@ function Navbar() {
                   display: 'flex',
                   alignItems: 'center',
                   height: 48,
-                  marginLeft: 0,
+                  padding: 0,
+                  margin: 0,
+                  marginLeft: 2,
                   paddingLeft: 0,
                 }}
               >
                 {appName}
               </Typography>
             </Link>
+            {user && location.pathname === '/memefeed' && (
+              // Only render the search bar if the user is logged in
+              <Box
+                sx={{
+                  width: { xs: '100%', md: '300px' },
+                  maxWidth: '300px',
+                  justifyContent: 'start',
+                  alignItems: 'start',
+                  pl: 2,
+                  display: { xs: 'none', sm: 'flex' },
+                }}
+              >
+                <SearchComponent />
+              </Box>
+            )}
           </Box>
 
           <Box component="nav" sx={{ display: { xs: 'none', md: 'flex' } }}>
@@ -116,9 +147,11 @@ function Navbar() {
               sx={{
                 display: { xs: 'flex', md: 'none' },
                 flexGrow: 1,
-                justifyContent: 'flex-start',
+                justifyContent: 'center',
+                padding: 0,
               }}
             >
+              {/* mobile view */}
               <Typography
                 variant="h5"
                 noWrap
@@ -128,8 +161,8 @@ function Navbar() {
                   textDecoration: 'none',
                   display: 'flex',
                   alignItems: 'center',
-                  marginLeft: 0,
-                  fontFamily: 'Roboto, "Segoe UI", "Arial", sans-serif', // Add font family here
+                  padding: 0,
+                  margin: 0,
                 }}
               >
                 {appName}
@@ -155,7 +188,7 @@ function Navbar() {
               }}
               MenuListProps={{
                 style: {
-                  width: 200,
+                  width: '100%',
                 },
               }}
             >
